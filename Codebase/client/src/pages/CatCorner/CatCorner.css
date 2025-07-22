@@ -1,18 +1,96 @@
 .catcorner {
-    display: flex;
-    height: 100vh;
-  }
-  
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(120deg, #f8fafc 60%, #e0f7fa 100%);
+}
+
+.catcorner-main {
+  flex: 1;
+  padding: 2rem 2.5vw;
+  overflow-y: auto;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.catcorner-header {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #388e3c;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px #b2dfdb44;
+  padding-left: 0.2em;
+}
+
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+/* Card enhancements */
+.feed-card, .cat-profile-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px #b2dfdb33, 0 1.5px 6px #388e3c11;
+  border: 1.5px solid #b2dfdb;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.feed-card:hover, .cat-profile-card:hover {
+  box-shadow: 0 8px 32px #388e3c22, 0 2px 8px #388e3c22;
+  transform: translateY(-2px) scale(1.025);
+}
+
+.cat-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.cat-profile-card img {
+  height: 5.5rem;
+  width: 5.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid #81c784;
+  box-shadow: 0 2px 8px #388e3c22;
+}
+
+.cat-profile-card h3 {
+  color: #388e3c;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.2em;
+}
+
+.cat-profile-card p {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
   .catcorner-main {
-    flex: 1;
-    padding: 1rem;
-    overflow-y: auto;
-    background: #f9f9f9;
+    padding: 1rem 0.5rem;
   }
-  
   .feed-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
     gap: 1rem;
   }
+}
+@media (max-width: 600px) {
+  .catcorner {
+    flex-direction: column;
+  }
+  .catcorner-main {
+    padding: 0.5rem 0.2rem;
+  }
+  .feed-grid {
+    grid-template-columns: 1fr;
+  }
+}
   
