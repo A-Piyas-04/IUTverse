@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../../components/Sidebar';
+import Sidebar from "../../components/Sidebar";
 import FeedCard from '../../components/FeedCard';
 import CatProfiles from '../../components/CatProfiles';
 import CatBreak from '../../components/CatBreak';
