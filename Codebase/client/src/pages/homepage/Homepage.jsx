@@ -1,8 +1,18 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const navItems = ["Home", "CatCorner", "Wholesome", "Marketplace"];
+
+  const getPath = (label) => {
+    switch (label) {
+      case "Home": return "/home";
+      case "CatCorner": return "/catcorner";
+      default: return `/${label.toLowerCase()}`;
+    }
+  };
+
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans overflow-hidden flex flex-col">
       {/* TOP NAVBAR */}
@@ -20,21 +30,25 @@ export default function HomePage() {
             className="w-100 px-4 py-2 rounded-full bg-gray-100 text-sm text-gray-800 placeholder-gray-400 border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 transition shadow-inner hover:shadow-green-200/30"
           />
         </div>
-        {/* Middle nav */}
+
+        {/* Middle nav with routing */}
         <nav className="flex gap-8 w-1/3 justify-between text-base font-medium text-green-700">
-          {["Home", "CatCorner", "Wholesome", "Marketplace"].map((label, i) => (
-            <a
+          {navItems.map((label, i) => (
+            <NavLink
               key={i}
-              href={`/${
-                label.toLowerCase() === "home" ? "" : label.toLowerCase()
-              }`}
-              className="relative px-3 py-1 rounded-lg transition-all duration-200 hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm group"
+              to={getPath(label)}
+              className={({ isActive }) =>
+                `relative px-3 py-1 rounded-lg transition-all duration-200 ${isActive
+                  ? "bg-green-100 text-green-900"
+                  : "hover:bg-green-100 hover:text-green-900"
+                } group`
+              }
             >
               <span className="group-hover:scale-105 group-hover:font-bold transition-transform duration-200">
                 {label}
               </span>
               <span className="absolute left-1/2 -bottom-1 w-0 h-0.5 bg-green-400 rounded-full group-hover:w-3/4 transition-all duration-300 group-hover:h-1"></span>
-            </a>
+            </NavLink>
           ))}
         </nav>
 
