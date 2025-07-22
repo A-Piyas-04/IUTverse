@@ -3,9 +3,9 @@
   --green-medium: #3a6f3a;
   --green-muted: #1e4d1e;
   --green-light: #6aa56a;
-  --green-shadow: rgba(34, 85, 34, 0.6);
-  --green-shadow-strong: rgba(34, 85, 34, .5);
-  --green-shadow-light: rgba(34, 85, 34, .88);
+  --green-shadow: rgba(34, 85, 34, 0.28);
+  --green-shadow-strong: rgba(34, 85, 34, .3);
+  --green-shadow-light: rgba(34, 85, 34, .68);
   --green-shadow-text1: rgba(34, 85, 34, .3);
   --green-shadow-text2: rgba(34, 85, 34, .2);
 }
