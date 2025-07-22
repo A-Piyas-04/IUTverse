@@ -3,7 +3,8 @@
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  color: black;
+  color: #222;
+  background: #fff;
   text-align: center;
   box-sizing: border-box;
 }
@@ -14,4 +15,6 @@ body {
   min-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
+  background: #fff;
+  color: #222;
 }
