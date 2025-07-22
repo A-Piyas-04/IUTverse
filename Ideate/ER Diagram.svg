@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2000" height="2400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .entity-box { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; rx: 8; }
+      .entity-title { fill: #1976d2; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; text-anchor: middle; }
+      .attribute { fill: #333; font-family: Arial, sans-serif; font-size: 11px; text-anchor: start; }
+      .pk { font-weight: bold; color: #d32f2f; }
+      .fk { font-style: italic; color: #388e3c; }
+      .relationship-line { stroke: #666; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .relationship-label { fill: #666; font-family: Arial, sans-serif; font-size: 12px; text-anchor: middle; }
+      .cardinality { fill: #666; font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; font-weight: bold; }
+      .section-title { fill: #1976d2; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; text-anchor: middle; }
+    </style>
+    <marker id="arrowhead" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#666" />
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="2000" height="2400" fill="#fafafa"/>
+  
+  <!-- Title -->
+  <text x="1000" y="40" class="section-title">IUTverse Database ER Diagram</text>
+  
+  <!-- SECTION 1: CORE USER & AUTHENTICATION -->
+  <text x="1000" y="80" class="section-title">Core UserAuthentication</text>
+  
+  <!-- User Entity -->
+  <rect x="50" y="100" width="220" height="240" class="entity-box"/>
+  <text x="160" y="125" class="entity-title">User</text>
+  <text x="70" y="150" class="attribute pk">• user_id (PK)</text>
+  <text x="70" y="165" class="attribute">• email (unique)</text>
+  <text x="70" y="180" class="attribute">• name</text>
+  <text x="70" y="195" class="attribute">• department</text>
+  <text x="70" y="210" class="attribute">• batch</text>
+  <text x="70" y="225" class="attribute">• student_id</text>
+  <text x="70" y="240" class="attribute">• bio</text>
+  <text x="70" y="255" class="attribute">• profile_picture_url</text>
+  <text x="70" y="270" class="attribute">• role</text>
+  <text x="70" y="285" class="attribute">• created_at</text>
+  
+  <!-- VerificationToken Entity -->
+  <rect x="350" y="100" width="200" height="140" class="entity-box"/>
+  <text x="450" y="125" class="entity-title">VerificationToken</text>
+  <text x="370" y="150" class="attribute pk">• token_id (PK)</text>
+  <text x="370" y="165" class="attribute fk">• user_id (FK)</text>
+  <text x="370" y="180" class="attribute">• token</text>
+  <text x="370" y="195" class="attribute">• expires_at</text>
+  <text x="370" y="210" class="attribute">• used</text>
+  
+  <!-- User to VerificationToken -->
+  <line x1="270" y1="220" x2="350" y2="170" class="relationship-line"/>
+  <text x="310" y="190" class="cardinality">1:1</text>
+  
+  <!-- SECTION 2: CONTENT & SOCIAL -->
+  <text x="1000" y="400" class="section-title">Content Social Features</text>
+  
+  <!-- Post Entity -->
+  <rect x="50" y="450" width="220" height="160" class="entity-box"/>
+  <text x="160" y="475" class="entity-title">Post</text>
+  <text x="70" y="500" class="attribute pk">• post_id (PK)</text>
+  <text x="70" y="515" class="attribute fk">• user_id (FK)</text>
+  <text x="70" y="530" class="attribute">• content</text>
+  <text x="70" y="545" class="attribute">• type</text>
+  <text x="70" y="560" class="attribute">• visibility</text>
+  <text x="70" y="575" class="attribute">• created_at</text>
+  
+  <!-- PostImage Entity -->
+  <rect x="350" y="450" width="180" height="120" class="entity-box"/>
+  <text x="440" y="475" class="entity-title">PostImage</text>
+  <text x="370" y="500" class="attribute pk">• image_id (PK)</text>
+  <text x="370" y="515" class="attribute fk">• post_id (FK)</text>
+  <text x="370" y="530" class="attribute">• image_url</text>
+  
+  <!-- Comment Entity -->
+  <rect x="600" y="450" width="180" height="140" class="entity-box"/>
+  <text x="690" y="475" class="entity-title">Comment</text>
+  <text x="620" y="500" class="attribute pk">• comment_id (PK)</text>
+  <text x="620" y="515" class="attribute fk">• post_id (FK)</text>
+  <text x="620" y="530" class="attribute fk">• user_id (FK)</text>
+  <text x="620" y="545" class="attribute">• content</text>
+  <text x="620" y="560" class="attribute">• is_anonymous</text>
+  <text x="620" y="575" class="attribute">• created_at</text>
+  
+  <!-- Reaction Entity -->
+  <rect x="850" y="450" width="180" height="140" class="entity-box"/>
+  <text x="940" y="475" class="entity-title">Reaction</text>
+  <text x="870" y="500" class="attribute pk">• reaction_id (PK)</text>
+  <text x="870" y="515" class="attribute fk">• post_id (FK)</text>
+  <text x="870" y="530" class="attribute fk">• user_id (FK)</text>
+  <text x="870" y="545" class="attribute">• type</text>
+  <text x="870" y="560" class="attribute">• created_at</text>
+  
+  <!-- User to Post -->
+  <line x1="160" y1="340" x2="160" y2="450" class="relationship-line"/>
+  <text x="180" y="395" class="cardinality">1:M</text>
+  
+  <!-- Post to PostImage -->
+  <line x1="270" y1="530" x2="350" y2="510" class="relationship-line"/>
+  <text x="310" y="515" class="cardinality">1:M</text>
+  
+  <!-- Post to Comment -->
+  <line x1="270" y1="530" x2="600" y2="515" class="relationship-line"/>
+  <text x="435" y="520" class="cardinality">1:M</text>
+  
+  <!-- User to Comment -->
+  <line x1="160" y1="340" x2="690" y2="530" class="relationship-line"/>
+  <text x="425" y="435" class="cardinality">1:M</text>
+  
+  <!-- Post to Reaction -->
+  <line x1="270" y1="530" x2="850" y2="515" class="relationship-line"/>
+  <text x="560" y="520" class="cardinality">1:M</text>
+  
+  <!-- User to Reaction -->
+  <line x1="160" y1="340" x2="940" y2="530" class="relationship-line"/>
+  <text x="550" y="435" class="cardinality">1:M</text>
+  
+  <!-- SECTION 3: CIRCLES & GROUPS -->
+  <text x="1000" y="700" class="section-title">Circles Study Groups</text>
+  
+  <!-- Circle Entity -->
+  <rect x="50" y="750" width="200" height="140" class="entity-box"/>
+  <text x="150" y="775" class="entity-title">Circle</text>
+  <text x="70" y="800" class="attribute pk">• circle_id (PK)</text>
+  <text x="70" y="815" class="attribute">• name</text>
+  <text x="70" y="830" class="attribute">• type</text>
+  <text x="70" y="845" class="attribute fk">• created_by (FK)</text>
+  
+  <!-- CircleMembership Entity -->
+  <rect x="350" y="750" width="200" height="120" class="entity-box"/>
+  <text x="450" y="775" class="entity-title">CircleMembership</text>
+  <text x="370" y="800" class="attribute fk">• circle_id (FK)</text>
+  <text x="370" y="815" class="attribute fk">• user_id (FK)</text>
+  <text x="370" y="830" class="attribute">• role</text>
+  <text x="370" y="845" class="attribute">• (Composite PK)</text>
+  
+  <!-- CirclePost Entity -->
+  <rect x="650" y="750" width="180" height="100" class="entity-box"/>
+  <text x="740" y="775" class="entity-title">CirclePost</text>
+  <text x="670" y="800" class="attribute pk">• circle_post_id (PK)</text>
+  <text x="670" y="815" class="attribute fk">• circle_id (FK)</text>
+  <text x="670" y="830" class="attribute fk">• post_id (FK)</text>
+  
+  <!-- User to Circle (via CircleMembership) -->
+  <line x1="160" y1="340" x2="450" y2="810" class="relationship-line"/>
+  <text x="305" y="575" class="cardinality">M:M</text>
+  
+  <!-- Circle to CircleMembership -->
+  <line x1="250" y1="820" x2="350" y2="810" class="relationship-line"/>
+  <text x="300" y="805" class="cardinality">1:M</text>
+  
+  <!-- Circle to CirclePost -->
+  <line x1="250" y1="820" x2="650" y2="800" class="relationship-line"/>
+  <text x="450" y="805" class="cardinality">1:M</text>
+  
+  <!-- Post to CirclePost -->
+  <line x1="160" y1="610" x2="740" y2="800" class="relationship-line"/>
+  <text x="450" y="705" class="cardinality">1:M</text>
+  
+  <!-- User to Circle (as created_by) -->
+  <line x1="160" y1="340" x2="150" y2="845" class="relationship-line"/>
+  <text x="155" y="590" class="cardinality">1:M</text>
+  
+  <!-- SECTION 4: EVENTS -->
+  <text x="1000" y="1000" class="section-title">Events RSVP</text>
+  
+  <!-- Event Entity -->
+  <rect x="50" y="1050" width="220" height="160" class="entity-box"/>
+  <text x="160" y="1075" class="entity-title">Event</text>
+  <text x="70" y="1100" class="attribute pk">• event_id (PK)</text>
+  <text x="70" y="1115" class="attribute fk">• host_id (FK)</text>
+  <text x="70" y="1130" class="attribute">• title</text>
+  <text x="70" y="1145" class="attribute">• description</text>
+  <text x="70" y="1160" class="attribute">• location</text>
+  <text x="70" y="1175" class="attribute">• datetime</text>
+  <text x="70" y="1190" class="attribute">• is_public</text>
+  
+  <!-- RSVP Entity -->
+  <rect x="350" y="1050" width="180" height="120" class="entity-box"/>
+  <text x="440" y="1075" class="entity-title">RSVP</text>
+  <text x="370" y="1100" class="attribute pk">• rsvp_id (PK)</text>
+  <text x="370" y="1115" class="attribute fk">• event_id (FK)</text>
+  <text x="370" y="1130" class="attribute fk">• user_id (FK)</text>
+  <text x="370" y="1145" class="attribute">• status</text>
+  
+  <!-- User to Event (as host) -->
+  <line x1="160" y1="340" x2="160" y2="1115" class="relationship-line"/>
+  <text x="180" y="725" class="cardinality">1:M</text>
+  
+  <!-- Event to RSVP -->
+  <line x1="270" y1="1130" x2="350" y2="1110" class="relationship-line"/>
+  <text x="310" y="1115" class="cardinality">1:M</text>
+  
+  <!-- User to RSVP -->
+  <line x1="160" y1="340" x2="440" y2="1110" class="relationship-line"/>
+  <text x="300" y="725" class="cardinality">1:M</text>
+  
+  <!-- SECTION 5: CAT CORNER -->
+  <text x="1000" y="1300" class="section-title">Cat Corner</text>
+  
+  <!-- Cat Entity -->
+  <rect x="50" y="1350" width="200" height="120" class="entity-box"/>
+  <text x="150" y="1375" class="entity-title">Cat</text>
+  <text x="70" y="1400" class="attribute pk">• cat_id (PK)</text>
+  <text x="70" y="1415" class="attribute">• name</text>
+  <text x="70" y="1430" class="attribute">• description</text>
+  <text x="70" y="1445" class="attribute">• first_seen_location</text>
+  <text x="70" y="1460" class="attribute">• photo_url</text>
+  
+  <!-- CatPost Entity -->
+  <rect x="350" y="1350" width="180" height="100" class="entity-box"/>
+  <text x="440" y="1375" class="entity-title">CatPost</text>
+  <text x="370" y="1400" class="attribute fk">• cat_id (FK)</text>
+  <text x="370" y="1415" class="attribute fk">• post_id (FK)</text>
+  
+  <!-- CatVote Entity -->
+  <rect x="650" y="1350" width="180" height="100" class="entity-box"/>
+  <text x="740" y="1375" class="entity-title">CatVote</text>
+  <text x="670" y="1400" class="attribute fk">• user_id (FK)</text>
+  <text x="670" y="1415" class="attribute fk">• cat_id (FK)</text>
+  <text x="670" y="1430" class="attribute">• month</text>
+  <text x="670" y="1445" class="attribute">• (Composite PK)</text>
+  
+  <!-- Cat to CatPost -->
+  <line x1="250" y1="1410" x2="350" y2="1400" class="relationship-line"/>
+  <text x="300" y="1395" class="cardinality">1:M</text>
+  
+  <!-- Post to CatPost -->
+  <line x1="160" y1="610" x2="440" y2="1400" class="relationship-line"/>
+  <text x="300" y="1005" class="cardinality">1:M</text>
+  
+  <!-- User to CatVote -->
+  <line x1="160" y1="340" x2="740" y2="1400" class="relationship-line"/>
+  <text x="450" y="870" class="cardinality">1:M</text>
+  
+  <!-- Cat to CatVote -->
+  <line x1="250" y1="1410" x2="650" y2="1400" class="relationship-line"/>
+  <text x="450" y="1395" class="cardinality">1:M</text>
+  
+  <!-- SECTION 6: MARKETPLACE & LOST/FOUND -->
+  <text x="1000" y="1550" class="section-title">Marketplace Lost/Found</text>
+  
+  <!-- MarketItem Entity -->
+  <rect x="50" y="1600" width="220" height="140" class="entity-box"/>
+  <text x="160" y="1625" class="entity-title">MarketItem</text>
+  <text x="70" y="1650" class="attribute pk">• item_id (PK)</text>
+  <text x="70" y="1665" class="attribute fk">• seller_id (FK)</text>
+  <text x="70" y="1680" class="attribute">• title</text>
+  <text x="70" y="1695" class="attribute">• description</text>
+  <text x="70" y="1710" class="attribute">• price</text>
+  <text x="70" y="1725" class="attribute">• category</text>
+  <text x="70" y="1740" class="attribute">• status</text>
+  <text x="70" y="1755" class="attribute">• posted_at</text>
+  
+  <!-- LostFoundItem Entity -->
+  <rect x="350" y="1600" width="220" height="140" class="entity-box"/>
+  <text x="460" y="1625" class="entity-title">LostFoundItem</text>
+  <text x="370" y="1650" class="attribute pk">• lost_item_id (PK)</text>
+  <text x="370" y="1665" class="attribute fk">• user_id (FK)</text>
+  <text x="370" y="1680" class="attribute">• title</text>
+  <text x="370" y="1695" class="attribute">• description</text>
+  <text x="370" y="1710" class="attribute">• image_url</text>
+  <text x="370" y="1725" class="attribute">• last_seen_location</text>
+  <text x="370" y="1740" class="attribute">• is_found</text>
+  
+  <!-- User to MarketItem -->
+  <line x1="160" y1="340" x2="160" y2="1665" class="relationship-line"/>
+  <text x="180" y="1000" class="cardinality">1:M</text>
+  
+  <!-- User to LostFoundItem -->
+  <line x1="160" y1="340" x2="460" y2="1665" class="relationship-line"/>
+  <text x="310" y="1000" class="cardinality">1:M</text>
+  
+  <!-- SECTION 7: ISLAMIC FEATURES -->
+  <text x="1000" y="1800" class="section-title">Islamic Features</text>
+  
+  <!-- PrayerTime Entity -->
+  <rect x="50" y="1850" width="200" height="140" class="entity-box"/>
+  <text x="150" y="1875" class="entity-title">PrayerTime</text>
+  <text x="70" y="1900" class="attribute pk">• date (PK)</text>
+  <text x="70" y="1915" class="attribute">• fajr</text>
+  <text x="70" y="1930" class="attribute">• dhuhr</text>
+  <text x="70" y="1945" class="attribute">• asr</text>
+  <text x="70" y="1960" class="attribute">• maghrib</text>
+  <text x="70" y="1975" class="attribute">• isha</text>
+  <text x="70" y="1990" class="attribute">• location</text>
+  
+  <!-- FiqhQuestion Entity -->
+  <rect x="350" y="1850" width="200" height="120" class="entity-box"/>
+  <text x="450" y="1875" class="entity-title">FiqhQuestion</text>
+  <text x="370" y="1900" class="attribute pk">• question_id (PK)</text>
+  <text x="370" y="1915" class="attribute fk">• user_id (FK)</text>
+  <text x="370" y="1930" class="attribute">• question_text</text>
+  <text x="370" y="1945" class="attribute">• asked_anonymously</text>
+  <text x="370" y="1960" class="attribute">• submitted_at</text>
+  
+  <!-- FiqhAnswer Entity -->
+  <rect x="650" y="1850" width="200" height="120" class="entity-box"/>
+  <text x="750" y="1875" class="entity-title">FiqhAnswer</text>
+  <text x="670" y="1900" class="attribute pk">• answer_id (PK)</text>
+  <text x="670" y="1915" class="attribute fk">• question_id (FK)</text>
+  <text x="670" y="1930" class="attribute fk">• answered_by (FK)</text>
+  <text x="670" y="1945" class="attribute">• answer_text</text>
+  <text x="670" y="1960" class="attribute">• answered_at</text>
+  
+  <!-- User to FiqhQuestion -->
+  <line x1="160" y1="340" x2="450" y2="1915" class="relationship-line"/>
+  <text x="305" y="1125" class="cardinality">1:M</text>
+  
+  <!-- FiqhQuestion to FiqhAnswer -->
+  <line x1="550" y1="1900" x2="650" y2="1900" class="relationship-line"/>
+  <text x="600" y="1885" class="cardinality">1:M</text>
+  
+  <!-- User to FiqhAnswer (as answered_by) -->
+  <line x1="160" y1="340" x2="750" y2="1930" class="relationship-line"/>
+  <text x="455" y="1135" class="cardinality">1:M</text>
+  
+  <!-- SECTION 8: MODERATION & REPUTATION -->
+  <text x="1000" y="2050" class="section-title">Moderation Reputation</text>
+  
+  <!-- Report Entity -->
+  <rect x="50" y="2100" width="200" height="120" class="entity-box"/>
+  <text x="150" y="2125" class="entity-title">Report</text>
+  <text x="70" y="2150" class="attribute pk">• report_id (PK)</text>
+  <text x="70" y="2165" class="attribute fk">• reporter_id (FK)</text>
+  <text x="70" y="2180" class="attribute fk">• reported_post_id (FK)</text>
+  <text x="70" y="2195" class="attribute">• reason</text>
+  <text x="70" y="2210" class="attribute">• status</text>
+  
+  <!-- Reputation Entity -->
+  <rect x="350" y="2100" width="200" height="100" class="entity-box"/>
+  <text x="450" y="2125" class="entity-title">Reputation</text>
+  <text x="370" y="2150" class="attribute fk">• user_id (FK)</text>
+  <text x="370" y="2165" class="attribute">• helpfulness_score</text>
+  <text x="370" y="2180" class="attribute">• wholesome_score</text>
+  <text x="370" y="2195" class="attribute">• pomodoro_points</text>
+  
+  <!-- User to Report (as reporter) -->
+  <line x1="160" y1="340" x2="150" y2="2165" class="relationship-line"/>
+  <text x="155" y="1250" class="cardinality">1:M</text>
+  
+  <!-- Post to Report -->
+  <line x1="160" y1="610" x2="150" y2="2180" class="relationship-line"/>
+  <text x="155" y="1395" class="cardinality">1:M</text>
+  
+  <!-- User to Reputation -->
+  <line x1="160" y1="340" x2="450" y2="2150" class="relationship-line"/>
+  <text x="305" y="1245" class="cardinality">1:1</text>
+  
+  <!-- Legend -->
+  <rect x="1200" y="100" width="300" height="280" fill="white" stroke="#ccc" stroke-width="2" rx="10"/>
+  <text x="1350" y="130" class="entity-title">Legend</text>
+  <text x="1220" y="155" class="attribute pk">• Primary Key (PK)</text>
+  <text x="1220" y="170" class="attribute fk">• Foreign Key (FK)</text>
+  <text x="1220" y="185" class="attribute">• Regular Attribute</text>
+  <text x="1220" y="205" class="cardinality">1:1 - One to One</text>
+  <text x="1220" y="220" class="cardinality">1:M - One to Many</text>
+  <text x="1220" y="235" class="cardinality">M:M - Many to Many</text>
+  <text x="1220" y="255" class="attribute">Composite Keys:</text>
+  <text x="1220" y="270" class="attribute">• CircleMembership</text>
+  <text x="1220" y="285" class="attribute">• CatVote</text>
+  <text x="1220" y="300" class="attribute">• RSVP</text>
+  
+  <!-- Section Dividers -->
+  <line x1="0" y1="380" x2="2000" y2="380" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="0" y1="680" x2="2000" y2="680" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="0" y1="980" x2="2000" y2="980" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="0" y1="1280" x2="2000" y2="1280" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="0" y1="1520" x2="2000" y2="1520" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="0" y1="1770" x2="2000" y2="1770" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="0" y1="2020" x2="2000" y2="2020" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5"/>
+</svg> 

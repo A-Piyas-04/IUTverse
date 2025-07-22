@@ -1,0 +1,16 @@
+| Layer      | Choice                                    |
+| ---------- | ----------------------------------------- |
+
+| Frontend   | React (Vite/Next.js) + Tailwind CSS       |
+
+| Backend    | Node.js + Express / or Firebase Functions |
+
+| Auth       | Firebase Auth / JWT / Magic Link          |
+
+| DB         | PostgreSQL + Prisma                       |
+
+| Realtime   | Socket.IO / Firebase Realtime             |
+
+| Offline    | Service Workers, IndexedDB, LocalStorage  |
+
+| Deployment | Vercel / Firebase Hosting / Railway       |

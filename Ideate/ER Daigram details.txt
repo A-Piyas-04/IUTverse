@@ -1,0 +1,289 @@
+🔵 Entities & Attributes
+1. User
+user_id (PK)
+
+email (unique, must end in @iut-dhaka.edu)
+
+name
+
+department
+
+batch
+
+student_id (optional via portal)
+
+bio
+
+profile_picture_url
+
+role (user, mod, admin)
+
+created_at
+
+2. VerificationToken
+token_id (PK)
+
+user_id (FK → User)
+
+token
+
+expires_at
+
+used
+
+3. Post
+post_id (PK)
+
+user_id (FK → User)
+
+content
+
+type (text, image, poll, cat_post, wholesome, confession, deed, etc.)
+
+visibility (public, dept, batch, anonymous)
+
+created_at
+
+4. PostImage
+image_id (PK)
+
+post_id (FK → Post)
+
+image_url
+
+5. Comment
+comment_id (PK)
+
+post_id (FK → Post)
+
+user_id (FK → User)
+
+content
+
+is_anonymous
+
+created_at
+
+6. Reaction
+reaction_id (PK)
+
+post_id (FK → Post)
+
+user_id (FK → User)
+
+type (like, upvote, wholesome, helpful, etc.)
+
+created_at
+
+🧑‍🤝‍🧑 Circle & Study Groups
+7. Circle
+circle_id (PK)
+
+name (e.g., Batch 21 CSE, Islamic Study Pod)
+
+type (batch, dept, study_pod, club)
+
+created_by (FK → User)
+
+8. CircleMembership
+circle_id (FK → Circle)
+
+user_id (FK → User)
+
+role (member, admin)
+
+(PK: composite of both)
+
+9. CirclePost
+circle_post_id (PK)
+
+circle_id (FK → Circle)
+
+post_id (FK → Post)
+
+📆 Events
+10. Event
+event_id (PK)
+
+host_id (FK → User or Club)
+
+title
+
+description
+
+location
+
+datetime
+
+is_public
+
+11. RSVP
+rsvp_id (PK)
+
+event_id (FK → Event)
+
+user_id (FK → User)
+
+status (going, interested, not_going)
+
+🐾 Cat Corner
+12. Cat
+cat_id (PK)
+
+name
+
+description
+
+first_seen_location
+
+photo_url
+
+13. CatPost
+cat_id (FK → Cat)
+
+post_id (FK → Post)
+
+14. CatVote
+user_id (FK → User)
+
+cat_id (FK → Cat)
+
+month
+
+(PK: composite)
+
+🧾 Marketplace & Lost/Found
+15. MarketItem
+item_id (PK)
+
+seller_id (FK → User)
+
+title
+
+description
+
+price
+
+category
+
+status (available, sold)
+
+posted_at
+
+16. LostFoundItem
+lost_item_id (PK)
+
+user_id (FK → User)
+
+title
+
+description
+
+image_url
+
+last_seen_location
+
+is_found
+
+🕌 Islamic Features
+17. PrayerTime
+date (PK)
+
+fajr
+
+dhuhr
+
+asr
+
+maghrib
+
+isha
+
+location (defaults to Gazipur/IUT)
+
+18. FiqhQuestion
+question_id (PK)
+
+user_id (FK → User)
+
+question_text
+
+asked_anonymously
+
+submitted_at
+
+19. FiqhAnswer
+answer_id (PK)
+
+question_id (FK → FiqhQuestion)
+
+answered_by (FK → User / Club Rep)
+
+answer_text
+
+answered_at
+
+📊 Moderation & Points
+20. Report
+report_id (PK)
+
+reporter_id (FK → User)
+
+reported_post_id (FK → Post)
+
+reason
+
+status (pending, reviewed)
+
+21. Reputation
+user_id (FK → User)
+
+helpfulness_score
+
+wholesome_score
+
+pomodoro_points
+
+(PK: user_id)
+
+🔁 Relationships (At a Glance)
+1:Many → User → Post, Comment, Reaction, RSVP, MarketItem
+
+Many:Many → User ↔ Circle (CircleMembership)
+
+1:Many → Post → PostImage
+
+1:Many → Cat → CatPost
+
+1:Many → FiqhQuestion → FiqhAnswer
+
+1:Many → Post → Reaction, Report
+
+Composite Keys → CatVote, CircleMembership, RSVP
+
+📐 Diagram Illustration (Text Layout)
+pgsql
+Copy
+Edit
+User ──< Post ──< PostImage
+    └──< Comment
+    └──< Reaction
+    └──< RSVP
+    └──< MarketItem
+    └──< LostFoundItem
+    └──< VerificationToken
+
+Circle ──< CircleMembership >── User
+       └──< CirclePost >── Post
+
+Event ──< RSVP
+
+Cat ──< CatPost >── Post
+    └──< CatVote >── User
+
+PrayerTime (daily)
+
+FiqhQuestion ──< FiqhAnswer
+
+Post ──< Report
+User ──< Reputation
