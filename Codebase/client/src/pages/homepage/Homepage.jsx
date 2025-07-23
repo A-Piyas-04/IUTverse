@@ -14,6 +14,7 @@ export default function HomePage() {
       likes: 23,
       comments: 7,
       shares: 2,
+      img: "../../../public/picture1.jpg",
     },
     {
       name: "Samiur Rahman Nafiz",
@@ -23,6 +24,7 @@ export default function HomePage() {
       likes: 42,
       comments: 12,
       shares: 8,
+      img: "../../../public/picture2.jpg",
     },
     {
       name: "Faiyaz Awsaf",
@@ -32,6 +34,7 @@ export default function HomePage() {
       likes: 18,
       comments: 5,
       shares: 15,
+      img: "../../../public/picture3.jpg",
     },
     {
       name: "Mashrur Faiyaz",
@@ -41,6 +44,7 @@ export default function HomePage() {
       likes: 30,
       comments: 10,
       shares: 5,
+      img: "../../../public/picture4.jpg",
     },
     {
       name: "Nuren Fahmid",
@@ -50,6 +54,7 @@ export default function HomePage() {
       likes: 25,
       comments: 8,
       shares: 4,
+      img: "../../../public/cats/cat1.jpg",
     },
     {
       name: "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
@@ -107,7 +112,7 @@ export default function HomePage() {
       <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white">
         {/* LEFT SIDEBAR */}
         <aside className="flex flex-col w-[320px] max-w-xs p-4 text-gray-800 space-y-4 backdrop-blur-md bg-green-50/60 rounded-2xl shadow-xl mt-6 animate-fade-in-left ">
-          <h3 className="font-semibold text-xl border-b border-green-200 pb-2 mb-2 tracking-wide">
+          <h3 className="font-semibold text-xl border-b border-green-200 pb-2 ml-[10px] mb-2 tracking-wide">
             Menu
           </h3>
           <ul className="space-y-4 text-base">
@@ -208,9 +213,16 @@ export default function HomePage() {
 
               {/* Post Content */}
               <div className="px-4 pb-3">
-                <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
+                <div className="text-[15px] mb-[12px] text-gray-900 leading-relaxed whitespace-pre-line">
                   {post.content}
                 </div>
+                {post.img && (
+                  <img
+                    src={post.img}
+                    alt="Post"
+                    className="w-full h-auto rounded-lg mt-3 shadow-md"
+                  />
+                )}
               </div>
 
               {/* Reactions and Comments Count */}
@@ -230,15 +242,15 @@ export default function HomePage() {
 
               {/* Action Buttons */}
               <div className="flex justify-around  py-1">
-                <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[5px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
                   <span>👍</span>
                   <span>Like</span>
                 </button>
-                <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[5px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
                   <span>💬</span>
                   <span>Comment</span>
                 </button>
-                <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                <button className="flex items-center justify-center gap-2 py-2 px-4  hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
                   <span>↗️</span>
                   <span>Share</span>
                 </button>
