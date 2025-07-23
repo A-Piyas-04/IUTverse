@@ -5,6 +5,8 @@ export default function Profile() {
   const navigate = () => {};
   const [activeTab, setActiveTab] = useState("Posts");
 
+  const userName = "Sarah Ahmed"; // Example user name, can be dynamic
+
   const tabs = [
     "Posts",
     "About",
@@ -42,6 +44,17 @@ export default function Profile() {
     },
   ];
 
+  const profilePicture = (
+    <img
+      src="../../../public/profile_picture.jpg"
+      alt="Profile"
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        e.target.style.display = "none";
+      }}
+    />
+  );
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar />
@@ -74,14 +87,7 @@ export default function Profile() {
               {/* Profile Picture */}
               <div className="relative">
                 <div className="w-[168px] h-[168px] rounded-full border-4 border-white shadow-lg bg-gray-300 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
+                  {profilePicture}
                 </div>
                 {/* <button className="absolute bottom-2 right-2 w-9 h-9 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-sm transition-colors">
                   <span className="text-base">📷</span>
@@ -104,7 +110,7 @@ export default function Profile() {
             {/* Name and Info */}
             <div className="pb-4">
               <h1 className="text-[32px] font-bold text-gray-900 leading-tight mb-1">
-                Sarah Ahmed
+                {userName}
               </h1>
               <p className="text-gray-600 text-[15px] mb-2">127 friends</p>
 
@@ -159,7 +165,7 @@ export default function Profile() {
               </button>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                   <span className="text-gray-500">🎓</span>
                   <span>
                     Studies{" "}
@@ -167,37 +173,37 @@ export default function Profile() {
                     <strong>Islamic University of Technology (IUT)</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
                   <span className="text-gray-500">🎓</span>
                   <span>
                     Studied at <strong>Dhaka Residential Model College</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
                   <span className="text-gray-500">🏫</span>
                   <span>
                     Went to <strong>Viqarunnisa Noon School and College</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
                   <span className="text-gray-500">🏠</span>
                   <span>
                     Lives in <strong>Dhaka, Bangladesh</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
                   <span className="text-gray-500">📍</span>
                   <span>
                     From <strong>Sylhet, Bangladesh</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
                   <span className="text-gray-500">📱</span>
                   <span className="text-blue-600 cursor-pointer hover:underline">
                     sarah.ahmed.dev
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700">
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
                   <span className="text-gray-500">💼</span>
                   <span>
                     Works at <strong>Tech Solutions Ltd</strong> as{" "}
@@ -259,20 +265,16 @@ export default function Profile() {
             {/* Create Post */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
-                    alt="Profile"
-                    className="w-[40px] h-[40px] rounded-full object-cover"
-                  />
+                <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0">
+                  {profilePicture}
                 </div>
                 <input
                   type="text"
                   placeholder="What's on your mind?"
-                  className="flex-1 py-3 px-4 bg-gray-100 rounded-full text-gray-700 placeholder-gray-500 focus:outline-none text-sm"
+                  className="flex-1 py-3 px-4 bg-gray-100 rounded-[25px] text-gray-700 placeholder-gray-500 focus:outline-none text-sm"
                 />
               </div>
-              <div className="flex justify-around pt-3 border-t border-gray-200">
+              <div className="flex justify-around pt-3 mt-[12px] border-gray-200">
                 <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
                   <span className="text-red-500">🎥</span>
                   <span className="text-gray-600 text-sm font-medium">
@@ -299,7 +301,7 @@ export default function Profile() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-900">Posts</h3>
                 <div className="flex gap-2">
-                  <button className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors text-sm">
+                  <button className="flex items-center gap-2 px-3 py-2 mr-[12px] bg-gray-100 hover:bg-gray-200 rounded-md transition-colors text-sm">
                     <span>⚙️</span>
                     <span className="font-medium">Filters</span>
                   </button>
@@ -318,15 +320,13 @@ export default function Profile() {
                 className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px]"
               >
                 {/* Post Header */}
-                <div className="flex items-start gap-3 p-4 pb-3">
-                  <img
-                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                    alt="Profile"
-                    className="w-[35px] h-[40px] rounded-full mt-[30px]"
-                  />
+                <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
+                  <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0 mt-[30px]">
+                    {profilePicture}
+                  </div>
                   <div className="flex-1">
                     <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
-                      Sarah Ahmed
+                      {userName}
                     </h4>
                     <p className="text-[13px] text-gray-500 flex items-center gap-1 mt-[-20px]">
                       {post.date} • <span className="text-blue-500">🌐</span>
@@ -338,14 +338,14 @@ export default function Profile() {
                 </div>
 
                 {/* Post Content */}
-                <div className="px-4 pb-3">
+                <div className="px-4 pb-3 ml-[10px]">
                   <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
                     {post.content}
                   </div>
                 </div>
 
                 {/* Reactions and Comments Count */}
-                <div className="flex justify-between items-center px-4 py-2 text-[13px] text-gray-600">
+                <div className="flex justify-between items-center px-4 py-2 text-[18px] ml-[10px] text-gray-600">
                   <div className="flex items-center gap-1">
                     <div className="flex">
                       <span className="text-blue-500">👍</span>
@@ -354,7 +354,7 @@ export default function Profile() {
                     <span>{post.likes}</span>
                   </div>
                   <div className="flex gap-4">
-                    <span>{post.comments} comments</span>
+                    <span className="mr-[5px]">{post.comments} comments</span>
                     <span>{post.shares} shares</span>
                   </div>
                 </div>
