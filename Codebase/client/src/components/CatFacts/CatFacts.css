@@ -1,0 +1,144 @@
+/* CatFacts Advanced Styling */
+.cat-facts-outer {
+  position: relative;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 3rem 1rem;
+  z-index: 1;
+}
+
+.cat-fact-card {
+  background: rgba(255,255,255,0.85);
+  border-radius: 2.5rem;
+  box-shadow: 0 8px 32px 0 rgba(34,139,34,0.10), 0 1.5px 8px #388e3c11;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  min-width: 320px;
+  max-width: 600px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  border: 2.5px solid #b2dfdb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: popInCard 0.7s cubic-bezier(.77,0,.18,1);
+}
+
+.cat-fact-text {
+  font-size: 2.1rem;
+  font-family: 'Comic Sans MS', 'Baloo 2', 'Segoe UI', cursive, sans-serif;
+  color: #2e7d32;
+  font-weight: 800;
+  margin: 1.2rem 0;
+  text-shadow: 0 2px 12px #b2dfdb88, 0 1px 0 #fff;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  transition: color 0.3s;
+}
+
+.cat-emoji {
+  font-size: 2.5rem;
+  margin: 0 0.5rem;
+  animation: pawBounce 1.2s infinite alternate cubic-bezier(.77,0,.18,1);
+}
+
+/* Cat Paw Shapes */
+.cat-paw {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  box-shadow: 0 2px 12px #b2dfdb55, 0 1px 0 #fff;
+  z-index: 0;
+  opacity: 0.7;
+  animation: pawWiggle 2.5s infinite alternate;
+}
+.cat-paw-1 { top: 10px; left: 10vw; background: #ffe082; animation-delay: 0.2s; }
+.cat-paw-2 { top: 30px; right: 12vw; background: #b2dfdb; animation-delay: 0.7s; }
+.cat-paw-3 { bottom: 30px; left: 14vw; background: #ffccbc; animation-delay: 1.1s; }
+.cat-paw-4 { bottom: 10px; right: 10vw; background: #c8e6c9; animation-delay: 1.7s; }
+
+/* Paw Toes (pseudo-elements) */
+.cat-paw::before, .cat-paw::after {
+  content: '';
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+.cat-paw::before {
+  width: 22px; height: 22px;
+  top: 8px; left: 8px;
+  box-shadow: 28px 0 0 0 #fff, 14px 24px 0 0 #fff, 0 28px 0 0 #fff;
+}
+.cat-paw::after {
+  width: 12px; height: 12px;
+  top: 38px; left: 24px;
+  box-shadow: 0 0 0 0 #fff;
+}
+
+/* Animations */
+@keyframes popInCard {
+  from { opacity: 0; transform: scale(0.8) translateY(40px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pawBounce {
+  0% { transform: translateY(0) scale(1); }
+  60% { transform: translateY(-8px) scale(1.08); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes pawWiggle {
+  0% { transform: rotate(-8deg) scale(1); }
+  100% { transform: rotate(8deg) scale(1.08); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .cat-fact-card {
+    min-width: 0;
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+  }
+  .cat-fact-text {
+    font-size: 1.2rem;
+  }
+  .cat-paw {
+    width: 36px;
+    height: 36px;
+  }
+} 
+
+.cat-fact-btn {
+  margin-top: 2.2rem;
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+  font-size: 1.25rem;
+  font-family: 'Baloo 2', 'Comic Sans MS', cursive, sans-serif;
+  font-weight: 700;
+  padding: 0.85rem 2.2rem;
+  border: none;
+  border-radius: 2rem;
+  box-shadow: 0 2px 12px #b2dfdb55, 0 1px 0 #fff;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  letter-spacing: 0.02em;
+  outline: none;
+  position: relative;
+  z-index: 3;
+}
+.cat-fact-btn:hover {
+  background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+  transform: translateY(-2px) scale(1.04) rotate(-1deg);
+  box-shadow: 0 6px 24px #43e97b44, 0 2px 8px #38f9d722;
+}
+.cat-fact-btn:active {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px #43e97b22;
+} 
