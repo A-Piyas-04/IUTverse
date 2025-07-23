@@ -1,102 +1,21 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar.jsx";
+import Navbar from "../../components/Navbar/Navbar";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const navItems = ["Home", "CatCorner", "Wholesome", "Marketplace"];
 
-  const userPosts = [
-    {
-      name: "Irfan Shafee",
-      date: "November 28, 2024",
-      content:
-        "Just finished my Data Structures assignment! The feeling of getting all test cases to pass is unmatched 🎉",
-      likes: 23,
-      comments: 7,
-      shares: 2,
-    },
-    {
-      name: "Samiur Rahman Nafiz",
-      date: "November 25, 2024",
-      content:
-        "Campus cats are the real MVPs of IUT. Spotted three new kittens near the lake today 🐱❤️",
-      likes: 42,
-      comments: 12,
-      shares: 8,
-    },
-    {
-      name: "Faiyaz Awsaf",
-      date: "November 20, 2024",
-      content:
-        "Group study session for Calculus 2 finals. Mathematics building, Room 301. Everyone welcome!",
-      likes: 18,
-      comments: 5,
-      shares: 15,
-    },
-    {
-      name: "Mashrur Faiyaz",
-      date: "November 15, 2024",
-      content:
-        "Just got my hands on the new IUTVerse merch! Loving the design and quality. Can't wait to wear it around campus 😎",
-      likes: 30,
-      comments: 10,
-      shares: 5,
-    },
-    {
-      name: "Nuren Fahmid",
-      date: "November 10, 2024",
-      content:
-        "Exploring the new library section today. Found some amazing books on AI and Machine Learning 📚🤖",
-      likes: 25,
-      comments: 8,
-      shares: 4,
-    },
-    {
-      name: "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
-      date: "November 5, 2024",
-      content:
-        "Had a great time at the IUTVerse meetup yesterday! Met so many amazing people and shared ideas 💡",
-      likes: 40,
-      comments: 15,
-      shares: 10,
-    },
-    {
-      name: "Irfan Shafee",
-      date: "October 30, 2024",
-      content:
-        "Just submitted my final project for Web Development! Feeling accomplished and ready for the next challenge 🚀",
-      likes: 35,
-      comments: 9,
-      shares: 6,
-    },
-    {
-      name: "Samiur Rahman Nafiz",
-      date: "October 25, 2024",
-      content:
-        "Can't believe it's already been a month since the semester started. Time flies when you're having fun at IUT!",
-      likes: 20,
-      comments: 4,
-      shares: 3,
-    },
-    {
-      name: "Sadman Mubasshir Khan",
-      date: "October 20, 2024",
-      content:
-        "Just finished my first semester exams! Feeling relieved and ready to relax for a bit. Anyone up for a movie night?",
-      likes: 28,
-      comments: 6,
-      shares: 2,
-    },
-    {
-      name: "Ahnaf Shahriar Pias",
-      date: "October 15, 2024",
-      content:
-        "Had an amazing time at the IUTVerse cultural fest! The performances were top-notch and the food was delicious 🍔🎶",
-      likes: 50,
-      comments: 20,
-      shares: 10,
-    },
-  ];
+  const getPath = (label) => {
+    switch (label) {
+      case "Home":
+        return "/home";
+      case "CatCorner":
+        return "/catcorner";
+      default:
+        return `/${label.toLowerCase()}`;
+    }
+  };
 
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans overflow-hidden flex flex-col">

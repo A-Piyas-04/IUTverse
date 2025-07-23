@@ -1,0 +1,24 @@
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background: var(--green-light);
+    min-height: 100vh;
+    box-shadow: 2px 0 8px var(--shadow-light);
+  }
+  .sidebar-item {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .sidebar-item:hover {
+    background: var(--green-medium);
+  }
+  .sidebar-item.active {
+    background: var(--green-dark);
+  }
+  

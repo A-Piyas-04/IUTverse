@@ -1,0 +1,123 @@
+.catcorner {
+    display: flex;
+    height: 100vh;
+    background: linear-gradient(135deg, #e8f5e9 50%, #f1f8e9 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .catcorner-main {
+    flex: 1;
+    padding: 2rem 2.5vw;
+    overflow-y: auto;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    animation: slideIn 0.4s ease-out;
+  }
+  
+  .catcorner-header {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #2e7d32;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px 8px #c8e6c944;
+    padding-left: 0.2em;
+  }
+  
+  .catcorner-content {
+    width: 100%;
+  }
+  
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    margin-bottom: 2rem;
+  }
+  
+  .feed-card, .cat-profile-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px #a5d6a733, 0 2px 8px #388e3c11;
+    border: 1.5px solid #c8e6c9;
+    transition: box-shadow 0.25s, transform 0.2s;
+    cursor: pointer;
+  }
+  .feed-card:hover, .cat-profile-card:hover {
+    box-shadow: 0 8px 28px #66bb6a33, 0 3px 10px #388e3c22;
+    transform: translateY(-4px) scale(1.02);
+  }
+  
+  .cat-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+  
+  .cat-profile-card img {
+    height: 5.5rem;
+    width: 5.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #81c784;
+    box-shadow: 0 2px 8px #388e3c22;
+  }
+  
+  .cat-profile-card h3 {
+    color: #388e3c;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.2em;
+  }
+  
+  .cat-profile-card p {
+    color: #666;
+    font-size: 1rem;
+  }
+  
+  /* Animations */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.4s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0.2; }
+    to { opacity: 1; }
+  }
+  
+  /* Responsive tweaks */
+  @media (max-width: 900px) {
+    .catcorner-main {
+      padding: 1rem 0.5rem;
+    }
+    .feed-grid {
+      gap: 1rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .catcorner {
+      flex-direction: column;
+    }
+    .catcorner-main {
+      padding: 0.5rem 0.2rem;
+    }
+    .feed-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
