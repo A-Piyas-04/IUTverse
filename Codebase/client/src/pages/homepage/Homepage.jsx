@@ -1,58 +1,107 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar.jsx";
 
 export default function HomePage() {
   const navigate = useNavigate();
+
+  const userPosts = [
+    {
+      name: "Irfan Shafee",
+      date: "November 28, 2024",
+      content:
+        "Just finished my Data Structures assignment! The feeling of getting all test cases to pass is unmatched 🎉",
+      likes: 23,
+      comments: 7,
+      shares: 2,
+    },
+    {
+      name: "Samiur Rahman Nafiz",
+      date: "November 25, 2024",
+      content:
+        "Campus cats are the real MVPs of IUT. Spotted three new kittens near the lake today 🐱❤️",
+      likes: 42,
+      comments: 12,
+      shares: 8,
+    },
+    {
+      name: "Faiyaz Awsaf",
+      date: "November 20, 2024",
+      content:
+        "Group study session for Calculus 2 finals. Mathematics building, Room 301. Everyone welcome!",
+      likes: 18,
+      comments: 5,
+      shares: 15,
+    },
+    {
+      name: "Mashrur Faiyaz",
+      date: "November 15, 2024",
+      content:
+        "Just got my hands on the new IUTVerse merch! Loving the design and quality. Can't wait to wear it around campus 😎",
+      likes: 30,
+      comments: 10,
+      shares: 5,
+    },
+    {
+      name: "Nuren Fahmid",
+      date: "November 10, 2024",
+      content:
+        "Exploring the new library section today. Found some amazing books on AI and Machine Learning 📚🤖",
+      likes: 25,
+      comments: 8,
+      shares: 4,
+    },
+    {
+      name: "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
+      date: "November 5, 2024",
+      content:
+        "Had a great time at the IUTVerse meetup yesterday! Met so many amazing people and shared ideas 💡",
+      likes: 40,
+      comments: 15,
+      shares: 10,
+    },
+    {
+      name: "Irfan Shafee",
+      date: "October 30, 2024",
+      content:
+        "Just submitted my final project for Web Development! Feeling accomplished and ready for the next challenge 🚀",
+      likes: 35,
+      comments: 9,
+      shares: 6,
+    },
+    {
+      name: "Samiur Rahman Nafiz",
+      date: "October 25, 2024",
+      content:
+        "Can't believe it's already been a month since the semester started. Time flies when you're having fun at IUT!",
+      likes: 20,
+      comments: 4,
+      shares: 3,
+    },
+    {
+      name: "Sadman Mubasshir Khan",
+      date: "October 20, 2024",
+      content:
+        "Just finished my first semester exams! Feeling relieved and ready to relax for a bit. Anyone up for a movie night?",
+      likes: 28,
+      comments: 6,
+      shares: 2,
+    },
+    {
+      name: "Ahnaf Shahriar Pias",
+      date: "October 15, 2024",
+      content:
+        "Had an amazing time at the IUTVerse cultural fest! The performances were top-notch and the food was delicious 🍔🎶",
+      likes: 50,
+      comments: 20,
+      shares: 10,
+    },
+  ];
+
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans overflow-hidden flex flex-col">
       {/* TOP NAVBAR */}
-      <header className="flex items-center justify-between px-6 py-3 bg-white/90 backdrop-blur-lg shadow-2xl w-full border-b border-green-200 animate-fade-in-down">
-        {/* Logo + Search */}
-        <div className="flex items-center gap-4 w-1/3 min-w-[200px]">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            className="h-10 w-10 rounded-full shadow-lg border-2 border-green-500 hover:scale-105 transition-transform duration-200"
-          />
-          <input
-            type="text"
-            placeholder="Search IUTVerse..."
-            className="w-100 px-4 py-2 rounded-full bg-gray-100 text-sm text-gray-800 placeholder-gray-400 border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 transition shadow-inner hover:shadow-green-200/30"
-          />
-        </div>
-        {/* Middle nav */}
-        <nav className="flex gap-8 w-1/3 justify-between text-base font-medium text-green-700">
-          {["Home", "CatCorner", "Wholesome", "Marketplace"].map((label, i) => (
-            <a
-              key={i}
-              href={`/${
-                label.toLowerCase() === "home" ? "" : label.toLowerCase()
-              }`}
-              className="relative px-3 py-1 rounded-lg transition-all duration-200 hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm group"
-            >
-              <span className="group-hover:scale-105 group-hover:font-bold transition-transform duration-200">
-                {label}
-              </span>
-              <span className="absolute left-1/2 -bottom-1 w-0 h-0.5 bg-green-400 rounded-full group-hover:w-3/4 transition-all duration-300 group-hover:h-1"></span>
-            </a>
-          ))}
-        </nav>
-
-        {/* Right: Profile */}
-        <div className="flex items-center gap-4 w-1/3 justify-end min-w-[200px]">
-          <img
-            src="/profile.jpg"
-            alt="Profile"
-            className="h-10 w-10 rounded-full shadow border-2 border-green-500 hover:scale-105 transition-transform duration-200"
-          />
-          <button
-            className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 hover:scale-105 active:scale-95 transition-all duration-200 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            onClick={() => navigate("/login")}
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+      <Navbar />
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white">
@@ -64,9 +113,13 @@ export default function HomePage() {
           <ul className="space-y-4 text-base">
             {[
               {
-                label: "Nuren Fahmid",
+                label: <span className="font-bold">Nuren Fahmid</span>,
                 icon: (
-                  <div className="h-10 w-10 rounded-full bg-gray-300 shadow-md" />
+                  <img
+                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                    alt="Profile"
+                    className="h-[30px] w-[30px] mr-[12px] rounded-full shadow-md border-2 border-green-400 hover:scale-105 transition-transform duration-200"
+                  />
                 ),
               },
               { label: "Friends", icon: "👥", bg: "bg-blue-200" },
@@ -79,7 +132,7 @@ export default function HomePage() {
             ].map((item, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 hover:text-green-700 transition group cursor-pointer"
+                className="flex items-center gap-3 mb-[12px] hover:text-green-700 transition group cursor-pointer"
               >
                 {typeof item.icon === "string" ? (
                   <div
@@ -101,12 +154,12 @@ export default function HomePage() {
         {/* CENTER FEED */}
         <section className="flex-1 flex flex-col items-center px-2 py-6 overflow-y-auto min-h-0 max-w-[600px] mx-auto space-y-8">
           {/* Post box */}
-          <div className="w-full bg-green-50/80 backdrop-blur-md rounded-2xl shadow-2xl border border-green-100 p-4">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="w-full bg-[#f9fafb] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-4">
+            <div className="flex items-center gap-3 mb-[10px] mt-[8px]">
               <img
-                src="/profile.jpg"
+                src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
                 alt="Profile"
-                className="h-10 w-10 rounded-full shadow-md border-2 border-green-400 hover:scale-105 transition-transform duration-200"
+                className="h-[30px] w-[35px] mr-[12px] rounded-full shadow-md border-2 border-green-400 hover:scale-105 transition-transform duration-200"
               />
               <input
                 type="text"
@@ -114,7 +167,7 @@ export default function HomePage() {
                 className="w-full px-4 py-2 rounded-full bg-white text-gray-800 placeholder-gray-400 border border-green-100 focus:outline-none focus:ring-2 focus:ring-green-300 transition shadow-inner hover:shadow-green-200/30"
               />
             </div>
-            <div className="flex gap-6 text-sm font-semibold justify-around">
+            <div className="flex gap-6 text-sm mb-[10px] font-semibold justify-around">
               <button className="flex items-center gap-1 text-red-500 hover:underline active:scale-95 transition-transform duration-200">
                 📹 Live video
               </button>
@@ -128,135 +181,84 @@ export default function HomePage() {
           </div>
 
           {/* Posts */}
-          <div className="w-full space-y-8">
-            {[
-              {
-                title: "IUTVerse",
-                time: "just now",
-                text: "Welcome to the beta version of the IUT-exclusive social feed. Stay wholesome!",
-              },
-              {
-                title: "Cat of the Week 🐾",
-                time: "1h ago",
-                text: "Spotty seen chilling near Fountain Zone. 🐱",
-              },
-              {
-                title: "Marketplace: Casio FX-991EX",
-                time: "2h ago",
-                text: "Slightly used, great condition. Batch 20. DM to buy.",
-              },
-              {
-                title: "Lost & Found 📦",
-                time: "3h ago",
-                text: "Lost my water bottle near the FC Footpath. It's green with a Pokémon sticker.",
-              },
-              {
-                title: "IUT Rover Team",
-                time: "5h ago",
-                text: "We’re recruiting! If you’re passionate about robotics and space, apply now!",
-              },
-              {
-                title: "Wholesome Wall 💚",
-                time: "6h ago",
-                text: "Shoutout to the campus cleaners — thank you for keeping our home clean!",
-              },
-              {
-                title: "Event Update 🎤",
-                time: "8h ago",
-                text: "Drama Club’s open mic night happening this Thursday in the OAT. Everyone’s welcome!",
-              },
-              {
-                title: "Academic Help 🧠",
-                time: "9h ago",
-                text: "Can anyone help me understand Normalization in DBMS? Finals coming 😭",
-              },
-              {
-                title: "Confession 🤫",
-                time: "10h ago",
-                text: "Sometimes I sit near the lake just to breathe. IUT has its quiet magic.",
-              },
-              {
-                title: "Cats of IUT 😺",
-                time: "12h ago",
-                text: "Three new kittens near El Dorado! Please don’t scare them, they’re very shy.",
-              },
-              {
-                title: "Marketplace: Lab Coat 🧪",
-                time: "13h ago",
-                text: "Selling a clean white lab coat (size M). Used for only one semester.",
-              },
-              {
-                title: "Good Deed 🌱",
-                time: "15h ago",
-                text: "Left some extra food in front of Hall 1 tree. Feel free to take if hungry.",
-              },
-              {
-                title: "Study Pod: Calculus 2 📚",
-                time: "16h ago",
-                text: "Revision session tonight at 9PM. Join the pod and bring your doubts!",
-              },
-              {
-                title: "FiqhBot 🤖",
-                time: "17h ago",
-                text: "Q: Can I pray wearing socks? A: Yes, but ensure they’re clean and cover ankles.",
-              },
-              {
-                title: "Marketplace: USB Drive",
-                time: "19h ago",
-                text: "32GB USB for sale. Used, but works fine. Asking 200 taka.",
-              },
-              {
-                title: "Prayer Time Reminder 🕌",
-                time: "20h ago",
-                text: "Asr begins in 15 minutes. Make wudu and pray on time!",
-              },
-              {
-                title: "Thank You, Seniors 🙏",
-                time: "21h ago",
-                text: "To all the 4th years who helped juniors with notes and guidance, thank you!",
-              },
-              {
-                title: "Wholesome Post 🌸",
-                time: "22h ago",
-                text: "I saw someone leave chocolate in the library with a sticky note: “You got this!” ❤️",
-              },
-              {
-                title: "CSE Dept Meme 😂",
-                time: "Yesterday",
-                text: "Every time we touch the server: *'Why you do this?'* – CSE 21 meme gang",
-              },
-              {
-                title: "Found Item 🧢",
-                time: "Yesterday",
-                text: "Found a black cap near the prayer space in FC. DM with details to claim.",
-              },
-            ].map((post, i) => (
-              <div
-                key={i}
-                className="w-full bg-white/90 backdrop-blur-lg border border-gray-200 rounded-3xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300"
-              >
-                {/* User Info */}
-                <div className="flex items-start gap-3 mb-3">
-                  <img
-                    src="/profile.jpg"
-                    alt="User"
-                    className="h-10 w-10 rounded-full border-2 border-green-400 shadow-md"
-                  />
-                  <div>
-                    <div className="text-sm font-semibold text-gray-800">
-                      {post.title}
-                    </div>
-                    <div className="text-[11px] text-gray-500">{post.time}</div>
-                  </div>
+          {userPosts.map((post, index) => (
+            <div
+              key={index}
+              className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px] min-w-full"
+            >
+              {/* Post Header */}
+              <div className="flex items-start gap-3 p-4 pb-3">
+                <img
+                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                  alt="Profile"
+                  className="w-[35px] h-[40px] mr-[12px] rounded-full mt-[30px]"
+                />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
+                    {post.name}
+                  </h4>
+                  <p className="text-[13px] text-gray-500 flex items-center gap-1 mt-[-20px]">
+                    {post.date} • <span className="text-blue-500">🌐</span>
+                  </p>
                 </div>
+                <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
+                  <span className="text-xl">⋯</span>
+                </button>
+              </div>
 
-                {/* Post Text */}
-                <div className="text-gray-800 text-[15px] leading-relaxed">
-                  {post.text}
+              {/* Post Content */}
+              <div className="px-4 pb-3">
+                <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
+                  {post.content}
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Reactions and Comments Count */}
+              <div className="flex justify-between items-center px-4 py-2 text-[13px] text-gray-600">
+                <div className="flex items-center gap-1">
+                  <div className="flex">
+                    <span className="text-blue-500">👍</span>
+                    <span className="text-red-500">❤️</span>
+                  </div>
+                  <span>{post.likes}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span>{post.comments} comments</span>
+                  <span>{post.shares} shares</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-around  py-1">
+                <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                  <span>👍</span>
+                  <span>Like</span>
+                </button>
+                <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                  <span>💬</span>
+                  <span>Comment</span>
+                </button>
+                <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                  <span>↗️</span>
+                  <span>Share</span>
+                </button>
+              </div>
+
+              {/* Comment Input */}
+              <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
+                <img
+                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                  alt="Me"
+                  className="w-[30px] h-[30px] mr-[12px] rounded-full"
+                />
+                <input
+                  type="text"
+                  placeholder="Write a comment..."
+                  className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
+                />
+              </div>
+            </div>
+          ))}
         </section>
 
         {/* RIGHT SIDEBAR */}
@@ -264,7 +266,7 @@ export default function HomePage() {
           <h3 className="font-semibold text-xl border-b border-green-200 pb-2 mb-4 tracking-wide">
             Contacts
           </h3>
-          <ul className="space-y-4 text-base">
+          <ul className="space-y-4 text-base mb-[15px]">
             {[
               "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
               "Irfan Shafee",
@@ -274,12 +276,12 @@ export default function HomePage() {
             ].map((name, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 hover:text-green-700 transition group cursor-pointer"
+                className="flex items-center gap-3 hover:text-green-700 mb-[5px] transition group cursor-pointer"
               >
                 <img
-                  src="/profile.jpg"
+                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
                   alt="User"
-                  className="h-8 w-8 rounded-full bg-gray-300 border-2 border-green-400 shadow group-hover:scale-110 transition-transform duration-200"
+                  className="h-[30px] w-[30px] mr-[8px] rounded-full bg-gray-300 border-2 border-green-400 shadow group-hover:scale-110 transition-transform duration-200"
                 />
                 <span className="group-hover:font-semibold transition-all duration-200">
                   {name}
