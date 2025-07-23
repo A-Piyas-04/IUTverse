@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Navbar from '../../components/Navbar/Navbar.jsx';
 import Sidebar from "../../components/Sidebar/Sidebar";
 import FeedCard from '../../components/FeedCard/FeedCard';
 import CatProfiles from '../../components/CatProfiles/CatProfiles';
@@ -28,30 +29,33 @@ export default function CatCorner() {
   };
 
   return (
-    <div className="catcorner fade-in">
-      <Sidebar selectedView={view} setSelectedView={setView} />
-      <main className="catcorner-main">
-        <h1 className="catcorner-header">{renderHeader()}</h1>
-        <div className="catcorner-content">
-          {view === 'Post' && (
-            <div className="feed-grid">
-              {DUMMY_POSTS.map((p, i) => (
-                <div className="feed-card" key={i}>
-                  <FeedCard post={p} />
-                </div>
-              ))}
-            </div>
-          )}
-          {view === 'Cat Profiles' && (
-            <div className="feed-grid">
-              <div className="cat-profile-card"><CatProfiles /></div>
-            </div>
-          )}
-          {view === 'Release your Stress' && <CatBreak />}
-          {view === 'Random Cat Facts' && <CatFacts />}
-          {view === 'Cat Help Desk' && <CatQA />}
-        </div>
-      </main>
+    <div className="catcorner-page">
+      <Navbar />
+      <div className="catcorner fade-in">
+        <Sidebar selectedView={view} setSelectedView={setView} />
+        <main className="catcorner-main">
+          <h1 className="catcorner-header">{renderHeader()}</h1>
+          <div className="catcorner-content">
+            {view === 'Post' && (
+              <div className="feed-grid">
+                {DUMMY_POSTS.map((p, i) => (
+                  <div className="feed-card" key={i}>
+                    <FeedCard post={p} />
+                  </div>
+                ))}
+              </div>
+            )}
+            {view === 'Cat Profiles' && (
+              <div className="feed-grid">
+                <div className="cat-profile-card"><CatProfiles /></div>
+              </div>
+            )}
+            {view === 'Release your Stress' && <CatBreak />}
+            {view === 'Random Cat Facts' && <CatFacts />}
+            {view === 'Cat Help Desk' && <CatQA />}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

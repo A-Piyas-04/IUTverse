@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Navbar from "../../components/Navbar.jsx";
+import Navbar from "../../components/Navbar/Navbar.jsx";
 
 export default function Profile() {
   const navigate = () => {};
@@ -47,7 +47,7 @@ export default function Profile() {
       <Navbar />
 
       {/* Main Container - Facebook uses max-width with centered content */}
-      <div className="max-w-[1100px] mx-auto bg-white">
+      <div className="max-w-[1100px] mx-auto bg-white mt-[80px]">
         {/* Cover Photo Section */}
         <div className="relative">
           <div className="w-full h-[348px] bg-gradient-to-br from-green-400 via-green-500 to-green-600 overflow-hidden relative">
