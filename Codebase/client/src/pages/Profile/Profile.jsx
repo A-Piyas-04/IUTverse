@@ -104,7 +104,7 @@ export default function Profile() {
             {/* Name and Info */}
             <div className="pb-4">
               <h1 className="text-[32px] font-bold text-gray-900 leading-tight mb-1">
-                Sarah Ahmed
+                Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti
               </h1>
               <p className="text-gray-600 text-[15px] mb-2">127 friends</p>
 
