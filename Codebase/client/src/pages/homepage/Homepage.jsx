@@ -5,6 +5,8 @@ import Navbar from "../../components/Navbar/Navbar.jsx";
 export default function HomePage() {
   const navigate = useNavigate();
 
+  const userName = "Sarah Ahmed"; // Example user name, can be dynamic
+
   const userPosts = [
     {
       name: "Irfan Shafee",
@@ -118,7 +120,16 @@ export default function HomePage() {
           <ul className="space-y-4 text-base">
             {[
               {
-                label: <span className="font-bold">Nuren Fahmid</span>,
+                label: (
+                  <span
+                    className="font-bold"
+                    onClick={() => {
+                      navigate("/profile");
+                    }}
+                  >
+                    {userName}
+                  </span>
+                ),
                 icon: (
                   <img
                     src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"

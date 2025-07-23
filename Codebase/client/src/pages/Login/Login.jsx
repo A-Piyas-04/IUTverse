@@ -1,35 +1,28 @@
-import './login.css';
-import { useState } from 'react';
-import loginImage from '../../assets/login.png';
+import "./login.css";
+import { useState } from "react";
+import loginImage from "../../assets/login.png";
+import { useNavigate, NavLink } from "react-router-dom";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (email && password) {
       setLoggedIn(true);
+      navigate("/home");
     }
   };
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    setEmail('');
-    setPassword('');
+    setEmail("");
+    setPassword("");
     setLoggedIn(false);
   };
-
-  if (loggedIn) {
-    return (
-      <div className="auth-bg center">
-        <div className="auth-appname">Welcome, {email}</div>
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="auth-bg">
@@ -41,7 +34,10 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="auth-form-container" style={{ backgroundImage: `url(${loginImage})` }}>
+      <div
+        className="auth-form-container"
+        style={{ backgroundImage: `url(${loginImage})` }}
+      >
         <form className="auth-form" onSubmit={handleSubmit}>
           <h2>Login</h2>
           <label htmlFor="email">IUT Email</label>
