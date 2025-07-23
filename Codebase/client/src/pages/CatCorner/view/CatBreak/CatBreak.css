@@ -1,0 +1,66 @@
+.cat-break-container {
+    background-color: #f0fdf4;
+    padding: 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+    margin: 1.5rem 0;
+    transition: background-color 0.3s ease;
+  }
+  
+  .cat-break-container:hover {
+    background-color: #ecfdf5;
+  }
+  
+  .cat-break-heading {
+    font-size: 1.5rem;
+    color: #065f46;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .cat-break-subtext {
+    font-size: 0.95rem;
+    color: #065f46;
+    margin-bottom: 1rem;
+  }
+  
+  .cat-break-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .cat-break-video-wrapper {
+    position: relative;
+    padding-top: 56.25%;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    overflow: hidden;
+    background: #fff;
+    transition: transform 0.3s ease;
+  }
+  
+  .cat-break-video-wrapper:hover {
+    transform: scale(1.02);
+  }
+  
+  .cat-break-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  
+  .video-title {
+    font-size: 0.9rem;
+    color: #047857;
+    text-align: center;
+    padding-top: 0.5rem;
+    font-weight: 500;
+  }
+  
