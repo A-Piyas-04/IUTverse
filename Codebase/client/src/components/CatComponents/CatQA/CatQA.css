@@ -1,0 +1,147 @@
+/* CatQA.css */
+
+.catqa-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fdf6ec;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #f9c84622;
+}
+
+.catqa-title {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #f9a846;
+  font-size: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.catqa-ask-btn {
+  padding: 10px 22px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  background: #f9c846;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 20px;
+}
+.catqa-ask-btn:hover {
+  background: #f7b846;
+}
+
+.catqa-card {
+  background: #fffbe7;
+  border: 1px solid #f9c846;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px #f9c84633;
+}
+
+.catqa-question-card {
+  background: #f7f7fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px #e0e0e033;
+}
+
+.catqa-question-time {
+  color: #f9a846;
+  font-weight: bold;
+}
+
+.catqa-question-text {
+  font-size: 1.1rem;
+  margin-left: 6px;
+}
+
+.catqa-answers-label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  margin-left: 12px;
+}
+
+.catqa-no-answers {
+  color: #aaa;
+  font-size: 14px;
+  margin-left: 12px;
+}
+
+.catqa-answer-list {
+  padding-left: 30px;
+  margin: 0;
+}
+
+.catqa-answer-item {
+  margin-bottom: 4px;
+}
+
+.catqa-answer-time {
+  color: #888;
+  font-size: 13px;
+}
+
+.catqa-answer-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.catqa-answer-input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.catqa-add-btn {
+  padding: 6px 12px;
+  background: #f9c846;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.catqa-add-btn:hover {
+  background: #f7b846;
+}
+
+.catqa-submit-btn, .catqa-cancel-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+.catqa-submit-btn {
+  background: #f9c846;
+}
+.catqa-submit-btn:hover {
+  background: #f7b846;
+}
+.catqa-cancel-btn {
+  background: #eee;
+}
+.catqa-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.catqa-textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 12px;
+  resize: vertical;
+}
+
+.catqa-empty {
+  text-align: center;
+  color: #888;
+  margin-top: 40px;
+} 
