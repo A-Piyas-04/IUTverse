@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Navbar from '../../components/Navbar/Navbar.jsx';
-import Sidebar from "../../components/Sidebar/Sidebar";
+import Sidebar from "./view/Sidebar/Sidebar.jsx";
 import FeedCard from '../../components/CatComponents/FeedCard/FeedCard';
-import CatProfiles from '../../components/CatComponents/CatProfiles/CatProfiles';
-import CatBreak from '../../components/CatComponents/CatBreak/CatBreak';
-import CatFacts from '../../components/CatComponents/CatFacts/CatFacts';
-import CatQA from '../../components/CatComponents/CatQA/CatQA';
+import CatProfiles from './view/CatProfiles/CatProfiles.jsx';
+import CatBreak from './view/CatBreak/CatBreak.jsx';
+import CatFacts from './view/CatFacts/CatFacts.jsx';
+import CatQA from './view/CatQA/CatQA.jsx';
 import './CatCorner.css';
 
 
