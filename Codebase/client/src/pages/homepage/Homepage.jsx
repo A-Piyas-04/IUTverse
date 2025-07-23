@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar.jsx";
+import Navbar from "../../components/Navbar/Navbar.jsx";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white">
+      <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white mt-[80px]">
         {/* LEFT SIDEBAR */}
         <aside className="flex flex-col w-[320px] max-w-xs p-4 text-gray-800 space-y-4 backdrop-blur-md bg-green-50/60 rounded-2xl shadow-xl mt-6 animate-fade-in-left ">
           <h3 className="font-semibold text-xl border-b border-green-200 pb-2 mb-2 tracking-wide">
