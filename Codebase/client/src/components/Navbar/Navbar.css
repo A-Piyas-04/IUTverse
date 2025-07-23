@@ -1,0 +1,89 @@
+/* General Layout */
+.navbar {
+  width: 100%;
+  height: 80px; /* Increased height */
+  position: fixed;
+  top: 0;
+  z-index: 50;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.navbar-inner {
+  height: 100%;
+}
+
+/* Background Glass Effect */
+.glass-bg {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 0 0 16px 16px;
+}
+
+/* Fade-in */
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+  animation: fade-in-down 0.6s ease-out both;
+}
+
+/* Search Input */
+.search-input {
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  background-color: #f0fdf4;
+  border: 1px solid #a7f3d0;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 220px;
+  color: #065f46;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+.search-input:focus {
+  outline: none;
+  border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.3);
+}
+
+/* Nav Buttons */
+.nav-btn {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #065f46;
+  transition: all 0.25s ease-in-out;
+}
+.nav-btn:hover {
+  background-color: #d1fae5;
+  color: #065f46;
+  font-weight: 600;
+}
+.nav-btn.active {
+  background-color: #4ade80;
+  color: white;
+  box-shadow: 0 2px 6px rgba(34,197,94,0.3);
+  font-weight: 600;
+}
+
+/* Logout Button */
+.logout-btn {
+  background: linear-gradient(to right, #22c55e, #4ade80);
+  color: white;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.4);
+}
+.logout-btn:hover {
+  background: linear-gradient(to right, #16a34a, #22c55e);
+  transform: scale(1.05);
+}
+.logout-btn:active {
+  transform: scale(0.95);
+}
