@@ -6,6 +6,7 @@ import Profile from "./pages/Profile/Profile.jsx";
 import CatCorner from "./pages/CatCorner/CatCorner.jsx";
 import LostAndFound from "./pages/LostAndFound/LostAndFound.jsx";
 import JobsPage from "./pages/Jobs/JobsPage.jsx";
+import EventHub from "./pages/EventHub/EventHub.jsx";
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
 
         {/* New Jobs route */}
         <Route path="/jobs" element={<JobsPage />} />
+
+        {/* New Event Hub route */}
+        <Route path="/eventhub" element={<EventHub />} />
 
         {/* Catch‑all: redirect to home or login */}
         <Route path="*" element={<Navigate to="/home" replace />} />
