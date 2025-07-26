@@ -19,7 +19,7 @@ export default function CatCorner() {
 
   const renderHeader = () => {
     switch (view) {
-      case 'Post': return '🐾 Cat Feed';
+      case ' ': return '🐾 Cat Feed';
       case 'Cat Profiles': return '😺 Meet the Campus Cats';
       case 'Release your Stress': return '🧘‍♂️ Relax with Cats';
       case 'Random Cat Facts': return '📘 Random Cat Facts';

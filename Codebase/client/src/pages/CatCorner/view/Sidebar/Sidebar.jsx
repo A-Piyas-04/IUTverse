@@ -1,7 +1,7 @@
 import React from "react";
 
 const optionData = [
-  { label: "Post", emoji: "📝" },
+  { label: " ", emoji: "🐈🐈🐈🐈" },
   { label: "Cat Profiles", emoji: "🐾" },
   { label: "Release your Stress", emoji: "😺" },
   { label: "Random Cat Facts", emoji: "📚" },
