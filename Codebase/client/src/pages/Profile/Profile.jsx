@@ -69,9 +69,9 @@ export default function Profile() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100 overflow-y-auto">
+      {" "}
       <Navbar />
-
       {/* Main Container - Facebook uses max-width with centered content */}
       <div className="max-w-[1100px] mx-auto bg-white mt-[80px]">
         {/* Cover Photo Section */}
@@ -163,7 +163,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
       {/* Content Area - Matches Facebook's spacing */}
       <div className="max-w-[1100px] mx-auto mt-[10px]">
         <div className="flex gap-4 pt-4 px-4">

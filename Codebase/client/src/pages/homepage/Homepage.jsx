@@ -106,7 +106,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans overflow-hidden flex flex-col">
+    <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
       {/* TOP NAVBAR */}
       <Navbar />
 
