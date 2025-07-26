@@ -15,7 +15,7 @@ const DUMMY_POSTS = [
 ];
 
 export default function CatCorner() {
-  const [view, setView] = useState('Post');
+  const [view, setView] = useState('Posts');
 
   const renderHeader = () => {
     switch (view) {
