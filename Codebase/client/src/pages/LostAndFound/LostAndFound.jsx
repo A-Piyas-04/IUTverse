@@ -116,7 +116,7 @@ export default function LostAndFound() {
 
   return (
     <div className="lost-found-page">
-      <Navbar navItems={["Home", "CatCorner", "LostAndFound", "Wholesome", "Marketplace"]} />
+      <Navbar navItems={["Home", "CatCorner", "LostAndFound", "Jobs", "Wholesome", "Marketplace"]} />
       
       <main className="lost-found-main">
         {/* Header Section */}

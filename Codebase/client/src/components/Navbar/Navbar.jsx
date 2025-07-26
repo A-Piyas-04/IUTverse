@@ -15,6 +15,8 @@ export default function Navbar({
         return "/catcorner";
       case "LostAndFound":
         return "/lostandfound";
+      case "Jobs":
+        return "/jobs";
       default:
         return `/${label.toLowerCase()}`;
     }

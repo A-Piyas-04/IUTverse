@@ -3,6 +3,7 @@ import "./LostFoundCard.css";
 
 export default function LostFoundCard({ post, onResolve }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -24,26 +25,46 @@ export default function LostFoundCard({ post, onResolve }) {
           label: 'LOST', 
           color: '#ef4444',
           bgColor: '#fef2f2',
-          borderColor: '#fecaca'
+          borderColor: '#fecaca',
+          gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
         }
       : { 
           icon: '✅', 
           label: 'FOUND', 
           color: '#10b981',
           bgColor: '#f0fdf4',
-          borderColor: '#bbf7d0'
+          borderColor: '#bbf7d0',
+          gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
         };
   };
 
   const typeConfig = getTypeConfig(post.type);
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: post.title,
+        text: post.description,
+        url: window.location.href
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${post.title}\n${post.description}\nContact: ${post.contact}`);
+      alert('Post details copied to clipboard!');
+    }
+  };
 
   return (
     <div className={`lost-found-card ${post.status === 'resolved' ? 'resolved' : ''}`}>
       {/* Card Header */}
       <div className="card-header">
         <div className="type-badge" style={{ 
-          backgroundColor: typeConfig.bgColor,
-          color: typeConfig.color,
+          background: typeConfig.gradient,
+          color: 'white',
           borderColor: typeConfig.borderColor
         }}>
           <span className="type-icon">{typeConfig.icon}</span>
@@ -60,6 +81,18 @@ export default function LostFoundCard({ post, onResolve }) {
       {/* Card Image */}
       <div className="card-image">
         <img src={post.image} alt={post.title} />
+        <div className="image-overlay">
+          <div className="image-actions">
+            <button className="image-action-btn" onClick={handleLike}>
+              <span className={`action-icon ${isLiked ? 'liked' : ''}`}>
+                {isLiked ? '❤️' : '🤍'}
+              </span>
+            </button>
+            <button className="image-action-btn" onClick={handleShare}>
+              <span className="action-icon">📤</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Card Content */}
@@ -82,10 +115,10 @@ export default function LostFoundCard({ post, onResolve }) {
         </div>
 
         <p className="card-description">
-          {showDetails ? post.description : `${post.description.substring(0, 100)}...`}
+          {showDetails ? post.description : `${post.description.substring(0, 120)}...`}
         </p>
 
-        {post.description.length > 100 && (
+        {post.description.length > 120 && (
           <button 
             className="read-more-btn"
             onClick={() => setShowDetails(!showDetails)}
@@ -113,7 +146,7 @@ export default function LostFoundCard({ post, onResolve }) {
           </button>
         )}
         
-        <button className="share-btn">
+        <button className="share-btn" onClick={handleShare}>
           <span className="share-icon">📤</span>
           Share
         </button>
