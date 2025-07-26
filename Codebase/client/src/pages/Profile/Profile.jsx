@@ -4,8 +4,21 @@ import Navbar from "../../components/Navbar/Navbar.jsx";
 export default function Profile() {
   const navigate = () => {};
   const [activeTab, setActiveTab] = useState("Posts");
+  const [users, setUsers] = useState([]);
 
-  const userName = "Sarah Ahmed"; // Example user name, can be dynamic
+  const userName = "নুরেন ফাহমিদ";
+  const schoolName = "বাংলাদেশ এলিমেন্টারি স্কুল";
+  const collegeName = "চট্টগ্রাম ক্যান্টনমেন্ট পাবলিক কলেজ";
+  const currentDepartment = "কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং";
+  const currentProgram = "কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং";
+  const currentYear = "২য়";
+  const currentSemester = "২য়";
+  const studentId = "২২০০৪২১২১";
+  const hometown = "চট্টগ্রাম, বাংলাদেশ";
+  const currentResidence = "গাজীপুর, বাংলাদেশ";
+  const currentHall = "সাউথ হল অফ রেসিডেন্স";
+  const currentRoom = "রুম ৫০৩";
+  const currentBed = "এ";
 
   const tabs = [
     "Posts",
@@ -155,7 +168,7 @@ export default function Profile() {
       <div className="max-w-[1100px] mx-auto mt-[10px]">
         <div className="flex gap-4 pt-4 px-4">
           {/* Left Sidebar - Fixed width like Facebook */}
-          <div className="w-[360px] flex-shrink-0 mr-[10px]">
+          <div className="w-[500px] flex-shrink-0 mr-[10px]">
             {/* Intro Card */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Intro</h3>
@@ -166,6 +179,55 @@ export default function Profile() {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমি <strong> {userName}</strong>
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমি <strong> {schoolName}</strong>   থেকে এসএসসি পাশ করেছি
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  এবং <strong> {collegeName}</strong>   থেকে এইচএসসি পাশ করেছি
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  <strong>{currentDepartment}</strong>   ডিপার্টমেন্টে <br />
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  {<strong>{currentProgram}</strong>}   প্রোগ্রামে <br />
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  {<strong>{currentYear}</strong>}   বর্ষে <br />
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  {<strong>{currentSemester}</strong>}   সেমিস্টারে অধ্যয়নরত
+                  আছি।
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমার স্টুডেন্ট আইডি   <strong>{studentId}</strong>
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমার হোমটাউন   <strong>{hometown}</strong>
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমার বর্তমান বাসা   <strong>{currentResidence}</strong>
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির{" "}
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  <strong>{currentHall}</strong>   হল অফ রেসিডেন্স বিল্ডিং এ{" "}
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  {<strong>{currentRoom}</strong>}   রুমে{" "}
+                </div>
+                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                  {<strong>{currentBed}</strong>}   বেডে থাকি।
+                </div>
+                {/* <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                   <span className="text-gray-500">🎓</span>
                   <span>
                     Studies{" "}
@@ -209,7 +271,7 @@ export default function Profile() {
                     Works at <strong>Tech Solutions Ltd</strong> as{" "}
                     <strong>Software Developer</strong>
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
 
