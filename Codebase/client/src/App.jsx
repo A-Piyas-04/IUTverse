@@ -3,6 +3,7 @@ import LoginPage from "./pages/Login/Login.jsx";
 import Homepage from "./pages/homepage/Homepage.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import CatCorner from "./pages/CatCorner/CatCorner.jsx";
+import LostAndFound from "./pages/LostAndFound/LostAndFound.jsx";
 
 function App() {
   return (
@@ -12,13 +13,10 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route path="/login" element={<LoginPage />} />
-
         <Route path="/home" element={<Homepage />} />
-
         <Route path="/profile" element={<Profile />} />
-
-        {/* New CatCorner route */}
         <Route path="/catcorner" element={<CatCorner />} />
+        <Route path="/lostandfound" element={<LostAndFound />} />
 
         {/* Catch‑all: redirect to home or login */}
         <Route path="*" element={<Navigate to="/home" replace />} />

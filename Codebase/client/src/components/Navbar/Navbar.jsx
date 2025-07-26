@@ -3,7 +3,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar({
-  navItems = ["Home", "CatCorner", "Wholesome", "Marketplace"],
+  navItems = ["Home", "CatCorner", "LostAndFound", "Wholesome", "Marketplace"],
 }) {
   const navigate = useNavigate();
 
@@ -13,6 +13,8 @@ export default function Navbar({
         return "/home";
       case "CatCorner":
         return "/catcorner";
+      case "LostAndFound":
+        return "/lostandfound";
       default:
         return `/${label.toLowerCase()}`;
     }
