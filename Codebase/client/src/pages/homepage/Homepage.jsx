@@ -213,7 +213,7 @@ export default function HomePage() {
                   <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
                     {post.name}
                   </h4>
-                  <p className="text-[13px] text-gray-500 flex items-center gap-1 mt-[-20px]">
+                  <p className="text-[13px] text-gray-500 flex items-center gap-1">
                     {post.date} • <span className="text-blue-500">🌐</span>
                   </p>
                 </div>

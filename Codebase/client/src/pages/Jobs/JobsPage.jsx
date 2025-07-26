@@ -206,7 +206,7 @@ export default function JobsPage() {
         {/* CENTER FEED */}
         <section className="flex-1 flex flex-col items-center px-2 py-6 overflow-y-auto min-h-0 max-w-[700px] mx-auto space-y-8">
           {/* Page Header */}
-          <div className="w-full bg-[#C7FFFF] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-6">
+          <div className="w-full bg-[#141866] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                 📢 Job Board
@@ -226,10 +226,10 @@ export default function JobsPage() {
           {/* Job Post Form */}
           {showJobForm && (
             <div className="w-full bg-[#f9fafb] backdrop-blur-md rounded-[12px] mb-[12px] shadow-2xl p-6 animate-fade-in-up">
-              <h3 className="text-xl font-semibold mb-4 text-gray-900">
+              <h3 className="text-xl font-semibold ml-[15px] mb-4 text-gray-900">
                 Post a New Job
               </h3>
-              <form onSubmit={handleSubmitJob} className="space-y-4">
+              <form onSubmit={handleSubmitJob} className="space-y-4 p-[15px]">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Job Title *
@@ -362,7 +362,7 @@ export default function JobsPage() {
                     <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
                       {job.postedBy.name}
                     </h4>
-                    <p className="text-[13px] text-gray-500 flex items-center gap-1 mt-[-20px]">
+                    <p className="text-[13px] text-gray-500 flex items-center gap-1">
                       {job.date} • <span className="text-blue-500">🌐</span>
                     </p>
                   </div>

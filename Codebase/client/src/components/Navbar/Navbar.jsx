@@ -3,7 +3,14 @@ import { useNavigate, NavLink } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar({
-  navItems = ["Home", "CatCorner", "LostAndFound", "Jobs","Wholesome", "Marketplace"],
+  navItems = [
+    "Home",
+    "CatCorner",
+    "LostAndFound",
+    "Jobs",
+    "Wholesome",
+    "Marketplace",
+  ],
 }) {
   const navigate = useNavigate();
 
@@ -23,23 +30,23 @@ export default function Navbar({
   return (
     <header className="navbar glass-bg shadow-lg border-b border-green-300 animate-fade-in-down">
       <div className="navbar-inner flex items-center justify-between w-full max-w-7xl mx-auto px-6">
-        {/* Logo + Search */}
-        <div className="flex items-center gap-4 w-[350px] ">
+        {/* Left: Logo + Search */}
+        <div className="flex items-center gap-4 flex-shrink-0">
           <img
             src="../../../public/iut_logo.png"
             alt="IUTVerse Logo"
-            className="h-[50px] w-[40px] mr-[12px] ml-[12px] shadow-lg  hover:scale-105 transition-transform"
+            className="h-[50px] w-[40px] shadow-lg hover:scale-105 transition-transform cursor-pointer"
             onClick={() => navigate("/home")}
           />
           <input
             type="text"
             placeholder="Search IUTVerse..."
-            className="search-input w-[100px]"
+            className="search-input w-[200px]"
           />
         </div>
 
-        {/* Middle Navigation */}
-        <nav className="flex gap-8 w-1/3 ml-[180px] justify-center items-center">
+        {/* Middle: Navigation */}
+        <nav className="flex gap-8 justify-center items-center flex-grow">
           {navItems.map((label, i) => (
             <NavLink
               key={i}
@@ -54,17 +61,14 @@ export default function Navbar({
         </nav>
 
         {/* Right: Profile + Logout */}
-        <div className="flex items-center gap-4 justify-end w-1/3">
+        <div className="flex items-center gap-4 flex-shrink-0">
           <img
             src="../../../public/profile_picture.jpg"
             alt="User"
-            className="h-[45px] w-[45px] rounded-full mr-[12px] shadow hover:scale-105 transition"
+            className="h-[45px] w-[45px] rounded-full shadow hover:scale-105 transition cursor-pointer"
             onClick={() => navigate("/profile")}
           />
-          <button
-            className="logout-btn mr-[12px]"
-            onClick={() => navigate("/login")}
-          >
+          <button className="logout-btn" onClick={() => navigate("/login")}>
             Logout
           </button>
         </div>

@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 html,
 body,
@@ -44,7 +42,8 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+/* Remove default button styles to let Tailwind handle them */
+/* button:not([class*="bg-"]):not([class*="text-"]) {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -55,14 +54,14 @@ button {
   cursor: pointer;
   transition: border-color 0.25s, background 0.25s;
 }
-button:hover {
+button:not([class*="bg-"]):not([class*="text-"]):hover {
   border-color: #2e7d32;
   background: #c8e6c9;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
+} */
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -71,7 +70,7 @@ button:focus-visible {
   a:hover {
     color: #388e3c;
   }
-  button {
+  button:not([class*="bg-"]):not([class*="text-"]) {
     background-color: #e8f5e9;
   }
 }
