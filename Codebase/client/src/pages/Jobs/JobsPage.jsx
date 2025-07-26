@@ -4,6 +4,7 @@ import "./JobsPage.css";
 
 export default function JobsPage() {
   const [showJobForm, setShowJobForm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All Jobs");
   const [jobs, setJobs] = useState([
     {
       id: 1,
@@ -123,6 +124,12 @@ export default function JobsPage() {
     });
   };
 
+  // Filter jobs based on selected category
+  const filteredJobs =
+    selectedCategory === "All Jobs"
+      ? jobs
+      : jobs.filter((job) => job.type === selectedCategory);
+
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
       {/* TOP NAVBAR */}
@@ -139,7 +146,7 @@ export default function JobsPage() {
             {[
               { label: "All Jobs", icon: "📋", count: jobs.length },
               {
-                label: "Internships",
+                label: "Internship",
                 icon: "🎓",
                 count: jobs.filter((job) => job.type === "Internship").length,
               },
@@ -161,13 +168,30 @@ export default function JobsPage() {
             ].map((item, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between gap-3 mb-[12px] hover:text-green-700 transition group cursor-pointer"
+                onClick={() => setSelectedCategory(item.label)}
+                className={`flex items-center justify-between gap-3 mb-[12px] transition group cursor-pointer ${
+                  selectedCategory === item.label
+                    ? "text-green-700 font-semibold bg-green-100 px-3 py-2 rounded-lg"
+                    : "hover:text-green-700"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full flex items-center justify-center bg-green-200 shadow group-hover:scale-110 transition-transform duration-200">
+                  <div
+                    className={`h-8 w-8 rounded-full flex items-center justify-center shadow transition-transform duration-200 ${
+                      selectedCategory === item.label
+                        ? "bg-green-400 group-hover:scale-110"
+                        : "bg-green-200 group-hover:scale-110"
+                    }`}
+                  >
                     <span className="text-xl">{item.icon}</span>
                   </div>
-                  <span className="group-hover:font-semibold transition-all duration-200">
+                  <span
+                    className={`transition-all duration-200 ${
+                      selectedCategory === item.label
+                        ? "font-semibold"
+                        : "group-hover:font-semibold"
+                    }`}
+                  >
                     {item.label}
                   </span>
                 </div>
@@ -182,19 +206,19 @@ export default function JobsPage() {
         {/* CENTER FEED */}
         <section className="flex-1 flex flex-col items-center px-2 py-6 overflow-y-auto min-h-0 max-w-[700px] mx-auto space-y-8">
           {/* Page Header */}
-          <div className="w-full bg-[#f9fafb] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-6">
+          <div className="w-full bg-[#C7FFFF] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                 📢 Job Board
               </h1>
               <button
                 onClick={() => setShowJobForm(!showJobForm)}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="bg-green-500 hover:bg-green-600 mr-[5px] text-white px-6 py-2 rounded-full font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 {showJobForm ? "Cancel" : "Post a Job"}
               </button>
             </div>
-            <p className="text-gray-600">
+            <p className="text-white ml-[10px]">
               Find opportunities or post job listings for the IUT community
             </p>
           </div>
@@ -321,101 +345,112 @@ export default function JobsPage() {
           )}
 
           {/* Job Posts */}
-          {jobs.map((job) => (
-            <div
-              key={job.id}
-              className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px] min-w-full"
-            >
-              {/* Post Header */}
-              <div className="flex items-start gap-3 p-4 pb-3">
-                <img
-                  src={job.postedBy.profileImg}
-                  alt="Profile"
-                  className="w-[35px] h-[35px] mr-[12px] rounded-full mt-[30px]"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
-                    {job.postedBy.name}
-                  </h4>
-                  <p className="text-[13px] text-gray-500 flex items-center gap-1 mt-[-20px]">
-                    {job.date} • <span className="text-blue-500">🌐</span>
-                  </p>
-                </div>
-                <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
-                  <span className="text-xl">⋯</span>
-                </button>
-              </div>
-              {/* Post Content */}
-              <div className="px-4 pb-3">
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {job.title}
-                  </h3>
-                  <span
-                    className={`px-3 py-1 mr-[5px] rounded-[15px] text-xs font-medium border ${getTypeColor(
-                      job.type
-                    )}`}
-                  >
-                    {job.type}
-                  </span>
-                </div>
-
-                <div className="text-[15px] mb-[12px] text-gray-900 leading-relaxed whitespace-pre-line">
-                  {job.description}
-                </div>
-
-                {job.requirements && job.requirements.length > 0 && (
-                  <div className="mb-3">
-                    <h4 className="font-semibold text-sm text-gray-700 mb-2">
-                      Requirements:
+          {filteredJobs.length > 0 ? (
+            filteredJobs.map((job) => (
+              <div
+                key={job.id}
+                className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px] min-w-full"
+              >
+                {/* Post Header */}
+                <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
+                  <img
+                    src={job.postedBy.profileImg}
+                    alt="Profile"
+                    className="w-[35px] h-[35px] mr-[12px] rounded-full mt-[30px]"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
+                      {job.postedBy.name}
                     </h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                      {job.requirements.map((req, index) => (
-                        <li key={index}>{req}</li>
-                      ))}
-                    </ul>
+                    <p className="text-[13px] text-gray-500 flex items-center gap-1 mt-[-20px]">
+                      {job.date} • <span className="text-blue-500">🌐</span>
+                    </p>
                   </div>
-                )}
+                  <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                    <span className="text-xl">⋯</span>
+                  </button>
+                </div>
+                {/* Post Content */}
+                <div className="px-4 pb-3 ml-[10px]">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {job.title}
+                    </h3>
+                    <span
+                      className={`px-3 py-1 mr-[5px] rounded-[15px] text-xs font-medium border ${getTypeColor(
+                        job.type
+                      )}`}
+                    >
+                      {job.type}
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-4 text-sm text-gray-500 mt-3">
-                  {job.compensation && (
-                    <span className="flex items-center gap-1">
-                      💰 {job.compensation}
-                    </span>
+                  <div className="text-[15px] mb-[12px] text-gray-900 leading-relaxed whitespace-pre-line">
+                    {job.description}
+                  </div>
+
+                  {job.requirements && job.requirements.length > 0 && (
+                    <div className="mb-3">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">
+                        Requirements:
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                        {job.requirements.map((req, index) => (
+                          <li key={index}>{req}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                  {job.deadline && (
-                    <span className="flex items-center gap-1">
-                      📅 Deadline: {job.deadline}
-                    </span>
-                  )}
+
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-3">
+                    {job.compensation && (
+                      <span className="flex items-center gap-1">
+                        💰 {job.compensation}
+                      </span>
+                    )}
+                    {job.deadline && (
+                      <span className="flex items-center gap-1">
+                        📅 Deadline: {job.deadline}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* Action Buttons */}
+                <div className="flex justify-between py-1 mt-[12px] mb-[12px]">
+                  <button className="flex items-center justify-center gap-2 py-2 px-4 ml-[10px] mr-[35px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                    <span>💬</span>
+                    <span>Comment</span>
+                  </button>
+                  <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[10px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                    <span>📩</span>
+                    <span>Apply</span>
+                  </button>
+                </div>
+                {/* Comment Input */}
+                <div className="flex items-center gap-2 p-4 pt-2 ">
+                  <img
+                    src="/profile_picture.jpg"
+                    alt="Me"
+                    className="w-[30px] h-[30px] mr-[12px] rounded-full"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Write a comment..."
+                    className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
+                  />
                 </div>
               </div>
-              {/* Action Buttons */}
-              <div className="flex justify-between py-1 mt-[12px] mb-[12px]">
-                <button className="flex items-center justify-center gap-2 py-2 px-4 ml-[10px] mr-[35px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                  <span>💬</span>
-                  <span>Comment</span>
-                </button>
-                <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[10px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                  <span>📩</span>
-                  <span>Apply</span>
-                </button>
-              </div>
-              {/* Comment Input */}
-              <div className="flex items-center gap-2 p-4 pt-2 ">
-                <img
-                  src="/profile_picture.jpg"
-                  alt="Me"
-                  className="w-[30px] h-[30px] mr-[12px] rounded-full"
-                />
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
-                />
-              </div>
+            ))
+          ) : (
+            <div className="w-full bg-[#f9fafb] rounded-[12px] p-8 text-center">
+              <p className="text-gray-500 text-lg">
+                No jobs found for "{selectedCategory}"
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                Try selecting a different category or check back later
+              </p>
             </div>
-          ))}
+          )}
         </section>
 
         {/* RIGHT SIDEBAR */}

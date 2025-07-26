@@ -24,7 +24,7 @@ export default function Navbar({
     <header className="navbar glass-bg shadow-lg border-b border-green-300 animate-fade-in-down">
       <div className="navbar-inner flex items-center justify-between w-full max-w-7xl mx-auto px-6">
         {/* Logo + Search */}
-        <div className="flex items-center gap-4 w-1/3 min-w-[220px]">
+        <div className="flex items-center gap-4 w-[350px] ">
           <img
             src="../../../public/iut_logo.png"
             alt="IUTVerse Logo"
@@ -34,12 +34,12 @@ export default function Navbar({
           <input
             type="text"
             placeholder="Search IUTVerse..."
-            className="search-input"
+            className="search-input w-[100px]"
           />
         </div>
 
         {/* Middle Navigation */}
-        <nav className="flex gap-8 w-1/3 justify-center items-center">
+        <nav className="flex gap-8 w-1/3 ml-[180px] justify-center items-center">
           {navItems.map((label, i) => (
             <NavLink
               key={i}

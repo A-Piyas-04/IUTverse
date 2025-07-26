@@ -9,7 +9,6 @@ body,
   margin: 0;
   padding: 0;
   background: #fff;
-  color: #222;
 }
 
 :root {
@@ -17,7 +16,6 @@ body,
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
-  color: #222;
   background-color: #fff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -39,7 +37,6 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #fff;
-  color: #222;
 }
 
 h1 {
@@ -55,7 +52,6 @@ button {
   font-weight: 500;
   font-family: inherit;
   background-color: #e8f5e9;
-  color: #222;
   cursor: pointer;
   transition: border-color 0.25s, background 0.25s;
 }
@@ -70,7 +66,6 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
     background-color: #ffffff;
   }
   a:hover {

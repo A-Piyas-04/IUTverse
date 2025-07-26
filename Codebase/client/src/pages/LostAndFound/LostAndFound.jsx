@@ -10,67 +10,72 @@ const SAMPLE_POSTS = [
     id: 1,
     type: "lost",
     title: "Lost iPhone 14 Pro",
-    description: "Lost my iPhone 14 Pro near the cafeteria. It has a black case with a cat sticker. Please contact if found!",
+    description:
+      "Lost my iPhone 14 Pro near the cafeteria. It has a black case with a cat sticker. Please contact if found!",
     location: "Cafeteria Area",
     date: "2024-01-15",
     time: "14:30",
     contact: "alice@iut.edu",
     image: "https://placehold.co/400x300/4ade80/ffffff?text=iPhone",
     user: "Alice Johnson",
-    status: "active"
+    status: "active",
   },
   {
     id: 2,
     type: "found",
     title: "Found Blue Water Bottle",
-    description: "Found a blue water bottle with 'IUT' written on it near the library entrance. Contact me to claim it.",
+    description:
+      "Found a blue water bottle with 'IUT' written on it near the library entrance. Contact me to claim it.",
     location: "Library Entrance",
     date: "2024-01-15",
     time: "16:45",
     contact: "bob@iut.edu",
     image: "https://placehold.co/400x300/60a5fa/ffffff?text=Water+Bottle",
     user: "Bob Smith",
-    status: "active"
+    status: "active",
   },
   {
     id: 3,
     type: "lost",
     title: "Lost Student ID Card",
-    description: "Lost my student ID card somewhere between the admin building and parking lot. Name: Sarah Wilson.",
+    description:
+      "Lost my student ID card somewhere between the admin building and parking lot. Name: Sarah Wilson.",
     location: "Admin Building to Parking Lot",
     date: "2024-01-14",
     time: "09:15",
     contact: "sarah@iut.edu",
     image: "https://placehold.co/400x300/f59e0b/ffffff?text=ID+Card",
     user: "Sarah Wilson",
-    status: "active"
+    status: "active",
   },
   {
     id: 4,
     type: "found",
     title: "Found Black Backpack",
-    description: "Found a black backpack with laptop inside near the computer lab. Please provide details to claim.",
+    description:
+      "Found a black backpack with laptop inside near the computer lab. Please provide details to claim.",
     location: "Computer Lab",
     date: "2024-01-14",
     time: "18:20",
     contact: "mike@iut.edu",
     image: "https://placehold.co/400x300/6b7280/ffffff?text=Backpack",
     user: "Mike Davis",
-    status: "active"
+    status: "active",
   },
   {
     id: 5,
     type: "lost",
     title: "Lost AirPods Case",
-    description: "Lost my AirPods charging case (white) in the student lounge. Has a small scratch on the front.",
+    description:
+      "Lost my AirPods charging case (white) in the student lounge. Has a small scratch on the front.",
     location: "Student Lounge",
     date: "2024-01-13",
     time: "12:30",
     contact: "emma@iut.edu",
     image: "https://placehold.co/400x300/e5e7eb/000000?text=AirPods",
     user: "Emma Brown",
-    status: "active"
-  }
+    status: "active",
+  },
 ];
 
 export default function LostAndFound() {
@@ -81,11 +86,12 @@ export default function LostAndFound() {
 
   // Filter posts based on type and search term
   const filteredPosts = useMemo(() => {
-    return posts.filter(post => {
+    return posts.filter((post) => {
       const matchesFilter = filter === "all" || post.type === filter;
-      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           post.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch =
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.location.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [posts, filter, searchTerm]);
@@ -95,13 +101,13 @@ export default function LostAndFound() {
     const post = {
       ...newPost,
       id: Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toLocaleTimeString('en-US', { 
-        hour12: false, 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      date: new Date().toISOString().split("T")[0],
+      time: new Date().toLocaleTimeString("en-US", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
       }),
-      status: "active"
+      status: "active",
     };
     setPosts([post, ...posts]);
     setShowAddModal(false);
@@ -109,15 +115,17 @@ export default function LostAndFound() {
 
   // Mark post as resolved
   const handleResolvePost = (postId) => {
-    setPosts(posts.map(post => 
-      post.id === postId ? { ...post, status: "resolved" } : post
-    ));
+    setPosts(
+      posts.map((post) =>
+        post.id === postId ? { ...post, status: "resolved" } : post
+      )
+    );
   };
 
   return (
     <div className="lost-found-page">
-      <Navbar navItems={["Home", "CatCorner", "LostAndFound", "Wholesome", "Marketplace"]} />
-      
+      <Navbar />
+
       <main className="lost-found-main">
         {/* Header Section */}
         <div className="lost-found-header">
@@ -127,7 +135,9 @@ export default function LostAndFound() {
               Lost & Found
               <span className="icon">🔍</span>
             </h1>
-            <p className="subtitle">Help each other find lost items and return found belongings</p>
+            <p className="subtitle">
+              Help each other find lost items and return found belongings
+            </p>
           </div>
         </div>
 
@@ -152,20 +162,20 @@ export default function LostAndFound() {
             <div className="filter-container">
               <div className="filter-toggle">
                 <button
-                  className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-                  onClick={() => setFilter('all')}
+                  className={`filter-btn ${filter === "all" ? "active" : ""}`}
+                  onClick={() => setFilter("all")}
                 >
                   All Posts
                 </button>
                 <button
-                  className={`filter-btn ${filter === 'lost' ? 'active' : ''}`}
-                  onClick={() => setFilter('lost')}
+                  className={`filter-btn ${filter === "lost" ? "active" : ""}`}
+                  onClick={() => setFilter("lost")}
                 >
                   <span className="lost-icon">❌</span> Lost
                 </button>
                 <button
-                  className={`filter-btn ${filter === 'found' ? 'active' : ''}`}
-                  onClick={() => setFilter('found')}
+                  className={`filter-btn ${filter === "found" ? "active" : ""}`}
+                  onClick={() => setFilter("found")}
                 >
                   <span className="found-icon">✅</span> Found
                 </button>
@@ -175,7 +185,7 @@ export default function LostAndFound() {
 
           {/* Add Post Button */}
           <div className="add-post-container">
-            <button 
+            <button
               className="add-post-btn"
               onClick={() => setShowAddModal(true)}
             >
@@ -188,7 +198,8 @@ export default function LostAndFound() {
         {/* Results Info */}
         <div className="results-info">
           <span className="results-count">
-            {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''} found
+            {filteredPosts.length} post{filteredPosts.length !== 1 ? "s" : ""}{" "}
+            found
           </span>
         </div>
 
@@ -221,4 +232,4 @@ export default function LostAndFound() {
       )}
     </div>
   );
-} 
+}
