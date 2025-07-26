@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
+import "../../pages/Profile/Profile.css";
 
 export default function Profile() {
   const navigate = () => {};
