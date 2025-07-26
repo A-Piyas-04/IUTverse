@@ -1,24 +1,96 @@
 .sidebar {
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    background: var(--green-light);
-    min-height: 100vh;
-    box-shadow: 2px 0 8px var(--shadow-light);
-  }
-  .sidebar-item {
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #fff;
-    font-weight: 600;
-    transition: background 0.2s;
-  }
-  .sidebar-item:hover {
-    background: var(--green-medium);
-  }
-  .sidebar-item.active {
-    background: var(--green-dark);
-  }
-  
+  background-color: #f0fdf4;
+  width: 240px;
+  min-height: 100vh;
+  padding: 20px 18px;
+  box-shadow: 2px 0 6px rgba(34, 139, 34, 0.1);
+  border-right: 2px solid #bbf7d0;
+  display: flex;
+  flex-direction: column;
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.sidebar-header {
+  width: 100%;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1b5e20;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+}
+
+.sidebar-divider {
+  border: none;
+  border-top: 2px solid #bbf7d0;
+  margin-bottom: 18px;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-button {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background-color: transparent;
+  border: none;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: #2e7d32;
+  border-radius: 10px;
+  transition: background 0.2s ease, color 0.2s ease;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sidebar-button:hover {
+  background-color: rgba(187, 247, 208, 0.5);
+}
+
+.sidebar-button.active {
+  background-color: rgba(187, 247, 208, 0.9);
+  color: #1b5e20;
+  font-weight: 600;
+  border-left: 4px solid #43e97b;
+}
+
+.sidebar-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.sidebar-label {
+  white-space: nowrap;
+}
+
+.sidebar-footer {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 30px;
+}
+
+.sidebar-footer-divider {
+  border: none;
+  border-top: 1.5px dashed #bbf7d0;
+  margin: 20px 0 10px;
+}
+
+.sidebar-note {
+  text-align: center;
+  font-size: 12px;
+  color: #66bb6a;
+  letter-spacing: 0.04em;
+}

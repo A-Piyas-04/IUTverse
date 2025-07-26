@@ -8,7 +8,6 @@ import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
 import './CatCorner.css';
 
-
 const DUMMY_POSTS = [
   { image: '/assets/cat1.jpg', caption: 'Lazy afternoon', user: 'Alice', time: '2h ago', type: 'image' },
   { image: '/assets/cat2.jpg', caption: 'Playful kitten', user: 'Bob', time: '4h ago', type: 'image' },
@@ -19,7 +18,7 @@ export default function CatCorner() {
 
   const renderHeader = () => {
     switch (view) {
-      case ' ': return '🐾 Cat Feed';
+      case 'Posts': return '🐾 Cat Feed';
       case 'Cat Profiles': return '😺 Meet the Campus Cats';
       case 'Release your Stress': return '🧘‍♂️ Relax with Cats';
       case 'Random Cat Facts': return '📘 Random Cat Facts';
@@ -32,11 +31,14 @@ export default function CatCorner() {
     <div className="catcorner-page">
       <Navbar />
       <div className="catcorner fade-in">
+        {/* ✅ Sidebar already styled with CSS — no wrapper or inline styles needed */}
         <Sidebar selectedView={view} setSelectedView={setView} />
+
         <main className="catcorner-main">
           <h1 className="catcorner-header">{renderHeader()}</h1>
+
           <div className="catcorner-content">
-            {view === 'Post' && (
+            {view === 'Posts' && (
               <div className="feed-grid">
                 {DUMMY_POSTS.map((p, i) => (
                   <div className="feed-card" key={i}>
@@ -45,11 +47,11 @@ export default function CatCorner() {
                 ))}
               </div>
             )}
+
             {view === 'Cat Profiles' && (
-              <div className="feed-grid">
-                <div className="cat-profile-card"><CatProfiles /></div>
-              </div>
+              <CatProfiles /> // ✅ New grid layout + softer animations are handled inside the component
             )}
+
             {view === 'Release your Stress' && <CatBreak />}
             {view === 'Random Cat Facts' && <CatFacts />}
             {view === 'Cat Help Desk' && <CatQA />}
