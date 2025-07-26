@@ -3,7 +3,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar({
-  navItems = ["Home", "CatCorner", "LostAndFound", "Wholesome", "Marketplace"],
+  navItems = ["Home", "CatCorner", "LostAndFound", "Jobs","Wholesome", "Marketplace"],
 }) {
   const navigate = useNavigate();
 
