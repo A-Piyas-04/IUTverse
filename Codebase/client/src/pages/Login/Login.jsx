@@ -1,11 +1,11 @@
 import './login.css';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import loginImage from '../../assets/login.png';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -18,46 +18,16 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateIUTEmail(email)) {
-      setMessage('Please enter a valid IUT email address');
-      return;
-    }
-
-    setLoading(true);
-    setMessage('');
-
-    try {
-      const response = await fetch('http://localhost:3000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setLoggedIn(true);
-        // Store user info in localStorage or context
-        localStorage.setItem('user', JSON.stringify({ email }));
-        // Redirect to home page
-        navigate('/home');
-      } else {
-        setMessage(data.message || 'Login failed. Please check your credentials.');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      setMessage('Network error. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
+    if (email && password) {
+      setLoggedIn(true);
     }
   };
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    setEmail('');
-    setPassword('');
+    setEmail("");
+    setPassword("");
     setLoggedIn(false);
     setMessage('');
     localStorage.removeItem('user');
@@ -66,7 +36,7 @@ export default function LoginPage() {
   if (loggedIn) {
     return (
       <div className="auth-bg center">
-        <div className="auth-appname">Welcome to IUTVerse, {email.split('@')[0]}!</div>
+        <div className="auth-appname">Welcome, {email}</div>
         <button className="logout-btn" onClick={handleLogout}>
           Logout
         </button>
@@ -84,7 +54,10 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="auth-form-container" style={{ backgroundImage: `url(${loginImage})` }}>
+      <div
+        className="auth-form-container"
+        style={{ backgroundImage: `url(${loginImage})` }}
+      >
         <form className="auth-form" onSubmit={handleSubmit}>
           <h2>Login</h2>
           <label htmlFor="email">IUT Email</label>
