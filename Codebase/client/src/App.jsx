@@ -15,6 +15,7 @@ import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
 
+
 function App() {
   return (
     <Router>

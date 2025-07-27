@@ -6,7 +6,7 @@ const navigationOptions = [
   { label: "Cat Profiles", emoji: "🐾" },
   { label: "Release your Stress", emoji: "😺" },
   { label: "Random Cat Facts", emoji: "📚" },
-  // { label: "Cat Jumps!!", emoji: "🎮" },
+  // { label: "Cat Game", emoji: "🎮" },
   { label: "Cat Help Desk", emoji: "🆘" },
 ];
 

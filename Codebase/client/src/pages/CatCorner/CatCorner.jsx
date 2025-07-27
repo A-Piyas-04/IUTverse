@@ -6,7 +6,7 @@ import CatProfiles from './view/CatProfiles/CatProfiles.jsx';
 import CatBreak from './view/CatBreak/CatBreak.jsx';
 import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
-import CatJumps from './view/CatJumps/CatJumps.jsx';
+// import CatGame from './view/CatGame/CatGame.jsx';
 import './CatCorner.css';
 
 const DUMMY_POSTS = [
@@ -23,7 +23,7 @@ export default function CatCorner() {
       case 'Cat Profiles': return '😺 Meet the Campus Cats';
       case 'Release your Stress': return '🧘‍♂️ Relax with Cats';
       case 'Random Cat Facts': return '📘 Random Cat Facts';
-      // case 'Cat Jumps!!': return '🎮 Cat Jumps';
+      // case 'Cat Game': return '🎮 Cat Game';
       case 'Cat Help Desk': return '❓ Cat Help Desk';
       default: return '';
     }
@@ -56,7 +56,7 @@ export default function CatCorner() {
 
             {view === 'Release your Stress' && <CatBreak />}
             {view === 'Random Cat Facts' && <CatFacts />}
-            {/* {view === 'Cat Jumps!!' && <CatJumps />} */}
+            {/* {view === 'Cat Game' && <CatGame />} */}
             {view === 'Cat Help Desk' && <CatQA />}
           </div>
         </main>
