@@ -2,10 +2,58 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import PostModal from "../../components/PostModal.jsx";
+import { authUtils } from "../../utils/auth.js";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [userName] = useState("John Doe"); // Add default username
+  const [selectedPost, setSelectedPost] = useState(null);
+  
+  // Sample posts data - this should eventually come from API
+  const userPosts = [
+    {
+      id: 1,
+      name: "John Doe",
+      date: "2 hours ago",
+      content: "Just finished working on the new IUTverse features! Excited to share them with everyone.",
+      likes: 15,
+      shares: 3,
+      img: null
+    },
+    {
+      id: 2,
+      name: "Jane Smith", 
+      date: "5 hours ago",
+      content: "Beautiful sunset from IUT campus today 🌅\n\nThe lake looks amazing this time of year!",
+      likes: 28,
+      shares: 7,
+      img: "/picture1.jpg"
+    },
+    {
+      id: 3,
+      name: "Alex Johnson",
+      date: "1 day ago", 
+      content: "Study group for Computer Networks tomorrow at 3 PM in the library. All CSE students welcome!",
+      likes: 12,
+      shares: 15,
+      img: null
+    }
+  ];
+
+  // Handle adding comments to posts
+  const handleAddComment = useCallback((postId, comment) => {
+    console.log(`Adding comment to post ${postId}:`, comment);
+    // This would normally update the post with the new comment
+  }, []);
+
+  // Handle logout
+  const handleLogout = () => {
+    // Clear authentication data
+    authUtils.clearAuthData();
+    
+    // Navigate to login page
+    navigate("/login");
+  };
   
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
@@ -51,7 +99,7 @@ export default function HomePage() {
           />
           <button
             className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 hover:scale-105 active:scale-95 transition-all duration-200 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
           >
             Logout
           </button>

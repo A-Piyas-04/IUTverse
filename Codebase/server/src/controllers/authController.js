@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { validateIUTEmail, generatePassword } = require('../utils/authUtils');
 const { sendPasswordEmail } = require('../services/emailService');
 const config = require('../config/config');
+const userStorage = require('../utils/userStorage');
 
 // Helper function to generate JWT token
 const generateToken = (user) => {
@@ -15,9 +16,6 @@ const generateToken = (user) => {
   );
 };
 
-// In-memory user storage (in production, use a database)
-const users = new Map();
-
 const signup = async (req, res) => {
   try {
     const { email } = req.body;
@@ -30,14 +28,14 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid IUT email address' });
     }
 
-    if (users.has(email)) {
+    if (userStorage.has(email)) {
       return res.status(409).json({ message: 'User already exists. Please login instead.' });
     }
 
     const password = generatePassword(email);
     
-    // Store user in memory (in production, store in database)
-    users.set(email, {
+    // Store user with persistent storage
+    userStorage.set(email, {
       email,
       password,
       createdAt: new Date()
@@ -79,7 +77,7 @@ const login = (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid IUT email address' });
     }
 
-    const user = users.get(email);
+    const user = userStorage.get(email);
     if (!user) {
       return res.status(401).json({ message: 'User not found. Please sign up first.' });
     }
@@ -107,7 +105,7 @@ const login = (req, res) => {
 };
 
 const getAllUsers = (req, res) => {
-  const userList = Array.from(users.values()).map(user => ({
+  const userList = Array.from(userStorage.values()).map(user => ({
     email: user.email,
     createdAt: user.createdAt
   }));
