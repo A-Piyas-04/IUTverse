@@ -1,5 +1,19 @@
+const jwt = require('jsonwebtoken');
 const { validateIUTEmail, generatePassword } = require('../utils/authUtils');
 const { sendPasswordEmail } = require('../services/emailService');
+const config = require('../config/config');
+
+// Helper function to generate JWT token
+const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      email: user.email,
+      userId: user.email // Using email as userId for now
+    },
+    config.jwtSecret,
+    { expiresIn: '24h' }
+  );
+};
 
 // In-memory user storage (in production, use a database)
 const users = new Map();
@@ -29,11 +43,17 @@ const signup = async (req, res) => {
       createdAt: new Date()
     });
 
-    // For development, we'll just log the password instead of sending email
+    // For development, we'll log the password to console
     console.log(`Password for ${email}: ${password}`);
     
-    // In production, uncomment the following line to send actual email:
-    // await sendPasswordEmail(email, password);
+    // Send password via email
+    try {
+      await sendPasswordEmail(email, password);
+      console.log(`Password email sent successfully to ${email}`);
+    } catch (emailError) {
+      console.error('Failed to send password email:', emailError);
+      // Don't fail the signup if email fails, but log the error
+    }
     
     res.status(201).json({ 
       message: 'Account created successfully! Password sent to your email.',
@@ -68,8 +88,12 @@ const login = (req, res) => {
       return res.status(401).json({ message: 'Invalid password. Please check your email for the correct password.' });
     }
 
+    // Generate JWT token
+    const token = generateToken(user);
+
     res.status(200).json({ 
       message: 'Login successful',
+      token,
       user: {
         email: user.email,
         createdAt: user.createdAt

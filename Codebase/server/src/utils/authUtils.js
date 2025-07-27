@@ -7,8 +7,12 @@ const validateIUTEmail = (email) => {
 // Helper function to generate password
 const generatePassword = (email) => {
   const username = email.split('@')[0];
+  
+  // If username is less than 6 characters, pad with numbers or use a different logic
   if (username.length < 6) {
-    throw new Error('Username too short');
+    const randomNum1 = Math.floor(Math.random() * 100);
+    const randomNum2 = Math.floor(Math.random() * 100);
+    return `${username}${randomNum1}${randomNum2}`;
   }
   
   const firstThree = username.substring(0, 3);

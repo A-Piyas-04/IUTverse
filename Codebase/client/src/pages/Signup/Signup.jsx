@@ -2,6 +2,7 @@ import './signup.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import loginImage from '../../assets/login.png';
+import ApiService from '../../services/api.js';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -40,29 +41,16 @@ export default function SignupPage() {
     setMessage('');
 
     try {
-      const password = generatePassword(email);
-      
-      // Send signup request to backend
-      const response = await fetch('http://localhost:3000/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email,
-          password 
-        }),
-      });
+      // Send signup request to backend using API service (only email, backend generates password)
+      const result = await ApiService.signup(email);
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (result.success) {
         setMessage('Password sent to your email! Redirecting to login...');
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
-        setMessage(data.message || 'Failed to send password. Please try again.');
+        setMessage(result.error || 'Failed to send password. Please try again.');
       }
     } catch (error) {
       console.error('Signup error:', error);

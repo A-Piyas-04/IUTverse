@@ -15,32 +15,72 @@ import JobsPage from "./pages/Jobs/JobsPage.jsx";
 import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { authUtils } from "./utils/auth.js";
 
 
 function App() {
+  const isAuthenticated = authUtils.isAuthenticated();
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/catcorner" element={<CatCorner />} />
-        <Route path="/lostandfound" element={<LostAndFound />} />
+        {/* Public routes */}
+        <Route 
+          path="/login" 
+          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} 
+        />
+        <Route 
+          path="/signup" 
+          element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} 
+        />
+        
+        {/* Protected routes */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Homepage />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/catcorner" element={
+          <ProtectedRoute>
+            <CatCorner />
+          </ProtectedRoute>
+        } />
+        <Route path="/lostandfound" element={
+          <ProtectedRoute>
+            <LostAndFound />
+          </ProtectedRoute>
+        } />
+        <Route path="/jobs" element={
+          <ProtectedRoute>
+            <JobsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/confessions" element={
+          <ProtectedRoute>
+            <Confessions />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/moderation" element={
+          <ProtectedRoute>
+            <Moderation />
+          </ProtectedRoute>
+        } />
+        <Route path="/eventhub" element={
+          <ProtectedRoute>
+            <EventHub />
+          </ProtectedRoute>
+        } />
 
-        {/* New Jobs route */}
-        <Route path="/jobs" element={<JobsPage />} />
-
-        {/* Confessions route */}
-        <Route path="/confessions" element={<Confessions />} />
-
-        {/* Admin routes */}
-        <Route path="/admin/moderation" element={<Moderation />} />
-        {/* New Event Hub route */}
-        <Route path="/eventhub" element={<EventHub />} />
-
-        {/* Catch‑all: redirect to home or login */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch‑all: redirect based on authentication */}
+        <Route path="*" element={
+          <Navigate to={isAuthenticated ? "/" : "/login"} replace />
+        } />
       </Routes>
     </Router>
   );
