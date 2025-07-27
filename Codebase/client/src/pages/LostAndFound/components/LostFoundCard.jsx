@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import "./LostFoundCard.css";
 
-export default function LostFoundCard({ post, onResolve }) {
+export default function LostFoundCard({ post, onResolve, className = "" }) {
   const [showDetails, setShowDetails] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -40,10 +39,6 @@ export default function LostFoundCard({ post, onResolve }) {
 
   const typeConfig = getTypeConfig(post.type);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-  };
-
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -59,7 +54,7 @@ export default function LostFoundCard({ post, onResolve }) {
   };
 
   return (
-    <div className={`lost-found-card ${post.status === 'resolved' ? 'resolved' : ''}`}>
+    <div className={`lost-found-card ${post.status === 'resolved' ? 'resolved' : ''} ${className}`}>
       {/* Card Header */}
       <div className="card-header">
         <div className="type-badge" style={{ 
@@ -83,11 +78,6 @@ export default function LostFoundCard({ post, onResolve }) {
         <img src={post.image} alt={post.title} />
         <div className="image-overlay">
           <div className="image-actions">
-            <button className="image-action-btn" onClick={handleLike}>
-              <span className={`action-icon ${isLiked ? 'liked' : ''}`}>
-                {isLiked ? '❤️' : '🤍'}
-              </span>
-            </button>
             <button className="image-action-btn" onClick={handleShare}>
               <span className="action-icon">📤</span>
             </button>
@@ -153,4 +143,4 @@ export default function LostFoundCard({ post, onResolve }) {
       </div>
     </div>
   );
-} 
+}

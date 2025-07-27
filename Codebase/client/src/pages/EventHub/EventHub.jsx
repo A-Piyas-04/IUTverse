@@ -165,7 +165,7 @@ export default function EventHub() {
       
       <main className="event-hub-main">
         {/* Header Section */}
-        <div className="event-hub-header">
+        <div className="event-hub-header animate-slide-in-top">
           <div className="header-content">
             <h1 className="main-title">
               <span className="icon">🎉</span>
@@ -178,7 +178,7 @@ export default function EventHub() {
 
         <div className="event-hub-content">
           {/* Filter Sidebar */}
-          <div className="filter-sidebar">
+          <div className="filter-sidebar animate-slide-in-left">
             <div className="filter-section">
               <h3 className="filter-title">Event Type</h3>
               <div className="filter-options">
@@ -251,7 +251,7 @@ export default function EventHub() {
 
           {/* Events Grid */}
           <div className="events-section">
-            <div className="events-header">
+            <div className="events-header animate-slide-in-right">
               <h2 className="events-title">
                 {filteredEvents.length} Event{filteredEvents.length !== 1 ? 's' : ''} Found
               </h2>
@@ -264,7 +264,7 @@ export default function EventHub() {
 
             <div className="events-grid">
               {filteredEvents.length === 0 ? (
-                <div className="no-events">
+                <div className="no-events animate-fade-in-scale">
                   <div className="no-events-icon">🎭</div>
                   <h3>No events found</h3>
                   <p>Try adjusting your filters or check back later for new events</p>
@@ -275,6 +275,7 @@ export default function EventHub() {
                     key={event.id}
                     event={event}
                     onToggleWishlist={toggleWishlist}
+                    className="animate-stagger"
                   />
                 ))
               )}

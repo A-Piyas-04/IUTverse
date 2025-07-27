@@ -128,7 +128,7 @@ export default function LostAndFound() {
       
       <main className="lost-found-main">
         {/* Header Section */}
-        <div className="lost-found-header">
+        <div className="lost-found-header animate-slide-in-top">
           <div className="header-content">
             <h1 className="main-title">
               <span className="icon">🔍</span>
@@ -142,7 +142,7 @@ export default function LostAndFound() {
         </div>
 
         {/* Controls Section */}
-        <div className="controls-section">
+        <div className="controls-section animate-slide-in-bottom">
           <div className="search-filter-container">
             {/* Search */}
             <div className="search-container">
@@ -196,7 +196,7 @@ export default function LostAndFound() {
         </div>
 
         {/* Results Info */}
-        <div className="results-info">
+        <div className="results-info animate-slide-in-left">
           <span className="results-count">
             {filteredPosts.length} post{filteredPosts.length !== 1 ? "s" : ""}{" "}
             found
@@ -206,7 +206,7 @@ export default function LostAndFound() {
         {/* Posts Grid */}
         <div className="posts-grid">
           {filteredPosts.length === 0 ? (
-            <div className="no-posts">
+            <div className="no-posts animate-fade-in-scale">
               <div className="no-posts-icon">🔍</div>
               <h3>No posts found</h3>
               <p>Try adjusting your search or filter criteria</p>
@@ -217,6 +217,7 @@ export default function LostAndFound() {
                 key={post.id}
                 post={post}
                 onResolve={handleResolvePost}
+                className="animate-stagger"
               />
             ))
           )}

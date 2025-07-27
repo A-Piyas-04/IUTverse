@@ -1,7 +1,7 @@
 import React from "react";
 import "./EventCard.css";
 
-export default function EventCard({ event, onToggleWishlist }) {
+export default function EventCard({ event, onToggleWishlist, className = "" }) {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -66,8 +66,18 @@ export default function EventCard({ event, onToggleWishlist }) {
     }
   };
 
+  const handleRegister = () => {
+    // In a real app, this would open a registration modal or redirect to registration page
+    alert(`Registration for "${event.title}" will be implemented soon!`);
+  };
+
+  const handleViewDetails = () => {
+    // In a real app, this would open a detailed view modal or navigate to event details page
+    alert(`Detailed view for "${event.title}" will be implemented soon!`);
+  };
+
   return (
-    <div className="event-card">
+    <div className={`event-card ${className}`}>
       {/* Event Image */}
       <div className="event-image">
         <img src={event.image} alt={event.title} />
@@ -141,11 +151,11 @@ export default function EventCard({ event, onToggleWishlist }) {
 
         {/* Event Actions */}
         <div className="event-actions-bottom">
-          <button className="register-btn">
+          <button className="register-btn" onClick={handleRegister}>
             <span className="register-icon">📝</span>
             Register Now
           </button>
-          <button className="details-btn">
+          <button className="details-btn" onClick={handleViewDetails}>
             <span className="details-icon">ℹ️</span>
             View Details
           </button>

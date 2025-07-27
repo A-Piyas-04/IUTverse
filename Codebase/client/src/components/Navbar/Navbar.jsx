@@ -8,7 +8,7 @@ export default function Navbar({
     "CatCorner",
     "LostAndFound",
     "Jobs",
-    "Wholesome",
+    "EventHub",
     "Confessions",
   ],
 }) {
@@ -26,6 +26,8 @@ export default function Navbar({
         return "/confessions";
       case "Jobs":
         return "/jobs";
+      case "EventHub":
+        return "/eventhub";
       default:
         return `/${label.toLowerCase()}`;
     }

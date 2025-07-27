@@ -160,14 +160,7 @@
   transition: all 0.3s ease;
 }
 
-.action-icon.liked {
-  animation: heartBeat 0.6s ease-in-out;
-}
 
-@keyframes heartBeat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
 
 /* Card Content */
 .card-content {
@@ -386,4 +379,4 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.6rem;
   }
-} 
+}
