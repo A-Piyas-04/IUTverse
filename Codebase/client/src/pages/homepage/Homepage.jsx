@@ -1,8 +1,24 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const loggedInUser = localStorage.getItem('user');
+    if (loggedInUser) {
+      setUser(JSON.parse(loggedInUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/login');
+  };
+
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans overflow-hidden flex flex-col">
       {/* TOP NAVBAR */}
@@ -26,7 +42,7 @@ export default function HomePage() {
             <a
               key={i}
               href={`/${
-                label.toLowerCase() === "home" ? "" : label.toLowerCase()
+                label.toLowerCase() === "home" ? "home" : label.toLowerCase()
               }`}
               className="relative px-3 py-1 rounded-lg transition-all duration-200 hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm group"
             >
@@ -38,19 +54,42 @@ export default function HomePage() {
           ))}
         </nav>
 
-        {/* Right: Profile */}
+        {/* Right: Profile/Auth */}
         <div className="flex items-center gap-4 w-1/3 justify-end min-w-[200px]">
-          <img
-            src="/profile.jpg"
-            alt="Profile"
-            className="h-10 w-10 rounded-full shadow border-2 border-green-500 hover:scale-105 transition-transform duration-200"
-          />
-          <button
-            className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 hover:scale-105 active:scale-95 transition-all duration-200 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-            onClick={() => navigate("/login")}
-          >
-            Logout
-          </button>
+          {user ? (
+            <>
+              <span className="text-sm text-green-700 font-medium">
+                Welcome, {user.email.split('@')[0]}
+              </span>
+              <img
+                src="/profile.jpg"
+                alt="Profile"
+                className="h-10 w-10 rounded-full shadow border-2 border-green-500 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                onClick={() => navigate("/profile")}
+              />
+              <button
+                className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-red-500 to-red-400 hover:from-red-400 hover:to-red-300 hover:scale-105 active:scale-95 transition-all duration-200 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 hover:scale-105 active:scale-95 transition-all duration-200 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                onClick={() => navigate("/signup")}
+              >
+                Get Started
+              </button>
+              <button
+                className="text-sm px-4 py-1.5 rounded-full border-2 border-green-500 text-green-700 hover:bg-green-50 hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </button>
+            </>
+          )}
         </div>
       </header>
 
