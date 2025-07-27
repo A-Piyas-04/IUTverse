@@ -202,9 +202,9 @@ export default function Confessions() {
     <div className="confessions-page">
       <Navbar />
       
-      <div className="confessions-main">
+      <div className="confessions-main animate-fade-in-up">
         {/* Header Section */}
-        <div className="confessions-header">
+        <div className="confessions-header animate-fade-in-down">
           <div className="header-content">
             <h1 className="main-title">
               <span className="icon">🤐</span>
@@ -217,7 +217,7 @@ export default function Confessions() {
         </div>
 
         {/* Controls Section */}
-        <div className="controls-section">
+        <div className="controls-section animate-fade-in-left">
           <div className="controls-left">
             {/* Filter */}
             <div className="filter-container">
@@ -271,7 +271,7 @@ export default function Confessions() {
         </div>
 
         {/* Analytics Widget */}
-        <div className="analytics-section">
+        <div className="analytics-section animate-fade-in-up">
           <AnalyticsWidget data={analyticsData} />
         </div>
 
@@ -283,7 +283,7 @@ export default function Confessions() {
         </div>
 
         {/* Confessions Feed */}
-        <div className="confessions-feed">
+        <div className="confessions-feed animate-fade-in-right">
           {filteredAndSortedConfessions.length > 0 ? (
             <div className="confessions-grid">
               {filteredAndSortedConfessions.map(confession => (
@@ -321,6 +321,29 @@ export default function Confessions() {
           onShowAnother={() => setShowRandomModal(false)}
         />
       )}
+      {/* Animations */}
+      <style>{`
+        @keyframes fade-in-down {
+          0% { opacity: 0; transform: translateY(-30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-left {
+          0% { opacity: 0; transform: translateX(-30px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fade-in-right {
+          0% { opacity: 0; transform: translateX(30px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .animate-fade-in-down { animation: fade-in-down 0.7s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-up { animation: fade-in-up 0.7s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-left { animation: fade-in-left 0.7s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-right { animation: fade-in-right 0.7s cubic-bezier(.4,0,.2,1) both; }
+      `}</style>
     </div>
   );
 } 

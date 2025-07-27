@@ -1,109 +1,179 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
+import PostModal from "../../components/PostModal.jsx";
 
 export default function HomePage() {
   const navigate = useNavigate();
 
   const userName = "Sarah Ahmed"; // Example user name, can be dynamic
 
-  const userPosts = [
+  const [userPosts, setUserPosts] = useState([
     {
+      id: 1,
       name: "Irfan Shafee",
       date: "November 28, 2024",
       content:
         "Just finished my Data Structures assignment! The feeling of getting all test cases to pass is unmatched 🎉",
       likes: 23,
-      comments: 7,
+      commentsCount: 2,
       shares: 2,
       img: "../../../public/picture1.jpg",
+      comments: [
+        { name: "Afnan Tashfia", text: "Congrats!!", time: "2h ago" },
+        { name: "You", text: "Nice one!", time: "Just now" },
+      ],
     },
     {
+      id: 2,
       name: "Samiur Rahman Nafiz",
       date: "November 25, 2024",
       content:
         "Campus cats are the real MVPs of IUT. Spotted three new kittens near the lake today 🐱❤️",
       likes: 42,
-      comments: 12,
+      commentsCount: 3,
       shares: 8,
       img: "../../../public/picture2.jpg",
+      comments: [
+        { name: "Mashrur Faiyaz", text: "So cute!", time: "1h ago" },
+        { name: "You", text: "Where exactly?", time: "Just now" },
+        { name: "Irfan Shafee", text: "I saw them too!", time: "5m ago" },
+      ],
     },
     {
+      id: 3,
       name: "Faiyaz Awsaf",
       date: "November 20, 2024",
       content:
         "Group study session for Calculus 2 finals. Mathematics building, Room 301. Everyone welcome!",
       likes: 18,
-      comments: 5,
+      commentsCount: 1,
       shares: 15,
       img: "../../../public/picture3.jpg",
+      comments: [
+        { name: "Samiur Rahman Nafiz", text: "I'll join!", time: "3h ago" },
+      ],
     },
     {
+      id: 4,
       name: "Mashrur Faiyaz",
       date: "November 15, 2024",
       content:
         "Just got my hands on the new IUTVerse merch! Loving the design and quality. Can't wait to wear it around campus 😎",
       likes: 30,
-      comments: 10,
+      commentsCount: 2,
       shares: 5,
       img: "../../../public/picture4.jpg",
+      comments: [
+        { name: "Nuren Fahmid", text: "Where did you buy it?", time: "4h ago" },
+        { name: "You", text: "Looks awesome!", time: "Just now" },
+      ],
     },
     {
+      id: 5,
       name: "Nuren Fahmid",
       date: "November 10, 2024",
       content:
         "Exploring the new library section today. Found some amazing books on AI and Machine Learning 📚🤖",
       likes: 25,
-      comments: 8,
+      commentsCount: 1,
       shares: 4,
       img: "../../../public/cats/cat1.jpg",
+      comments: [
+        { name: "Faiyaz Awsaf", text: "Any book recommendations?", time: "2h ago" },
+      ],
     },
     {
+      id: 6,
       name: "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
       date: "November 5, 2024",
       content:
         "Had a great time at the IUTVerse meetup yesterday! Met so many amazing people and shared ideas 💡",
       likes: 40,
-      comments: 15,
+      commentsCount: 0,
       shares: 10,
+      comments: [],
     },
     {
+      id: 7,
       name: "Irfan Shafee",
       date: "October 30, 2024",
       content:
         "Just submitted my final project for Web Development! Feeling accomplished and ready for the next challenge 🚀",
       likes: 35,
-      comments: 9,
+      commentsCount: 1,
       shares: 6,
+      comments: [
+        { name: "You", text: "Congrats!", time: "Just now" },
+      ],
     },
     {
+      id: 8,
       name: "Samiur Rahman Nafiz",
       date: "October 25, 2024",
       content:
         "Can't believe it's already been a month since the semester started. Time flies when you're having fun at IUT!",
       likes: 20,
-      comments: 4,
+      commentsCount: 0,
       shares: 3,
+      comments: [],
     },
     {
+      id: 9,
       name: "Sadman Mubasshir Khan",
       date: "October 20, 2024",
       content:
         "Just finished my first semester exams! Feeling relieved and ready to relax for a bit. Anyone up for a movie night?",
       likes: 28,
-      comments: 6,
+      commentsCount: 2,
       shares: 2,
+      comments: [
+        { name: "Ahnaf Shahriar Pias", text: "Movie night sounds great!", time: "1h ago" },
+        { name: "You", text: "Count me in!", time: "Just now" },
+      ],
     },
     {
+      id: 10,
       name: "Ahnaf Shahriar Pias",
       date: "October 15, 2024",
       content:
         "Had an amazing time at the IUTVerse cultural fest! The performances were top-notch and the food was delicious 🍔🎶",
       likes: 50,
-      comments: 20,
+      commentsCount: 3,
       shares: 10,
+      comments: [
+        { name: "Sadman Mubasshir Khan", text: "The food was amazing!", time: "2h ago" },
+        { name: "You", text: "Loved the music!", time: "Just now" },
+        { name: "Irfan Shafee", text: "Best fest ever!", time: "5m ago" },
+      ],
     },
-  ];
+  ]);
+
+  const [selectedPost, setSelectedPost] = useState(null);
+
+  // Handle comment add (mock only)
+  const handleAddComment = useCallback((postId, newComment) => {
+    setUserPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: [...post.comments, newComment],
+              commentsCount: post.commentsCount + 1,
+            }
+          : post
+      )
+    );
+  }, []);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") setSelectedPost(null);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
 
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
@@ -200,7 +270,8 @@ export default function HomePage() {
           {userPosts.map((post, index) => (
             <div
               key={index}
-              className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px] min-w-full"
+              className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px] min-w-full cursor-pointer hover:shadow-lg transition"
+              onClick={() => setSelectedPost(post)}
             >
               {/* Post Header */}
               <div className="flex items-start gap-3 p-4 pb-3">
@@ -246,7 +317,6 @@ export default function HomePage() {
                   <span>{post.likes}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span>{post.comments} comments</span>
                   <span>{post.shares} shares</span>
                 </div>
               </div>
@@ -266,22 +336,16 @@ export default function HomePage() {
                   <span>Share</span>
                 </button>
               </div>
-
-              {/* Comment Input */}
-              <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
-                <img
-                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                  alt="Me"
-                  className="w-[30px] h-[30px] mr-[12px] rounded-full"
-                />
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
-                />
-              </div>
             </div>
           ))}
+          {/* Post Detail Modal */}
+          {selectedPost && (
+            <PostModal
+              post={userPosts.find((p) => p.id === selectedPost.id)}
+              onClose={() => setSelectedPost(null)}
+              onCommentSubmit={handleAddComment}
+            />
+          )}
         </section>
 
         {/* RIGHT SIDEBAR */}
