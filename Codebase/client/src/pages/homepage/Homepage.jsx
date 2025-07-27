@@ -5,6 +5,8 @@ import PostModal from "../../components/PostModal.jsx";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [userName] = useState("John Doe"); // Add default username
+  
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
       {/* TOP NAVBAR */}
@@ -12,7 +14,7 @@ export default function HomePage() {
         {/* Logo + Search */}
         <div className="flex items-center gap-4 w-1/3 min-w-[200px]">
           <img
-            src="/logo.png"
+            src="/iut_logo.png"
             alt="Logo"
             className="h-10 w-10 rounded-full shadow-lg border-2 border-green-500 hover:scale-105 transition-transform duration-200"
           />
@@ -43,7 +45,7 @@ export default function HomePage() {
         {/* Right: Profile */}
         <div className="flex items-center gap-4 w-1/3 justify-end min-w-[200px]">
           <img
-            src="/profile.jpg"
+            src="/profile_picture.jpg"
             alt="Profile"
             className="h-10 w-10 rounded-full shadow border-2 border-green-500 hover:scale-105 transition-transform duration-200"
           />

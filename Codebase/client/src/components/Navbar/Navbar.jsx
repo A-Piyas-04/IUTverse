@@ -17,7 +17,7 @@ export default function Navbar({
   const getPath = (label) => {
     switch (label) {
       case "Home":
-        return "/home";
+        return "/";
       case "CatCorner":
         return "/catcorner";
       case "LostAndFound":

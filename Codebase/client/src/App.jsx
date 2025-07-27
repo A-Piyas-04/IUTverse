@@ -23,6 +23,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/catcorner" element={<CatCorner />} />
         <Route path="/lostandfound" element={<LostAndFound />} />
@@ -39,7 +40,7 @@ function App() {
         <Route path="/eventhub" element={<EventHub />} />
 
         {/* Catch‑all: redirect to home or login */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
