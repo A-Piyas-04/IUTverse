@@ -2,14 +2,14 @@ const jwt = require('jsonwebtoken');
 const { validateIUTEmail, generatePassword } = require('../utils/authUtils');
 const { sendPasswordEmail } = require('../services/emailService');
 const config = require('../config/config');
-const userStorage = require('../utils/userStorage');
+const userService = require('../services/userService');
 
 // Helper function to generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
     { 
       email: user.email,
-      userId: user.email // Using email as userId for now
+      userId: user.id // Use proper user ID from database
     },
     config.jwtSecret,
     { expiresIn: '24h' }
@@ -28,18 +28,16 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid IUT email address' });
     }
 
-    if (userStorage.has(email)) {
+    // Check if user already exists using database
+    const userExists = await userService.userExists(email);
+    if (userExists) {
       return res.status(409).json({ message: 'User already exists. Please login instead.' });
     }
 
     const password = generatePassword(email);
     
-    // Store user with persistent storage
-    userStorage.set(email, {
-      email,
-      password,
-      createdAt: new Date()
-    });
+    // Create user in database
+    await userService.createUser(email, password);
 
     // For development, we'll log the password to console
     console.log(`Password for ${email}: ${password}`);
@@ -61,11 +59,14 @@ const signup = async (req, res) => {
 
   } catch (error) {
     console.error('Signup error:', error);
+    if (error.message === 'User already exists') {
+      return res.status(409).json({ message: 'User already exists. Please login instead.' });
+    }
     res.status(500).json({ message: 'Internal server error. Please try again.' });
   }
 };
 
-const login = (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -77,13 +78,10 @@ const login = (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid IUT email address' });
     }
 
-    const user = userStorage.get(email);
+    // Verify user credentials using database
+    const user = await userService.verifyPassword(email, password);
     if (!user) {
-      return res.status(401).json({ message: 'User not found. Please sign up first.' });
-    }
-
-    if (user.password !== password) {
-      return res.status(401).json({ message: 'Invalid password. Please check your email for the correct password.' });
+      return res.status(401).json({ message: 'Invalid email or password. Please check your credentials.' });
     }
 
     // Generate JWT token
@@ -93,7 +91,9 @@ const login = (req, res) => {
       message: 'Login successful',
       token,
       user: {
+        id: user.id,
         email: user.email,
+        name: user.name,
         createdAt: user.createdAt
       }
     });
@@ -104,12 +104,14 @@ const login = (req, res) => {
   }
 };
 
-const getAllUsers = (req, res) => {
-  const userList = Array.from(userStorage.values()).map(user => ({
-    email: user.email,
-    createdAt: user.createdAt
-  }));
-  res.json(userList);
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ message: 'Internal server error. Please try again.' });
+  }
 };
 
 module.exports = {

@@ -17,7 +17,18 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, get text content for error handling
+        const textData = await response.text();
+        data = { message: `Non-JSON response: ${textData.substring(0, 100)}...` };
+      }
 
       if (!response.ok) {
         // If unauthorized, clear auth data and redirect to login
@@ -37,21 +48,21 @@ class ApiService {
 
   // Auth endpoints
   async login(email, password) {
-    return this.request('/login', {
+    return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   }
 
   async signup(email) {
-    return this.request('/signup', {
+    return this.request('/auth/signup', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
   }
 
   async getAllUsers() {
-    return this.request('/users', {
+    return this.request('/auth/users', {
       method: 'GET',
     });
   }
