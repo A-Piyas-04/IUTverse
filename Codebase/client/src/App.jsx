@@ -6,6 +6,8 @@ import Profile from "./pages/Profile/Profile.jsx";
 import CatCorner from "./pages/CatCorner/CatCorner.jsx";
 import LostAndFound from "./pages/LostAndFound/LostAndFound.jsx";
 import JobsPage from "./pages/Jobs/JobsPage.jsx";
+import Confessions from "./pages/Confessions/Confessions.jsx";
+import Moderation from "./pages/Admin/Moderation.jsx";
 
 function App() {
   return (
@@ -22,6 +24,12 @@ function App() {
 
         {/* New Jobs route */}
         <Route path="/jobs" element={<JobsPage />} />
+
+        {/* Confessions route */}
+        <Route path="/confessions" element={<Confessions />} />
+
+        {/* Admin routes */}
+        <Route path="/admin/moderation" element={<Moderation />} />
 
         {/* Catch‑all: redirect to home or login */}
         <Route path="*" element={<Navigate to="/home" replace />} />

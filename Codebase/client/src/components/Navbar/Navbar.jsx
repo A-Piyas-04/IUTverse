@@ -9,7 +9,7 @@ export default function Navbar({
     "LostAndFound",
     "Jobs",
     "Wholesome",
-    "Marketplace",
+    "Confessions",
   ],
 }) {
   const navigate = useNavigate();
@@ -22,6 +22,8 @@ export default function Navbar({
         return "/catcorner";
       case "LostAndFound":
         return "/lostandfound";
+      case "Confessions":
+        return "/confessions";
       default:
         return `/${label.toLowerCase()}`;
     }
@@ -29,9 +31,9 @@ export default function Navbar({
 
   return (
     <header className="navbar glass-bg shadow-lg border-b border-green-300 animate-fade-in-down">
-      <div className="navbar-inner flex items-center justify-between w-full max-w-7xl mx-auto px-6">
+      <div className="navbar-inner grid grid-cols-3 items-center w-full   px-6">
         {/* Left: Logo + Search */}
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex items-center gap-4 justify-start">
           <img
             src="../../../public/iut_logo.png"
             alt="IUTVerse Logo"
@@ -41,12 +43,12 @@ export default function Navbar({
           <input
             type="text"
             placeholder="Search IUTVerse..."
-            className="search-input w-[200px]"
+            className="search-input w-[50px] ml-2 mr-35"
           />
         </div>
 
         {/* Middle: Navigation */}
-        <nav className="flex gap-8 justify-center items-center flex-grow">
+        <nav className="flex gap-8 justify-center items-center">
           {navItems.map((label, i) => (
             <NavLink
               key={i}
@@ -61,7 +63,7 @@ export default function Navbar({
         </nav>
 
         {/* Right: Profile + Logout */}
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex items-center gap-4 justify-end">
           <img
             src="../../../public/profile_picture.jpg"
             alt="User"
