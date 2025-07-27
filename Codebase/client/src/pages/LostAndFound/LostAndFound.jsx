@@ -125,7 +125,7 @@ export default function LostAndFound() {
   return (
     <div className="lost-found-page">
       <Navbar />
-
+      
       <main className="lost-found-main">
         {/* Header Section */}
         <div className="lost-found-header">

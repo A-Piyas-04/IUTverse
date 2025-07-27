@@ -24,6 +24,8 @@ export default function Navbar({
         return "/lostandfound";
       case "Confessions":
         return "/confessions";
+      case "Jobs":
+        return "/jobs";
       default:
         return `/${label.toLowerCase()}`;
     }

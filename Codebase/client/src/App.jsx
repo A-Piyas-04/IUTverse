@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import LoginPage from "./pages/Login/Login.jsx";
 import Homepage from "./pages/homepage/Homepage.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
@@ -8,6 +13,7 @@ import LostAndFound from "./pages/LostAndFound/LostAndFound.jsx";
 import JobsPage from "./pages/Jobs/JobsPage.jsx";
 import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
+import EventHub from "./pages/EventHub/EventHub.jsx";
 
 function App() {
   return (
@@ -30,6 +36,8 @@ function App() {
 
         {/* Admin routes */}
         <Route path="/admin/moderation" element={<Moderation />} />
+        {/* New Event Hub route */}
+        <Route path="/eventhub" element={<EventHub />} />
 
         {/* Catch‑all: redirect to home or login */}
         <Route path="*" element={<Navigate to="/home" replace />} />
