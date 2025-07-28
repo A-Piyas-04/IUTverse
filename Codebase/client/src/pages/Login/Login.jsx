@@ -4,6 +4,7 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import loginImage from '../../assets/login.png';
 import ApiService from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { authUtils } from '../../utils/auth.js';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout, isAuthenticated, user } = useAuth();
 
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
@@ -64,7 +65,8 @@ export default function LoginPage() {
     setEmail("");
     setPassword("");
     setMessage('');
-    // Auth context will handle clearing auth data
+    // Use auth context logout function
+    logout();
   };
 
   if (loggedIn) {
@@ -117,13 +119,17 @@ export default function LoginPage() {
             required
             disabled={loading}
           />
-
-          {message && <div className="message error">{message}</div>}
-
+          
+          {message && (
+            <div className="message error">
+              {message}
+            </div>
+          )}
+          
           <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
-
+          
           <div className="auth-link">
             Don't have a password yet? <a href="/signup">Get started here</a>
           </div>
