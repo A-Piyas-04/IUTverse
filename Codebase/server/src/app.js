@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const routes = require('./routes');
-const { requestLogger } = require('./middleware/logging');
+const express = require("express");
+const cors = require("cors");
+const routes = require("./routes");
+const { requestLogger } = require("./middleware/logging");
 
 const app = express();
 
@@ -13,6 +13,6 @@ app.use(cors());
 app.use(requestLogger);
 
 // Routes
-app.use('/', routes);
+app.use("/", routes);
 
 module.exports = app;
