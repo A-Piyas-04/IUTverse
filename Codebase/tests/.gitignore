@@ -1,0 +1,18 @@
+# Test artifacts and results
+test-results/
+coverage/
+*.log
+
+# Node modules for tests
+node_modules/
+
+# Temporary test files
+*.tmp
+*.temp
+
+# Test output files
+test-output.*
+
+# OS generated files
+.DS_Store
+Thumbs.db

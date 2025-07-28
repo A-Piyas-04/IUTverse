@@ -2,95 +2,109 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import PostModal from "../../components/PostModal.jsx";
+import { authUtils } from "../../utils/auth.js";
 
 export default function HomePage() {
   const navigate = useNavigate();
-
-  const [userPosts, setUserPosts] = useState([]);
+  const [userName] = useState("John Doe"); // Add default username
   const [selectedPost, setSelectedPost] = useState(null);
-  const [userName, setUserName] = useState("Guest");
-  const [userEmail, setUserEmail] = useState("");
-  const [userId, setUserId] = useState("");
-  const [userImage, setUserImage] = useState("");
-  const [userFriends, setUserFriends] = useState([]);
-  const [userGroups, setUserGroups] = useState([]);
-  const [userSaved, setUserSaved] = useState([]);
   
-  // Function to handle adding comments to posts
-  const handleAddComment = useCallback((postId, commentData) => {
-    setUserPosts(prevPosts => 
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...(post.comments || []), commentData]
-          };
-        }
-        return post;
-      })
-    );
-  }, []);
-
-  useEffect(() => {
-    // Fetch user data from localStorage or API
-    const userData = JSON.parse(localStorage.getItem("user"));
-    if (userData) {
-      setUserName(userData.name || "Guest");
-      setUserEmail(userData.email || "");
-      setUserId(userData.id || "");
-      setUserImage(userData.image || "");
-      setUserFriends(userData.friends || []);
-      setUserGroups(userData.groups || []);
-      setUserSaved(userData.saved || []);
+  // Sample posts data - this should eventually come from API
+  const userPosts = [
+    {
+      id: 1,
+      name: "John Doe",
+      date: "2 hours ago",
+      content: "Just finished working on the new IUTverse features! Excited to share them with everyone.",
+      likes: 15,
+      shares: 3,
+      img: null
+    },
+    {
+      id: 2,
+      name: "Jane Smith", 
+      date: "5 hours ago",
+      content: "Beautiful sunset from IUT campus today 🌅\n\nThe lake looks amazing this time of year!",
+      likes: 28,
+      shares: 7,
+      img: "/picture1.jpg"
+    },
+    {
+      id: 3,
+      name: "Alex Johnson",
+      date: "1 day ago", 
+      content: "Study group for Computer Networks tomorrow at 3 PM in the library. All CSE students welcome!",
+      likes: 12,
+      shares: 15,
+      img: null
     }
+  ];
 
-    // Fetch user posts (mock data for now)
-    const fetchPosts = async () => {
-      const posts = [
-        {
-          id: 1,
-          name: userName,
-          date: "2023-10-01",
-          content: "Hello, this is my first post!",
-          img: "/picture2.jpg",
-          likes: 10,
-          shares: 2,
-          comments: [],
-          commentsCount: 0
-        },
-        {
-          id: 2,
-          name: userName,
-          date: "2023-10-02",
-          content: "Another day, another post!",
-          img: "",
-          likes: 5,
-          shares: 1,
-          comments: [],
-          commentsCount: 0
-        },
-        {
-          id: 3,
-          name: userName,
-          date: "2023-10-03",
-          content: "Loving this new platform!",
-          img: "/picture3.jpg",
-          likes: 20,
-          shares: 4,
-          comments: [],
-          commentsCount: 0
-        },
-      ];
-      setUserPosts(posts);
-    };
-
-    fetchPosts();
+  // Handle adding comments to posts
+  const handleAddComment = useCallback((postId, comment) => {
+    console.log(`Adding comment to post ${postId}:`, comment);
+    // This would normally update the post with the new comment
   }, []);
 
+  // Handle logout
+  const handleLogout = () => {
+    // Clear authentication data
+    authUtils.clearAuthData();
+    
+    // Navigate to login page
+    navigate("/login");
+  };
+  
   return (
     <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
       {/* TOP NAVBAR */}
-      <Navbar />
+      <header className="flex items-center justify-between px-6 py-3 bg-white/90 backdrop-blur-lg shadow-2xl w-full border-b border-green-200 animate-fade-in-down">
+        {/* Logo + Search */}
+        <div className="flex items-center gap-4 w-1/3 min-w-[200px]">
+          <img
+            src="/iut_logo.png"
+            alt="Logo"
+            className="h-10 w-10 rounded-full shadow-lg border-2 border-green-500 hover:scale-105 transition-transform duration-200"
+          />
+          <input
+            type="text"
+            placeholder="Search IUTVerse..."
+            className="w-100 px-4 py-2 rounded-full bg-gray-100 text-sm text-gray-800 placeholder-gray-400 border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 transition shadow-inner hover:shadow-green-200/30"
+          />
+        </div>
+        {/* Middle nav */}
+        <nav className="flex gap-8 w-1/3 justify-between text-base font-medium text-green-700">
+          {["Home", "CatCorner", "Wholesome", "Marketplace"].map((label, i) => (
+            <a
+              key={i}
+              href={`/${
+                label.toLowerCase() === "home" ? "" : label.toLowerCase()
+              }`}
+              className="relative px-3 py-1 rounded-lg transition-all duration-200 hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm group"
+            >
+              <span className="group-hover:scale-105 group-hover:font-bold transition-transform duration-200">
+                {label}
+              </span>
+              <span className="absolute left-1/2 -bottom-1 w-0 h-0.5 bg-green-400 rounded-full group-hover:w-3/4 transition-all duration-300 group-hover:h-1"></span>
+            </a>
+          ))}
+        </nav>
+
+        {/* Right: Profile */}
+        <div className="flex items-center gap-4 w-1/3 justify-end min-w-[200px]">
+          <img
+            src="/profile_picture.jpg"
+            alt="Profile"
+            className="h-10 w-10 rounded-full shadow border-2 border-green-500 hover:scale-105 transition-transform duration-200"
+          />
+          <button
+            className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 hover:scale-105 active:scale-95 transition-all duration-200 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </header>
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white mt-[80px]">
