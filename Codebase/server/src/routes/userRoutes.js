@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const profileController = require('../controllers/profileController');
 
 // Get user profile (protected route)
 router.get('/profile', authenticateToken, (req, res) => {
@@ -22,5 +23,12 @@ router.get('/dashboard', authenticateToken, (req, res) => {
     }
   });
 });
+
+// Get profile by userId (public)
+router.get('/profile/:userId', profileController.getProfile);
+// Create profile (protected)
+router.post('/profile', authenticateToken, profileController.createProfile);
+// Update profile (protected)
+router.put('/profile', authenticateToken, profileController.updateProfile);
 
 module.exports = router;
