@@ -1,7 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
-import LostFoundCard from "./components/LostFoundCard.jsx";
-import AddPostModal from "./components/AddPostModal.jsx";
+import LostFoundCard from "./components/lostfoundcard.jsx";
+import AddPostModal from "./components/addpostmodal.jsx";
+import { 
+  getLostAndFoundPosts, 
+  createLostAndFoundPost, 
+  markPostAsResolved 
+} from "../../services/lostAndFoundApi.js";
 import "./LostAndFound.css";
 
 // Sample data - in a real app, this would come from a database
@@ -20,106 +25,145 @@ const SAMPLE_POSTS = [
     user: "Alice Johnson",
     status: "active",
   },
-  {
-    id: 2,
-    type: "found",
-    title: "Found Blue Water Bottle",
-    description:
-      "Found a blue water bottle with 'IUT' written on it near the library entrance. Contact me to claim it.",
-    location: "Library Entrance",
-    date: "2024-01-15",
-    time: "16:45",
-    contact: "bob@iut.edu",
-    image: "https://placehold.co/400x300/60a5fa/ffffff?text=Water+Bottle",
-    user: "Bob Smith",
-    status: "active",
-  },
-  {
-    id: 3,
-    type: "lost",
-    title: "Lost Student ID Card",
-    description:
-      "Lost my student ID card somewhere between the admin building and parking lot. Name: Sarah Wilson.",
-    location: "Admin Building to Parking Lot",
-    date: "2024-01-14",
-    time: "09:15",
-    contact: "sarah@iut.edu",
-    image: "https://placehold.co/400x300/f59e0b/ffffff?text=ID+Card",
-    user: "Sarah Wilson",
-    status: "active",
-  },
-  {
-    id: 4,
-    type: "found",
-    title: "Found Black Backpack",
-    description:
-      "Found a black backpack with laptop inside near the computer lab. Please provide details to claim.",
-    location: "Computer Lab",
-    date: "2024-01-14",
-    time: "18:20",
-    contact: "mike@iut.edu",
-    image: "https://placehold.co/400x300/6b7280/ffffff?text=Backpack",
-    user: "Mike Davis",
-    status: "active",
-  },
-  {
-    id: 5,
-    type: "lost",
-    title: "Lost AirPods Case",
-    description:
-      "Lost my AirPods charging case (white) in the student lounge. Has a small scratch on the front.",
-    location: "Student Lounge",
-    date: "2024-01-13",
-    time: "12:30",
-    contact: "emma@iut.edu",
-    image: "https://placehold.co/400x300/e5e7eb/000000?text=AirPods",
-    user: "Emma Brown",
-    status: "active",
-  },
 ];
 
 export default function LostAndFound() {
-  const [posts, setPosts] = useState(SAMPLE_POSTS);
+  const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Filter posts based on type and search term
-  const filteredPosts = useMemo(() => {
-    return posts.filter((post) => {
-      const matchesFilter = filter === "all" || post.type === filter;
-      const matchesSearch =
-        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.location.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
-  }, [posts, filter, searchTerm]);
+    const filteredPosts = useMemo(() => {
+      return posts.filter(post => {
+        const matchesFilter = filter === 'all' || post.type === filter;
+        const matchesSearch = !searchTerm || 
+          post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.location.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesFilter && matchesSearch;
+      });
+    }, [posts, filter, searchTerm]);
+
+  // Fetch posts from API
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching posts...');
+      const response = await getLostAndFoundPosts();
+      console.log('Fetched posts response:', response);
+      
+      // Handle the response - it should be an array of posts
+      if (Array.isArray(response)) {
+        console.log('Setting posts from array response:', response);
+        setPosts(response);
+      } else if (response && Array.isArray(response.data)) {
+        console.log('Setting posts from response.data:', response.data);
+        setPosts(response.data);
+      } else {
+        console.warn('Unexpected response format:', response);
+        setPosts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setPosts([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Add new post
-  const handleAddPost = (newPost) => {
-    const post = {
-      ...newPost,
-      id: Date.now(),
-      date: new Date().toISOString().split("T")[0],
-      time: new Date().toLocaleTimeString("en-US", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      status: "active",
-    };
-    setPosts([post, ...posts]);
-    setShowAddModal(false);
+  const handleAddPost = async (formData) => {
+    try {
+      console.log('LostAndFound - handleAddPost called');
+      console.log('LostAndFound - Submitting form data:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+      
+      console.log('LostAndFound - About to call createLostAndFoundPost API');
+      const response = await createLostAndFoundPost(formData);
+      console.log('LostAndFound - Post creation response:', response);
+      
+      // Handle the response - extract the created post
+      let createdPost = null;
+      if (response && typeof response === 'object') {
+        if (response.data) {
+          createdPost = response.data;
+        } else if (response.id) {
+          createdPost = response;
+        }
+      }
+      
+      console.log('Created post:', createdPost);
+      
+      if (createdPost) {
+        // Add the new post to the beginning of the posts array
+        setPosts(prevPosts => {
+          console.log('Adding new post to existing posts. Current count:', prevPosts.length);
+          const updatedPosts = [createdPost, ...prevPosts];
+          console.log('Updated posts count:', updatedPosts.length);
+          return updatedPosts;
+        });
+        
+        setShowAddModal(false);
+        
+        // Refresh posts from server to ensure consistency
+        console.log('Refreshing posts from server...');
+        await fetchPosts();
+      } else {
+        console.warn('No valid post data received from server');
+        // Still refresh to get the latest data
+        await fetchPosts();
+        setShowAddModal(false);
+      }
+    } catch (error) {
+      console.error('LostAndFound - Error creating post:', error);
+      console.error('LostAndFound - Error message:', error.message);
+      console.error('LostAndFound - Error stack:', error.stack);
+      console.error('LostAndFound - Error name:', error.name);
+      
+      // Show detailed error to user
+      const errorMessage = error.message || 'Unknown error occurred';
+      console.log('LostAndFound - Showing error to user:', errorMessage);
+      alert(`Failed to create post: ${errorMessage}\n\nCheck browser console for more details.`);
+    }
   };
 
   // Mark post as resolved
-  const handleResolvePost = (postId) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId ? { ...post, status: "resolved" } : post
-      )
-    );
+  const handleResolvePost = async (postId) => {
+    try {
+      const response = await markPostAsResolved(postId);
+      // Handle API response structure
+      const updatedPost = response.data || response;
+      setPosts(
+        posts.map((post) =>
+          post.id === postId ? { ...post, status: "resolved" } : post
+        )
+      );
+    } catch (err) {
+      console.error('Error resolving post:', err);
+      setError('Failed to resolve post. Please try again.');
+      // Fallback: update local state anyway
+      setPosts(
+        posts.map((post) =>
+          post.id === postId ? { ...post, status: "resolved" } : post
+        )
+      );
+    }
+  };
+
+  // Load posts on component mount and when filter/search changes
+  useEffect(() => {
+    fetchPosts();
+  }, [filter, searchTerm]);
+
+  // Refresh posts function
+  const handleRefresh = () => {
+    fetchPosts();
   };
 
   return (
@@ -141,6 +185,15 @@ export default function LostAndFound() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="error-message animate-slide-in-top">
+            <span className="error-icon">⚠️</span>
+            {error}
+            <button className="error-dismiss" onClick={() => setError(null)}>×</button>
+          </div>
+        )}
+
         {/* Controls Section */}
         <div className="controls-section animate-slide-in-bottom">
           <div className="search-filter-container">
@@ -154,6 +207,7 @@ export default function LostAndFound() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -164,18 +218,21 @@ export default function LostAndFound() {
                 <button
                   className={`filter-btn ${filter === "all" ? "active" : ""}`}
                   onClick={() => setFilter("all")}
+                  disabled={loading}
                 >
                   All Posts
                 </button>
                 <button
                   className={`filter-btn ${filter === "lost" ? "active" : ""}`}
                   onClick={() => setFilter("lost")}
+                  disabled={loading}
                 >
                   <span className="lost-icon">❌</span> Lost
                 </button>
                 <button
                   className={`filter-btn ${filter === "found" ? "active" : ""}`}
                   onClick={() => setFilter("found")}
+                  disabled={loading}
                 >
                   <span className="found-icon">✅</span> Found
                 </button>
@@ -183,11 +240,21 @@ export default function LostAndFound() {
             </div>
           </div>
 
-          {/* Add Post Button */}
-          <div className="add-post-container">
+          {/* Action Buttons */}
+          <div className="action-buttons-container">
+            <button
+              className="refresh-btn"
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh posts"
+            >
+              <span className={`refresh-icon ${loading ? 'spinning' : ''}`}>🔄</span>
+              Refresh
+            </button>
             <button
               className="add-post-btn"
               onClick={() => setShowAddModal(true)}
+              disabled={loading}
             >
               <span className="add-icon">+</span>
               Add Post
@@ -205,7 +272,13 @@ export default function LostAndFound() {
 
         {/* Posts Grid */}
         <div className="posts-grid">
-          {filteredPosts.length === 0 ? (
+          {loading ? (
+            <div className="loading-container animate-fade-in-scale">
+              <div className="loading-spinner"></div>
+              <h3>Loading posts...</h3>
+              <p>Please wait while we fetch the latest posts</p>
+            </div>
+          ) : filteredPosts.length === 0 ? (
             <div className="no-posts animate-fade-in-scale">
               <div className="no-posts-icon">🔍</div>
               <h3>No posts found</h3>
@@ -229,6 +302,7 @@ export default function LostAndFound() {
         <AddPostModal
           onClose={() => setShowAddModal(false)}
           onSubmit={handleAddPost}
+          isSubmitting={submitting}
         />
       )}
     </div>
