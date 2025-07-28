@@ -1,0 +1,150 @@
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  department   String?
+  batch        Int?
+  studentId    String?  @unique
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  profile   Profile?
+  posts     Post[]
+  reactions PostReaction[]
+  events    Event[]        @relation("CreatedEvents")
+  rsvps     EventRsvp[]
+  catVotes  CatVote[]
+
+  lostAndFounds  LostAndFound[]
+  uploadedCats   Cat[]
+  questionPapers QuestionPaper[]
+}
+
+model Profile {
+  userId         Int      @id
+  bio            String?
+  profilePicture String?
+  interests      String[]
+  badges         String[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  content     String
+  category    String
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  reactions PostReaction[]
+  tags      PostTag[]
+}
+
+model PostReaction {
+  id           Int    @id @default(autoincrement())
+  post         Post   @relation(fields: [postId], references: [id])
+  postId       Int
+  user         User   @relation(fields: [userId], references: [id])
+  userId       Int
+  reactionType String
+
+  @@unique([postId, userId])
+}
+
+model ConfessionTag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique
+  posts PostTag[]
+}
+
+model PostTag {
+  postId Int
+  tagId  Int
+  post   Post          @relation(fields: [postId], references: [id])
+  tag    ConfessionTag @relation(fields: [tagId], references: [id])
+
+  @@id([postId, tagId])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  location    String
+  eventDate   DateTime
+  createdBy   User     @relation("CreatedEvents", fields: [createdById], references: [id])
+  createdById Int
+
+  rsvps EventRsvp[]
+}
+
+model EventRsvp {
+  user    User  @relation(fields: [userId], references: [id])
+  userId  Int
+  event   Event @relation(fields: [eventId], references: [id])
+  eventId Int
+
+  @@id([userId, eventId])
+}
+
+model LostAndFound {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  type        String
+  title       String
+  description String
+  image       String
+  location    String
+  hallOrDept  String
+  createdAt   DateTime @default(now())
+}
+
+model Cat {
+  id           Int      @id @default(autoincrement())
+  name         String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  uploadedById Int
+  image        String
+  createdAt    DateTime @default(now())
+
+  votes CatVote[]
+}
+
+model CatVote {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  cat    Cat  @relation(fields: [catId], references: [id])
+  catId  Int
+
+  @@id([userId, catId])
+}
+
+model QuestionPaper {
+  id           Int      @id @default(autoincrement())
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  uploadedById Int
+  department   String
+  courseCode   String
+  semester     String
+  fileUrl      String
+  uploadedAt   DateTime @default(now())
+}
