@@ -42,7 +42,7 @@
   position: relative;
   height: 200px;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
 }
 
 .event-image img {
@@ -280,7 +280,7 @@
   left: 0;
   width: 3rem;
   height: 3px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
@@ -367,7 +367,7 @@
   top: 0.5rem;
   bottom: 0.5rem;
   width: 3px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
   border-radius: 2px;
 }
 
@@ -526,4 +526,4 @@
   .event-image {
     height: 160px;
   }
-} 
+}
