@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
-import LostFoundCard from "./components/LostFoundCard.jsx";
-import AddPostModal from "./components/AddPostModal.jsx";
+import LostFoundCard from "./components/lostfoundcard.jsx";
+import AddPostModal from "./components/addpostmodal.jsx";
 import { 
   getLostAndFoundPosts, 
   createLostAndFoundPost, 
@@ -25,62 +25,6 @@ const SAMPLE_POSTS = [
     user: "Alice Johnson",
     status: "active",
   },
-  {
-    id: 2,
-    type: "found",
-    title: "Found Blue Water Bottle",
-    description:
-      "Found a blue water bottle with 'IUT' written on it near the library entrance. Contact me to claim it.",
-    location: "Library Entrance",
-    date: "2024-01-15",
-    time: "16:45",
-    contact: "bob@iut.edu",
-    image: "https://placehold.co/400x300/60a5fa/ffffff?text=Water+Bottle",
-    user: "Bob Smith",
-    status: "active",
-  },
-  {
-    id: 3,
-    type: "lost",
-    title: "Lost Student ID Card",
-    description:
-      "Lost my student ID card somewhere between the admin building and parking lot. Name: Sarah Wilson.",
-    location: "Admin Building to Parking Lot",
-    date: "2024-01-14",
-    time: "09:15",
-    contact: "sarah@iut.edu",
-    image: "https://placehold.co/400x300/f59e0b/ffffff?text=ID+Card",
-    user: "Sarah Wilson",
-    status: "active",
-  },
-  {
-    id: 4,
-    type: "found",
-    title: "Found Black Backpack",
-    description:
-      "Found a black backpack with laptop inside near the computer lab. Please provide details to claim.",
-    location: "Computer Lab",
-    date: "2024-01-14",
-    time: "18:20",
-    contact: "mike@iut.edu",
-    image: "https://placehold.co/400x300/6b7280/ffffff?text=Backpack",
-    user: "Mike Davis",
-    status: "active",
-  },
-  {
-    id: 5,
-    type: "lost",
-    title: "Lost AirPods Case",
-    description:
-      "Lost my AirPods charging case (white) in the student lounge. Has a small scratch on the front.",
-    location: "Student Lounge",
-    date: "2024-01-13",
-    time: "12:30",
-    contact: "emma@iut.edu",
-    image: "https://placehold.co/400x300/e5e7eb/000000?text=AirPods",
-    user: "Emma Brown",
-    status: "active",
-  },
 ];
 
 export default function LostAndFound() {
@@ -93,71 +37,99 @@ export default function LostAndFound() {
   const [submitting, setSubmitting] = useState(false);
 
   // Filter posts based on type and search term
-  const filteredPosts = useMemo(() => {
-    return posts.filter((post) => {
-      const matchesFilter = filter === "all" || post.type === filter;
-      const matchesSearch =
-        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.location.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
-  }, [posts, filter, searchTerm]);
+    const filteredPosts = useMemo(() => {
+      return posts.filter(post => {
+        const matchesFilter = filter === 'all' || post.type === filter;
+        const matchesSearch = !searchTerm || 
+          post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.location.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesFilter && matchesSearch;
+      });
+    }, [posts, filter, searchTerm]);
 
   // Fetch posts from API
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const fetchedPosts = await getLostAndFoundPosts({
-        type: filter,
-        search: searchTerm
-      });
-      setPosts(fetchedPosts);
-    } catch (err) {
-      console.error('Error fetching posts:', err);
-      setError('Failed to load posts. Please try again.');
-      // Fallback to sample data if API fails
-      setPosts(SAMPLE_POSTS);
+      console.log('Fetching posts...');
+      const response = await getLostAndFoundPosts();
+      console.log('Fetched posts response:', response);
+      
+      // Handle the response - it should be an array of posts
+      if (Array.isArray(response)) {
+        console.log('Setting posts from array response:', response);
+        setPosts(response);
+      } else if (response && Array.isArray(response.data)) {
+        console.log('Setting posts from response.data:', response.data);
+        setPosts(response.data);
+      } else {
+        console.warn('Unexpected response format:', response);
+        setPosts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setPosts([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
   // Add new post
-  const handleAddPost = async (newPost) => {
+  const handleAddPost = async (formData) => {
     try {
-      setSubmitting(true);
-      const createdPost = await createLostAndFoundPost(newPost);
-      setPosts([createdPost, ...posts]);
-      setShowAddModal(false);
-    } catch (err) {
-      console.error('Error creating post:', err);
-      setError('Failed to create post. Please try again.');
-      // Fallback: add to local state with temporary ID
-      const post = {
-        ...newPost,
-        id: Date.now(),
-        date: new Date().toISOString().split("T")[0],
-        time: new Date().toLocaleTimeString("en-US", {
-          hour12: false,
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        status: "active",
-        user: "Current User"
-      };
-      setPosts([post, ...posts]);
-      setShowAddModal(false);
-    } finally {
-      setSubmitting(false);
+      console.log('Submitting form data:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+      
+      const response = await createLostAndFoundPost(formData);
+      console.log('Post creation response:', response);
+      
+      // Handle the response - extract the created post
+      let createdPost = null;
+      if (response && typeof response === 'object') {
+        if (response.data) {
+          createdPost = response.data;
+        } else if (response.id) {
+          createdPost = response;
+        }
+      }
+      
+      console.log('Created post:', createdPost);
+      
+      if (createdPost) {
+        // Add the new post to the beginning of the posts array
+        setPosts(prevPosts => {
+          console.log('Adding new post to existing posts. Current count:', prevPosts.length);
+          const updatedPosts = [createdPost, ...prevPosts];
+          console.log('Updated posts count:', updatedPosts.length);
+          return updatedPosts;
+        });
+        
+        setShowAddModal(false);
+        
+        // Refresh posts from server to ensure consistency
+        console.log('Refreshing posts from server...');
+        await fetchPosts();
+      } else {
+        console.warn('No valid post data received from server');
+        // Still refresh to get the latest data
+        await fetchPosts();
+        setShowAddModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to create post. Please try again.');
     }
   };
 
   // Mark post as resolved
   const handleResolvePost = async (postId) => {
     try {
-      await markPostAsResolved(postId);
+      const response = await markPostAsResolved(postId);
+      // Handle API response structure
+      const updatedPost = response.data || response;
       setPosts(
         posts.map((post) =>
           post.id === postId ? { ...post, status: "resolved" } : post

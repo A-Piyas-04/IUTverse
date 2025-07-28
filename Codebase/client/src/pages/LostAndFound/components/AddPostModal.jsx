@@ -8,8 +8,10 @@ export default function AddPostModal({ onClose, onSubmit, isSubmitting = false }
     description: "",
     location: "",
     contact: "",
-    image: ""
+    image: null
   });
+  
+  const [imagePreview, setImagePreview] = useState(null);
 
   const [errors, setErrors] = useState({});
 
@@ -26,6 +28,63 @@ export default function AddPostModal({ onClose, onSubmit, isSubmitting = false }
         ...prev,
         [name]: ""
       }));
+    }
+  };
+  
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({
+          ...prev,
+          image: "Please select a valid image file"
+        }));
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({
+          ...prev,
+          image: "Image size must be less than 5MB"
+        }));
+        return;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        image: file
+      }));
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear any previous errors
+      if (errors.image) {
+        setErrors(prev => ({
+          ...prev,
+          image: ""
+        }));
+      }
+    }
+  };
+  
+  const removeImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      image: null
+    }));
+    setImagePreview(null);
+    
+    // Reset file input
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+      fileInput.value = '';
     }
   };
 
@@ -56,16 +115,49 @@ export default function AddPostModal({ onClose, onSubmit, isSubmitting = false }
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('AddPostModal - Form submission initiated');
+    console.log('AddPostModal - Current form data:', formData);
     
     if (validateForm()) {
-      // Add default image if none provided
-      const postData = {
-        ...formData,
-        image: formData.image || `https://placehold.co/400x300/${formData.type === 'lost' ? 'ef4444' : '10b981'}/ffffff?text=${encodeURIComponent(formData.title)}`,
-        user: "Current User" // In a real app, this would come from auth context
-      };
+      console.log('AddPostModal - Form validation passed');
       
-      onSubmit(postData);
+      try {
+        // Create a FormData object for the API call
+        const formDataToSubmit = new FormData();
+        
+        // Add all text fields to FormData
+        formDataToSubmit.append('type', formData.type);
+        formDataToSubmit.append('title', formData.title);
+        formDataToSubmit.append('description', formData.description);
+        formDataToSubmit.append('location', formData.location);
+        formDataToSubmit.append('contact', formData.contact);
+        
+        // Add image file if present
+        if (formData.image && formData.image instanceof File) {
+          console.log('AddPostModal - Adding image to FormData:', formData.image.name);
+          formDataToSubmit.append('image', formData.image);
+        }
+        
+        console.log('AddPostModal - FormData created successfully');
+        
+        // Log FormData entries for debugging
+        console.log('AddPostModal - FormData entries:');
+        for (let pair of formDataToSubmit.entries()) {
+          console.log(pair[0] + ': ' + (pair[1] instanceof File ? 
+            `File: ${pair[1].name} (${pair[1].size} bytes)` : pair[1]));
+        }
+        
+        console.log('AddPostModal - Submitting FormData to parent component');
+        onSubmit(formDataToSubmit);
+      } catch (error) {
+        console.error('AddPostModal - Error preparing form data:', error);
+        setErrors(prev => ({
+          ...prev,
+          form: 'Error preparing form data: ' + error.message
+        }));
+      }
+    } else {
+      console.log('AddPostModal - Form validation failed:', errors);
     }
   };
 
@@ -76,8 +168,9 @@ export default function AddPostModal({ onClose, onSubmit, isSubmitting = false }
       description: "",
       location: "",
       contact: "",
-      image: ""
+      image: null
     });
+    setImagePreview(null);
     setErrors({});
     onClose();
   };
@@ -177,18 +270,41 @@ export default function AddPostModal({ onClose, onSubmit, isSubmitting = false }
             {errors.contact && <span className="error-message">{errors.contact}</span>}
           </div>
 
-          {/* Image URL (Optional) */}
+          {/* Image Upload (Optional) */}
           <div className="form-group">
-            <label className="form-label">Image URL (Optional)</label>
-            <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleInputChange}
-              className="form-input"
-              placeholder="https://example.com/image.jpg"
-            />
-            <span className="form-hint">Leave empty to use a placeholder image</span>
+            <label className="form-label">Image (Optional)</label>
+            <div className="image-upload-container">
+              <input
+                type="file"
+                id="image-upload"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="image-input"
+                style={{ display: 'none' }}
+              />
+              
+              {!imagePreview ? (
+                <label htmlFor="image-upload" className="image-upload-label">
+                  <div className="upload-placeholder">
+                    <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span>Click to upload image</span>
+                    <span className="upload-hint">PNG, JPG up to 5MB</span>
+                  </div>
+                </label>
+              ) : (
+                <div className="image-preview-container">
+                  <img src={imagePreview} alt="Preview" className="image-preview" />
+                  <button type="button" onClick={removeImage} className="remove-image-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+            {errors.image && <span className="error-message">{errors.image}</span>}
           </div>
 
           {/* Form Actions */}

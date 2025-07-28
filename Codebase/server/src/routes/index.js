@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
+const lostAndFoundRoutes = require('./lostAndFoundRoutes');
 
 // Root route
 router.get('/', (req, res) => {
@@ -13,5 +14,8 @@ router.use('/api/auth', authRoutes);
 
 // User routes
 router.use('/api', userRoutes);
+
+// Lost and Found routes
+router.use('/api/lost-and-found', lostAndFoundRoutes);
 
 module.exports = router;
