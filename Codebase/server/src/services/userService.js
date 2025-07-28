@@ -93,6 +93,26 @@ class UserService {
     }
   }
 
+  // Get user by email (for token validation)
+  async getUserByEmail(email) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          department: true,
+          createdAt: true
+        }
+      });
+      return user;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      throw error;
+    }
+  }
+
   // Close database connection
   async disconnect() {
     await prisma.$disconnect();

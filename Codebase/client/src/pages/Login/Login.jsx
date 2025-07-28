@@ -3,15 +3,15 @@ import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import loginImage from '../../assets/login.png';
 import ApiService from '../../services/api.js';
-import { authUtils } from '../../utils/auth.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loggedIn, setLoggedIn] = useState(authUtils.isAuthenticated());
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
@@ -38,12 +38,11 @@ export default function LoginPage() {
       const result = await ApiService.login(email, password);
 
       if (result.success) {
-        // Store authentication data
+        // Store authentication data using auth context
         if (result.data.token) {
-          authUtils.setAuthData(result.data.token, result.data.user);
+          login(result.data.token, result.data.user);
         }
         
-        setLoggedIn(true);
         setMessage('Login successful! Redirecting...');
         
         // Redirect to homepage after successful login
@@ -64,9 +63,8 @@ export default function LoginPage() {
   const handleLogout = () => {
     setEmail("");
     setPassword("");
-    setLoggedIn(false);
     setMessage('');
-    authUtils.clearAuthData();
+    // Auth context will handle clearing auth data
   };
 
   if (loggedIn) {

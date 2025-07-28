@@ -16,73 +16,95 @@ import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import { authUtils } from "./utils/auth.js";
+import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 
+// Loading component
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+      <p className="text-green-600 font-medium">Loading IUTverse...</p>
+    </div>
+  </div>
+);
 
-function App() {
-  const isAuthenticated = authUtils.isAuthenticated();
+// App Routes Component (needs to be inside AuthProvider)
+function AppRoutes() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route 
-          path="/login" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} 
-        />
-        <Route 
-          path="/signup" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} 
-        />
-        
-        {/* Protected routes */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Homepage />
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } />
-        <Route path="/catcorner" element={
-          <ProtectedRoute>
-            <CatCorner />
-          </ProtectedRoute>
-        } />
-        <Route path="/lostandfound" element={
-          <ProtectedRoute>
-            <LostAndFound />
-          </ProtectedRoute>
-        } />
-        <Route path="/jobs" element={
-          <ProtectedRoute>
-            <JobsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/confessions" element={
-          <ProtectedRoute>
-            <Confessions />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/moderation" element={
-          <ProtectedRoute>
-            <Moderation />
-          </ProtectedRoute>
-        } />
-        <Route path="/eventhub" element={
-          <ProtectedRoute>
-            <EventHub />
-          </ProtectedRoute>
-        } />
+    <Routes>
+      {/* Public routes */}
+      <Route 
+        path="/login" 
+        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} 
+      />
+      <Route 
+        path="/signup" 
+        element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />} 
+      />
+      
+      {/* Protected routes */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Homepage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
+      <Route path="/catcorner" element={
+        <ProtectedRoute>
+          <CatCorner />
+        </ProtectedRoute>
+      } />
+      <Route path="/lostandfound" element={
+        <ProtectedRoute>
+          <LostAndFound />
+        </ProtectedRoute>
+      } />
+      <Route path="/jobs" element={
+        <ProtectedRoute>
+          <JobsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/confessions" element={
+        <ProtectedRoute>
+          <Confessions />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/moderation" element={
+        <ProtectedRoute>
+          <Moderation />
+        </ProtectedRoute>
+      } />
+      <Route path="/eventhub" element={
+        <ProtectedRoute>
+          <EventHub />
+        </ProtectedRoute>
+      } />
 
-        {/* Catch‑all: redirect based on authentication */}
-        <Route path="*" element={
-          <Navigate to={isAuthenticated ? "/" : "/login"} replace />
-        } />
-      </Routes>
-    </Router>
+      {/* Catch‑all: redirect based on authentication */}
+      <Route path="*" element={
+        <Navigate to={isAuthenticated ? "/" : "/login"} replace />
+      } />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
 }
 

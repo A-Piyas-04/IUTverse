@@ -2,6 +2,24 @@
 const AUTH_TOKEN_KEY = 'iutverse_auth_token';
 const USER_DATA_KEY = 'iutverse_user_data';
 
+// Helper function to decode JWT without verification (client-side only)
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+};
+
 export const authUtils = {
   // Store authentication data
   setAuthData(token, userData) {
@@ -22,7 +40,53 @@ export const authUtils = {
 
   // Check if user is authenticated
   isAuthenticated() {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    
+    // Check if token is expired
+    if (this.isTokenExpired(token)) {
+      this.clearAuthData();
+      return false;
+    }
+    
+    return true;
+  },
+
+  // Check if token is expired
+  isTokenExpired(token) {
+    if (!token) return true;
+    
+    const decoded = decodeJWT(token);
+    if (!decoded || !decoded.exp) return true;
+    
+    // Check if token expires within the next 5 minutes (buffer time)
+    const currentTime = Math.floor(Date.now() / 1000);
+    const bufferTime = 5 * 60; // 5 minutes in seconds
+    
+    return decoded.exp < (currentTime + bufferTime);
+  },
+
+  // Validate token with server
+  async validateTokenWithServer() {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      // Import API service dynamically to avoid circular imports
+      const { default: ApiService } = await import('../services/api.js');
+      const result = await ApiService.validateToken();
+
+      if (!result.success) {
+        this.clearAuthData();
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      this.clearAuthData();
+      return false;
+    }
   },
 
   // Clear authentication data

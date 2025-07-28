@@ -114,8 +114,32 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const validateToken = async (req, res) => {
+  try {
+    // If we reach here, the token is valid (middleware already verified it)
+    const user = await userService.getUserByEmail(req.user.email);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'Token is valid',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Token validation error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   signup,
   login,
-  getAllUsers
+  getAllUsers,
+  validateToken
 };

@@ -33,8 +33,14 @@ class ApiService {
       if (!response.ok) {
         // If unauthorized, clear auth data and redirect to login
         if (response.status === 401 || response.status === 403) {
-          authUtils.clearAuthData();
-          window.location.href = '/login';
+          // Import auth context dynamically to avoid circular imports
+          try {
+            authUtils.clearAuthData();
+            // Force a page reload to reinitialize auth state
+            window.location.href = '/login';
+          } catch (error) {
+            console.error('Error clearing auth data:', error);
+          }
         }
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
@@ -63,6 +69,12 @@ class ApiService {
 
   async getAllUsers() {
     return this.request('/auth/users', {
+      method: 'GET',
+    });
+  }
+
+  async validateToken() {
+    return this.request('/auth/validate', {
       method: 'GET',
     });
   }
