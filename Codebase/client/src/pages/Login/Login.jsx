@@ -69,7 +69,7 @@ export default function LoginPage() {
     logout();
   };
 
-  if (loggedIn) {
+  if (isAuthenticated) {
     const userData = authUtils.getUserData();
     const userEmail = userData ? userData.email : email;
     
