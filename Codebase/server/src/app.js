@@ -8,6 +8,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Parse form data
 app.use(cors());
 
 // Serve static files for uploads
