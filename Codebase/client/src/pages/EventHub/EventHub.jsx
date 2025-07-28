@@ -7,14 +7,14 @@ import "./EventHub.css";
 const SAMPLE_EVENTS = [
   {
     id: 1,
-    title: "IUT Programming Contest 2024",
+    title: "IUT Hackathon 2024",
     type: "Club",
-    clubName: "IUT Programming Club",
+    clubName: "IUT Computer Society",
     date: "2024-12-15",
     time: "10:00 AM",
     location: "Computer Lab, 3rd Floor",
-    description: "Annual programming competition for all students. Solve algorithmic problems and win exciting prizes!",
-    image: "https://placehold.co/400x250/3b82f6/ffffff?text=Programming+Contest",
+    description: "Join a 24-hour coding marathon to build innovative solutions and compete for top prizes!",
+    image: "https://placehold.co/400x250/3b82f6/ffffff?text=Hackathon",
     isWishlisted: false,
     category: "Competition"
   },
@@ -44,27 +44,27 @@ const SAMPLE_EVENTS = [
   },
   {
     id: 4,
-    title: "Cultural Night 2024",
+    title: "IUT Cultural Fest 2024",
     type: "Club",
-    clubName: "IUT Cultural Club",
+    clubName: "IUT SIKS",
     date: "2024-12-25",
     time: "7:00 PM",
     location: "Open Air Theater",
-    description: "A night filled with music, dance, and cultural performances by talented students.",
-    image: "https://placehold.co/400x250/8b5cf6/ffffff?text=Cultural+Night",
+    description: "A vibrant evening of music, dance, and cultural showcases from all over the country.",
+    image: "https://placehold.co/400x250/8b5cf6/ffffff?text=Cultural+Fest",
     isWishlisted: true,
     category: "Celebration"
   },
   {
     id: 5,
-    title: "Debate Competition",
+    title: "Inter-University Debate Showdown",
     type: "Club",
-    clubName: "IUT Debate Club",
+    clubName: "IUT Debating Society",
     date: "2024-12-18",
     time: "3:00 PM",
     location: "Seminar Room 1",
-    description: "Inter-department debate competition on current affairs and social issues.",
-    image: "https://placehold.co/400x250/ef4444/ffffff?text=Debate+Competition",
+    description: "Engage in powerful debates on hot topics with students from across universities.",
+    image: "https://placehold.co/400x250/ef4444/ffffff?text=Debate+Showdown",
     isWishlisted: false,
     category: "Competition"
   },
@@ -94,28 +94,30 @@ const SAMPLE_EVENTS = [
   },
   {
     id: 8,
-    title: "Robotics Workshop",
+    title: "Robotics & AI Workshop",
     type: "Club",
-    clubName: "IUT Robotics Club",
+    clubName: "IUT Robotics Society",
     date: "2024-12-12",
     time: "11:00 AM",
     location: "Engineering Lab",
-    description: "Hands-on workshop on robotics and automation. Learn to build and program robots.",
+    description: "Learn the fundamentals of robotics and AI through practical sessions with hands-on kits.",
     image: "https://placehold.co/400x250/6366f1/ffffff?text=Robotics+Workshop",
     isWishlisted: false,
     category: "Workshop"
   }
 ];
 
+
 // Available clubs for filtering
 const AVAILABLE_CLUBS = [
   "IUT Computer Society",
-  "IUT Automobile Society", 
-  "IUT Debating Society",
   "IUT Robotics Society",
-  "IUT Photographic Society",
   "IUT SIKS",
+  "IUT Debating Society",
   "IUT Al-Fazari Interstellar Society",
+  "IUT Automobile Society", 
+  "IUT Career and Business Society",
+  "IUT Photographic Society",
   "Al Biruni Society of Scientific Studies"
 ];
 
