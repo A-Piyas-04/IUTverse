@@ -22,21 +22,14 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       
       try {
-        // Check if user has a valid token
+        // Check if user has a valid token (check expiry only)
         if (authUtils.isAuthenticated()) {
-          // Validate token with server
-          const isValid = await authUtils.validateTokenWithServer();
-          
-          if (isValid) {
-            setIsAuthenticated(true);
-            setUser(authUtils.getUserData());
-          } else {
-            // Token is invalid, clear auth data
-            setIsAuthenticated(false);
-            setUser(null);
-            authUtils.clearAuthData();
-          }
+          // For faster startup, just check token validity locally
+          // Server validation can happen later during API calls
+          setIsAuthenticated(true);
+          setUser(authUtils.getUserData());
         } else {
+          // No token or expired token - user is not authenticated
           setIsAuthenticated(false);
           setUser(null);
         }

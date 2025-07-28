@@ -74,7 +74,16 @@ export const authUtils = {
     try {
       // Import API service dynamically to avoid circular imports
       const { default: ApiService } = await import('../services/api.js');
-      const result = await ApiService.validateToken();
+      
+      // Add a timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Token validation timeout')), 5000)
+      );
+      
+      const result = await Promise.race([
+        ApiService.validateToken(),
+        timeoutPromise
+      ]);
 
       if (!result.success) {
         this.clearAuthData();

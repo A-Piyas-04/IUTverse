@@ -1,5 +1,5 @@
 import './login.css';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import loginImage from '../../assets/login.png';
 import ApiService from '../../services/api.js';
@@ -12,7 +12,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  
+  // Safely get auth context
+  const authContext = useAuth();
+  const login = authContext?.login;
+  const isAuthenticated = authContext?.isAuthenticated;
+  const user = authContext?.user;
+
+  // If already authenticated, redirect to home
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
@@ -40,22 +52,25 @@ export default function LoginPage() {
 
       if (result.success) {
         // Store authentication data using auth context
-        if (result.data.token) {
+        if (result.data.token && login) {
           login(result.data.token, result.data.user);
+        } else {
+          // Fallback to manual token storage if AuthContext not ready
+          localStorage.setItem('token', result.data.token);
+          localStorage.setItem('user', JSON.stringify(result.data.user));
         }
         
         setMessage('Login successful! Redirecting...');
         
-        // Redirect to homepage after successful login
         setTimeout(() => {
           navigate('/');
-        }, 1500);
+        }, 1000);
       } else {
-        setMessage(result.error || 'Invalid email or password. Please try again.');
+        setMessage(result.message || 'Login failed. Please try again.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setMessage('Network error. Please check your connection and try again.');
+      setMessage('An error occurred during login. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -38,24 +38,20 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Public routes - no auth check needed */}
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+        element={<LoginPage />}
       />
       <Route
         path="/signup"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />}
+        element={<SignupPage />}
       />
 
       {/* Protected routes */}
       <Route
         path="/"
-        element={
-          <ProtectedRoute>
-            <Homepage />
-          </ProtectedRoute>
-        }
+        element={isAuthenticated ? <Homepage /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/profile"

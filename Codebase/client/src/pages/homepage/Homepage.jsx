@@ -3,45 +3,58 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import PostModal from "../../components/PostModal.jsx";
 import { authUtils } from "../../utils/auth.js";
+import { usePosts } from "../../hooks/usePosts.js";
 import "./Homepage.css";
 
 export default function HomePage() {
   
   const navigate = useNavigate();
+  const { posts, loading, error, fetchAllPosts, createPost, toggleLike, clearError } = usePosts();
 
   const [userName] = useState("John Doe"); // Add default username
   const [selectedPost, setSelectedPost] = useState(null);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
   
-  // Sample posts data - this should eventually come from API
-  const userPosts = [
-    {
-      id: 1,
-      name: "John Doe",
-      date: "2 hours ago",
-      content: "Just finished working on the new IUTverse features! Excited to share them with everyone.",
-      likes: 15,
-      shares: 3,
-      img: null
-    },
-    {
-      id: 2,
-      name: "Jane Smith", 
-      date: "5 hours ago",
-      content: "Beautiful sunset from IUT campus today 🌅\n\nThe lake looks amazing this time of year!",
-      likes: 28,
-      shares: 7,
-      img: "/picture1.jpg"
-    },
-    {
-      id: 3,
-      name: "Alex Johnson",
-      date: "1 day ago", 
-      content: "Study group for Computer Networks tomorrow at 3 PM in the library. All CSE students welcome!",
-      likes: 12,
-      shares: 15,
-      img: null
+  // Fetch posts on component mount
+  useEffect(() => {
+    fetchAllPosts();
+  }, [fetchAllPosts]);
+
+  // Handle creating a new post
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || isCreatingPost) return;
+    
+    setIsCreatingPost(true);
+    const result = await createPost({
+      content: newPostContent.trim(),
+      category: "general",
+      isAnonymous: false
+    });
+    
+    if (result.success) {
+      setNewPostContent("");
     }
-  ];
+    setIsCreatingPost(false);
+  };
+
+  // Handle liking a post
+  const handleLikePost = async (postId, event) => {
+    event.stopPropagation(); // Prevent opening post modal
+    await toggleLike(postId);
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    if (diffInHours < 48) return "1 day ago";
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  };
 
   // Handle adding comments to posts
   const handleAddComment = useCallback((postId, comment) => {
@@ -131,7 +144,20 @@ export default function HomePage() {
                 type="text"
                 placeholder="What's on your mind?"
                 className="post-input"
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleCreatePost()}
+                disabled={isCreatingPost}
               />
+              {newPostContent.trim() && (
+                <button 
+                  onClick={handleCreatePost}
+                  disabled={isCreatingPost}
+                  className="post-submit-btn"
+                >
+                  {isCreatingPost ? "Posting..." : "Post"}
+                </button>
+              )}
             </div>
             <div className="post-actions">
               <button className="action-btn live-video">
@@ -146,8 +172,32 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="error-message">
+              <p>❌ Error: {error}</p>
+              <button onClick={clearError} className="clear-error-btn">
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="loading-message">
+              <div className="loading-spinner"></div>
+              <p>Loading posts...</p>
+            </div>
+          )}
+
           {/* Posts */}
-          {userPosts.map((post, index) => (
+          {!loading && posts.length === 0 && !error && (
+            <div className="no-posts-message">
+              <p>No posts yet. Be the first to share something!</p>
+            </div>
+          )}
+
+          {posts.map((post, index) => (
             <div
               key={index}
               className="post"
@@ -162,10 +212,10 @@ export default function HomePage() {
                 />
                 <div className="post-user-info">
                   <h4 className="post-username">
-                    {post.name}
+                    {post.user.name}
                   </h4>
                   <p className="post-meta">
-                    {post.date} • <span className="text-blue-500">🌐</span>
+                    {formatDate(post.createdAt)} • <span className="text-blue-500">🌐</span>
                   </p>
                 </div>
                 <button className="post-options-btn">
@@ -197,13 +247,16 @@ export default function HomePage() {
                   <span>{post.likes}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span>{post.shares} shares</span>
+                  <span>0 shares</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="post-actions-buttons">
-                <button className="post-action-btn">
+                <button 
+                  className="post-action-btn"
+                  onClick={(e) => handleLikePost(post.id, e)}
+                >
                   <span>👍</span>
                   <span>Like</span>
                 </button>
@@ -221,7 +274,7 @@ export default function HomePage() {
           {/* Post Detail Modal */}
           {selectedPost && (
             <PostModal
-              post={userPosts.find((p) => p.id === selectedPost.id)}
+              post={posts.find((p) => p.id === selectedPost.id)}
               onClose={() => setSelectedPost(null)}
               onCommentSubmit={handleAddComment}
             />

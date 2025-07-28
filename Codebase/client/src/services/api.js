@@ -112,6 +112,50 @@ class ApiService {
       body: JSON.stringify(profileData),
     });
   }
+
+  // Posts endpoints
+  async getAllPosts() {
+    return this.request('/posts', {
+      method: 'GET',
+    });
+  }
+
+  async getMyPosts() {
+    return this.request('/posts/my-posts', {
+      method: 'GET',
+    });
+  }
+
+  async getPostsByUserId(userId) {
+    return this.request(`/posts/user/${userId}`, {
+      method: 'GET',
+    });
+  }
+
+  async createPost(postData) {
+    return this.request('/posts', {
+      method: 'POST',
+      body: JSON.stringify(postData),
+    });
+  }
+
+  async deletePost(postId) {
+    return this.request(`/posts/${postId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async toggleLike(postId) {
+    return this.request(`/posts/${postId}/like`, {
+      method: 'POST',
+    });
+  }
+
+  async getPostReactions(postId) {
+    return this.request(`/posts/${postId}/reactions`, {
+      method: 'GET',
+    });
+  }
 }
 
 export default new ApiService();
