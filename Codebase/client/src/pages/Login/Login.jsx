@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout, isAuthenticated, user } = useAuth();
 
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
@@ -65,12 +65,11 @@ export default function LoginPage() {
     setEmail("");
     setPassword("");
     setMessage('');
-    // Auth context will handle clearing auth data
+    // Use auth context logout function
+    logout();
   };
 
-  // Check if user is already logged in
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) {
+  if (loggedIn) {
     const userData = authUtils.getUserData();
     const userEmail = userData ? userData.email : email;
     
