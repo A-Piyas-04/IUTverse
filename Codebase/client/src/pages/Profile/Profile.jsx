@@ -2,13 +2,18 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ApiService from "../../services/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useProfile } from "../../hooks/useProfile.js";
 
 export default function Profile() {
   const { user } = useAuth();
+  const { profileData, userPosts, loading, error, createPost, toggleLike, deletePost } = useProfile();
   const [activeTab, setActiveTab] = useState("Posts");
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [showIntroForm, setShowIntroForm] = useState(false);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [showPostCreator, setShowPostCreator] = useState(false);
   const [introForm, setIntroForm] = useState({
     bio: "",
     schoolName: "",
@@ -26,14 +31,14 @@ export default function Profile() {
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
-      setLoading(true);
+      setProfileLoading(true);
       const res = await ApiService.getProfileByUserId(user.id);
       if (res.success && res.data) {
         setProfile(res.data);
       } else {
         setProfile(null);
       }
-      setLoading(false);
+      setProfileLoading(false);
     };
     fetchProfile();
   }, [user]);
@@ -50,6 +55,35 @@ export default function Profile() {
       setProfile(res.data);
     } else {
       alert("Failed to create profile");
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim()) return;
+    
+    setIsCreatingPost(true);
+    try {
+      const result = await createPost(newPostContent);
+      if (result.success) {
+        setNewPostContent("");
+        setShowPostCreator(false);
+      } else {
+        alert(result.message || "Failed to create post");
+      }
+    } catch (error) {
+      alert("Failed to create post");
+    } finally {
+      setIsCreatingPost(false);
+    }
+  };
+
+  const handleLikePost = async (postId) => {
+    await toggleLike(postId);
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      await deletePost(postId);
     }
   };
 
@@ -78,33 +112,6 @@ export default function Profile() {
     "Videos",
     "Reels",
     "More",
-  ];
-
-  const userPosts = [
-    {
-      date: "November 28, 2024",
-      content:
-        "Just finished my Data Structures assignment! The feeling of getting all test cases to pass is unmatched 🎉",
-      likes: 23,
-      comments: 7,
-      shares: 2,
-    },
-    {
-      date: "November 25, 2024",
-      content:
-        "Campus cats are the real MVPs of IUT. Spotted three new kittens near the lake today 🐱❤️",
-      likes: 42,
-      comments: 12,
-      shares: 8,
-    },
-    {
-      date: "November 20, 2024",
-      content:
-        "Group study session for Calculus 2 finals. Mathematics building, Room 301. Everyone welcome!",
-      likes: 18,
-      comments: 5,
-      shares: 15,
-    },
   ];
 
   const profilePicture = (
@@ -222,7 +229,7 @@ export default function Profile() {
             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Intro</h3>
 
-              {loading ? (
+              {profileLoading ? (
                 <p>Loading profile...</p>
               ) : !profile ? (
                 showIntroForm ? (
@@ -484,38 +491,136 @@ export default function Profile() {
 
           {/* Main Content - Takes remaining space */}
           <div className="flex-1 min-w-0">
-            {/* Create Post */}
+            {/* Enhanced Create Post */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0">
-                  {profilePicture}
+              {!showPostCreator ? (
+                /* Collapsed Post Creator */
+                <div className="flex items-center gap-3">
+                  <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0">
+                    {profilePicture}
+                  </div>
+                  <button
+                    onClick={() => setShowPostCreator(true)}
+                    className="flex-1 py-3 px-4 bg-gray-100 rounded-[25px] text-gray-500 text-left hover:bg-gray-200 transition-colors text-sm"
+                  >
+                    What's on your mind?
+                  </button>
                 </div>
-                <input
-                  type="text"
-                  placeholder="What's on your mind?"
-                  className="flex-1 py-3 px-4 bg-gray-100 rounded-[25px] text-gray-700 placeholder-gray-500 focus:outline-none text-sm"
-                />
-              </div>
-              <div className="flex justify-around pt-3 mt-[12px] border-gray-200">
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-red-500">🎥</span>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Live video
-                  </span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-green-500">📷</span>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Photo/video
-                  </span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-yellow-500">😊</span>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Life event
-                  </span>
-                </button>
-              </div>
+              ) : (
+                /* Expanded Post Creator */
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0">
+                      {profilePicture}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">Create a post</h3>
+                      <p className="text-sm text-gray-500">{user?.name || user?.email || "Anonymous"}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowPostCreator(false);
+                        setNewPostContent("");
+                      }}
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-gray-100 rounded-full"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <textarea
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      placeholder="What's on your mind?"
+                      className="w-full min-h-[120px] p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                      maxLength={500}
+                      disabled={isCreatingPost}
+                    />
+                    <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                      {newPostContent.length}/500
+                    </div>
+                  </div>
+
+                  {/* Post Options */}
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-2">
+                        <button className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                          <span className="text-green-500">📷</span>
+                          <span className="text-gray-600 text-sm font-medium">Photo/video</span>
+                        </button>
+                        <button className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                          <span className="text-yellow-500">😊</span>
+                          <span className="text-gray-600 text-sm font-medium">Feeling/activity</span>
+                        </button>
+                        <button className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                          <span className="text-red-500">📍</span>
+                          <span className="text-gray-600 text-sm font-medium">Check in</span>
+                        </button>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setShowPostCreator(false);
+                            setNewPostContent("");
+                          }}
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
+                          disabled={isCreatingPost}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleCreatePost}
+                          disabled={!newPostContent.trim() || isCreatingPost}
+                          className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            newPostContent.trim() && !isCreatingPost
+                              ? 'bg-blue-500 text-white hover:bg-blue-600'
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {isCreatingPost ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Posting...</span>
+                            </div>
+                          ) : (
+                            'Post'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Action Buttons (shown when collapsed) */}
+              {!showPostCreator && (
+                <div className="flex justify-around pt-3 mt-4 border-t border-gray-200">
+                  <button 
+                    onClick={() => setShowPostCreator(true)}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span className="text-red-500">🎥</span>
+                    <span className="text-gray-600 text-sm font-medium">Live video</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowPostCreator(true)}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span className="text-green-500">📷</span>
+                    <span className="text-gray-600 text-sm font-medium">Photo/video</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowPostCreator(true)}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span className="text-yellow-500">😊</span>
+                    <span className="text-gray-600 text-sm font-medium">Life event</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Filter and View Options */}
@@ -536,82 +641,104 @@ export default function Profile() {
             </div>
 
             {/* Posts */}
-            {userPosts.map((post, index) => (
-              <div
-                key={index}
-                className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px]"
-              >
-                {/* Post Header */}
-                <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
-                  <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0 mt-[30px]">
-                    {profilePicture}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
-                      {userName}
-                    </h4>
-                    <p className="text-[13px] text-gray-500 flex items-center gap-1 ">
-                      {post.date} • <span className="text-blue-500">🌐</span>
-                    </p>
-                  </div>
-                  <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
-                    <span className="text-xl">⋯</span>
-                  </button>
-                </div>
-
-                {/* Post Content */}
-                <div className="px-4 pb-3 ml-[10px]">
-                  <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
-                    {post.content}
-                  </div>
-                </div>
-
-                {/* Reactions and Comments Count */}
-                <div className="flex justify-between items-center px-4 py-2 text-[18px] ml-[10px] text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <div className="flex">
-                      <span className="text-blue-500">👍</span>
-                      <span className="text-red-500">❤️</span>
-                    </div>
-                    <span>{post.likes}</span>
-                  </div>
-                  <div className="flex gap-4">
-                    <span className="mr-[5px]">{post.comments} comments</span>
-                    <span>{post.shares} shares</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-around border-t border-gray-200 py-1">
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                    <span>👍</span>
-                    <span>Like</span>
-                  </button>
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                    <span>💬</span>
-                    <span>Comment</span>
-                  </button>
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                    <span>↗️</span>
-                    <span>Share</span>
-                  </button>
-                </div>
-
-                {/* Comment Input */}
-                <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
-                  <img
-                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                    alt="Me"
-                    className="w-[30px] h-[30px] rounded-full"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
-                  />
-                </div>
+            {loading ? (
+              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+                <p className="text-gray-500">Loading posts...</p>
               </div>
-            ))}
+            ) : error ? (
+              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+                <p className="text-red-500">Error: {error}</p>
+              </div>
+            ) : userPosts.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+                <p className="text-gray-500">No posts yet. Create your first post above!</p>
+              </div>
+            ) : (
+              userPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px]"
+                >
+                  {/* Post Header */}
+                  <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
+                    <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0 mt-[30px]">
+                      {profilePicture}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
+                        {post.author?.name || user?.name || "Anonymous"}
+                      </h4>
+                      <p className="text-[13px] text-gray-500 flex items-center gap-1 ">
+                        {new Date(post.createdAt).toLocaleDateString()} • <span className="text-blue-500">🌐</span>
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleDeletePost(post.id)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+                    >
+                      <span className="text-xl">⋯</span>
+                    </button>
+                  </div>
+
+                  {/* Post Content */}
+                  <div className="px-4 pb-3 ml-[10px]">
+                    <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
+                      {post.content}
+                    </div>
+                  </div>
+
+                  {/* Reactions and Comments Count */}
+                  <div className="flex justify-between items-center px-4 py-2 text-[18px] ml-[10px] text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <div className="flex">
+                        <span className="text-blue-500">👍</span>
+                        <span className="text-red-500">❤️</span>
+                      </div>
+                      <span>{post.likesCount || 0}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="mr-[5px]">{post.commentsCount || 0} comments</span>
+                      <span>{post.sharesCount || 0} shares</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-around border-t border-gray-200 py-1">
+                    <button 
+                      onClick={() => handleLikePost(post.id)}
+                      className={`flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-[15px] font-medium flex-1 ${
+                        post.isLikedByCurrentUser ? 'text-blue-500' : 'text-gray-600'
+                      }`}
+                    >
+                      <span>{post.isLikedByCurrentUser ? '👍' : '👍'}</span>
+                      <span>Like</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                      <span>💬</span>
+                      <span>Comment</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                      <span>↗️</span>
+                      <span>Share</span>
+                    </button>
+                  </div>
+
+                  {/* Comment Input */}
+                  <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
+                    <img
+                      src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                      alt="Me"
+                      className="w-[30px] h-[30px] rounded-full"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Write a comment..."
+                      className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

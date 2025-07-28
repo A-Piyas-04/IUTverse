@@ -15,6 +15,7 @@ export default function HomePage() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [newPostContent, setNewPostContent] = useState("");
   const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [showPostCreator, setShowPostCreator] = useState(false);
   
   // Fetch posts on component mount
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function HomePage() {
     
     if (result.success) {
       setNewPostContent("");
+      setShowPostCreator(false);
     }
     setIsCreatingPost(false);
   };
