@@ -1,15 +1,18 @@
-import "./login.css";
-import { useState } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
-import loginImage from "../../assets/login.png";
+import './login.css';
+import { useState } from 'react';
+import { useNavigate, NavLink } from 'react-router-dom';
+import loginImage from '../../assets/login.png';
+import ApiService from '../../services/api.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import { authUtils } from '../../utils/auth.js';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
@@ -18,30 +21,68 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email && password) {
-      if (!validateIUTEmail(email)) {
-        setMessage("Please enter a valid IUT email address.");
-        return;
+    
+    if (!validateIUTEmail(email)) {
+      setMessage('Please enter a valid IUT email address (yourname@iut-dhaka.edu)');
+      return;
+    }
+
+    if (!email || !password) {
+      setMessage('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const result = await ApiService.login(email, password);
+
+      if (result.success) {
+        // Store authentication data using auth context
+        if (result.data.token) {
+          login(result.data.token, result.data.user);
+        }
+        
+        setMessage('Login successful! Redirecting...');
+        
+        // Redirect to homepage after successful login
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      } else {
+        setMessage(result.error || 'Invalid email or password. Please try again.');
       }
-      setLoading(true);
-      setMessage("");
-      // Simulate login (replace with real API call)
-      setTimeout(() => {
-        setLoading(false);
-        setLoggedIn(true);
-        localStorage.setItem("user", JSON.stringify({ email }));
-        navigate("/home");
-      }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      setMessage('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLogout = () => {
     setEmail("");
     setPassword("");
-    setLoggedIn(false);
-    setMessage("");
-    localStorage.removeItem("user");
+    setMessage('');
+    // Auth context will handle clearing auth data
   };
+
+  // Check if user is already logged in
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) {
+    const userData = authUtils.getUserData();
+    const userEmail = userData ? userData.email : email;
+    
+    return (
+      <div className="auth-bg center">
+        <div className="auth-appname">Welcome, {userEmail}</div>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-bg">
@@ -79,13 +120,17 @@ export default function LoginPage() {
             required
             disabled={loading}
           />
-
-          {message && <div className="message error">{message}</div>}
-
+          
+          {message && (
+            <div className="message error">
+              {message}
+            </div>
+          )}
+          
           <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
-
+          
           <div className="auth-link">
             Don't have a password yet? <a href="/signup">Get started here</a>
           </div>

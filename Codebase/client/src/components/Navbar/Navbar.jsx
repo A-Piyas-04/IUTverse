@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate, NavLink } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 import "./Navbar.css";
 
 export default function Navbar({
@@ -13,6 +14,7 @@ export default function Navbar({
   ],
 }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const getPath = (label) => {
     switch (label) {
@@ -31,6 +33,11 @@ export default function Navbar({
       default:
         return `/${label.toLowerCase()}`;
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -74,7 +81,7 @@ export default function Navbar({
             className="h-[45px] w-[45px] rounded-full shadow hover:scale-105 transition cursor-pointer"
             onClick={() => navigate("/profile")}
           />
-          <button className="logout-btn" onClick={() => navigate("/login")}>
+          <button className="logout-btn" onClick={handleLogout}>
             Logout
           </button>
         </div>

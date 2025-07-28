@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authRoutes = require('./authRoutes');
+const userRoutes = require('./userRoutes');
 
 // Root route
 router.get('/', (req, res) => {
@@ -8,6 +9,9 @@ router.get('/', (req, res) => {
 });
 
 // Auth routes
-router.use('/api', authRoutes);
+router.use('/api/auth', authRoutes);
+
+// User routes
+router.use('/api', userRoutes);
 
 module.exports = router;
