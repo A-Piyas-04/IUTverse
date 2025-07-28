@@ -1,7 +1,7 @@
 .confessions-page {
   height: 100vh;
   overflow-y: auto;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+   background: linear-gradient(135deg, #e6fce8 50%, #e1fcee 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -12,7 +12,7 @@
 
 /* Header Section */
 .confessions-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(20, 24, 102);
   padding: 3rem 2rem;
   text-align: center;
   color: white;
