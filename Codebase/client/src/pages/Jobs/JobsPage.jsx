@@ -131,7 +131,7 @@ export default function JobsPage() {
       : jobs.filter((job) => job.type === selectedCategory);
 
   return (
-    <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
+    <div className="w-screen h-screen min-h-screen min-w-full bg-[background: linear-gradient(135deg, #e6fce8 50%, #e1fcee 100%);] text-gray-900 font-sans flex flex-col" important>
       {/* TOP NAVBAR */}
       <Navbar />
 

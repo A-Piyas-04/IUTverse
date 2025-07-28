@@ -1,3 +1,4 @@
+// This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
@@ -36,12 +37,21 @@ model User {
 }
 
 model Profile {
-  userId         Int      @id
-  bio            String?
-  profilePicture String?
-  interests      String[]
-  badges         String[]
-
+  userId           Int      @id
+  bio              String?
+  profilePicture   String?
+  interests        String[]
+  badges           String[]
+  schoolName       String?   // SSC institution
+  collegeName      String?   // HSC institution
+  currentProgram   String?
+  currentYear      String?
+  currentSemester  String?
+  hometown         String?
+  currentResidence String?
+  currentHall      String?
+  currentRoom      String?
+  currentBed       String?
   user User @relation(fields: [userId], references: [id])
 }
 

@@ -113,6 +113,49 @@ class UserService {
     }
   }
 
+  // Get profile by userId
+  async getProfile(userId) {
+    try {
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+      });
+      return profile;
+    } catch (error) {
+      console.error('Error getting profile:', error);
+      throw error;
+    }
+  }
+
+  // Create profile
+  async createProfile(userId, profileData) {
+    try {
+      const profile = await prisma.profile.create({
+        data: {
+          userId,
+          ...profileData,
+        },
+      });
+      return profile;
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
+  }
+
+  // Update profile
+  async updateProfile(userId, profileData) {
+    try {
+      const profile = await prisma.profile.update({
+        where: { userId },
+        data: profileData,
+      });
+      return profile;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  }
+
   // Close database connection
   async disconnect() {
     await prisma.$disconnect();

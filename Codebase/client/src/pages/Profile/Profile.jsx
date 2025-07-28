@@ -1,9 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
+import ApiService from "../../services/api.js";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 
 export default function Profile() {
-  const navigate = () => {};
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("Posts");
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showIntroForm, setShowIntroForm] = useState(false);
+  const [introForm, setIntroForm] = useState({
+    bio: "",
+    schoolName: "",
+    collegeName: "",
+    currentProgram: "",
+    currentYear: "",
+    currentSemester: "",
+    hometown: "",
+    currentResidence: "",
+    currentHall: "",
+    currentRoom: "",
+    currentBed: "",
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      setLoading(true);
+      const res = await ApiService.getProfileByUserId(user.id);
+      if (res.success && res.data) {
+        setProfile(res.data);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, [user]);
+
+  const handleIntroChange = (e) => {
+    setIntroForm({ ...introForm, [e.target.name]: e.target.value });
+  };
+
+  const handleIntroSubmit = async (e) => {
+    e.preventDefault();
+    const res = await ApiService.createProfile(introForm);
+    if (res.success) {
+      setShowIntroForm(false);
+      setProfile(res.data);
+    } else {
+      alert("Failed to create profile");
+    }
+  };
+
+  const navigate = () => {};
   const [users, setUsers] = useState([]);
 
   const userName = "নুরেন ফাহমিদ";
@@ -172,106 +222,217 @@ export default function Profile() {
             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Intro</h3>
 
-              <button className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm">
-                Add bio
-              </button>
+              {loading ? (
+                <p>Loading profile...</p>
+              ) : !profile ? (
+                showIntroForm ? (
+                  <form onSubmit={handleIntroSubmit} className="space-y-2">
+                    <input
+                      name="bio"
+                      value={introForm.bio}
+                      onChange={handleIntroChange}
+                      placeholder="Bio"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="schoolName"
+                      value={introForm.schoolName}
+                      onChange={handleIntroChange}
+                      placeholder="School Name"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="collegeName"
+                      value={introForm.collegeName}
+                      onChange={handleIntroChange}
+                      placeholder="College Name"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentProgram"
+                      value={introForm.currentProgram}
+                      onChange={handleIntroChange}
+                      placeholder="Current Program"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentYear"
+                      value={introForm.currentYear}
+                      onChange={handleIntroChange}
+                      placeholder="Current Year"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentSemester"
+                      value={introForm.currentSemester}
+                      onChange={handleIntroChange}
+                      placeholder="Current Semester"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="hometown"
+                      value={introForm.hometown}
+                      onChange={handleIntroChange}
+                      placeholder="Hometown"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentResidence"
+                      value={introForm.currentResidence}
+                      onChange={handleIntroChange}
+                      placeholder="Current Residence"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentHall"
+                      value={introForm.currentHall}
+                      onChange={handleIntroChange}
+                      placeholder="Current Hall"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentRoom"
+                      value={introForm.currentRoom}
+                      onChange={handleIntroChange}
+                      placeholder="Current Room"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
+                      name="currentBed"
+                      value={introForm.currentBed}
+                      onChange={handleIntroChange}
+                      placeholder="Current Bed"
+                      className="w-full p-2 border rounded"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full py-2 px-4 bg-blue-500 text-white rounded"
+                    >
+                      Save Intro
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowIntroForm(false)}
+                      className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded mt-2"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setShowIntroForm(true)}
+                    className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
+                  >
+                    Add intro
+                  </button>
+                )
+              ) : (
+                <form onSubmit={handleIntroSubmit} className="space-y-2">
+                  <button
+                    type="submit"
+                    className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
+                  >
+                    Edit intro
+                  </button>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমি <strong> {userName}</strong>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমি <strong> {schoolName}</strong>   থেকে এসএসসি পাশ করেছি
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  এবং <strong> {collegeName}</strong>   থেকে এইচএসসি পাশ করেছি
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  <strong>{currentDepartment}</strong>   ডিপার্টমেন্টে <br />
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  {<strong>{currentProgram}</strong>}   প্রোগ্রামে <br />
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  {<strong>{currentYear}</strong>}   বর্ষে <br />
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  {<strong>{currentSemester}</strong>}   সেমিস্টারে অধ্যয়নরত
-                  আছি।
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমার স্টুডেন্ট আইডি   <strong>{studentId}</strong>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমার হোমটাউন   <strong>{hometown}</strong>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমার বর্তমান বাসা   <strong>{currentResidence}</strong>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির{" "}
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  <strong>{currentHall}</strong>   হল অফ রেসিডেন্স বিল্ডিং এ{" "}
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  {<strong>{currentRoom}</strong>}   রুমে{" "}
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  {<strong>{currentBed}</strong>}   বেডে থাকি।
-                </div>
-                {/* <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                  <span className="text-gray-500">🎓</span>
-                  <span>
-                    Studies{" "}
-                    <strong>BSc. in Computer Science and Engineering</strong> at{" "}
-                    <strong>Islamic University of Technology (IUT)</strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                  <span className="text-gray-500">🎓</span>
-                  <span>
-                    Studied at <strong>Dhaka Residential Model College</strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                  <span className="text-gray-500">🏫</span>
-                  <span>
-                    Went to <strong>Viqarunnisa Noon School and College</strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                  <span className="text-gray-500">🏠</span>
-                  <span>
-                    Lives in <strong>Dhaka, Bangladesh</strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                  <span className="text-gray-500">📍</span>
-                  <span>
-                    From <strong>Sylhet, Bangladesh</strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                  <span className="text-gray-500">📱</span>
-                  <span className="text-blue-600 cursor-pointer hover:underline">
-                    sarah.ahmed.dev
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                  <span className="text-gray-500">💼</span>
-                  <span>
-                    Works at <strong>Tech Solutions Ltd</strong> as{" "}
-                    <strong>Software Developer</strong>
-                  </span>
-                </div> */}
-              </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমি <strong> {profile.userName}</strong>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমি <strong> {profile.schoolName}</strong>   থেকে এসএসসি পাশ করেছি
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      এবং <strong> {profile.collegeName}</strong>   থেকে এইচএসসি পাশ করেছি
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      <strong>{profile.currentDepartment}</strong>   ডিপার্টমেন্টে <br />
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      {<strong>{profile.currentProgram}</strong>}   প্রোগ্রামে <br />
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      {<strong>{profile.currentYear}</strong>}   বর্ষে <br />
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      {<strong>{profile.currentSemester}</strong>}   সেমিস্টারে অধ্যয়নরত
+                      আছি।
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমার স্টুডেন্ট আইডি   <strong>{profile.studentId}</strong>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমার হোমটাউন   <strong>{profile.hometown}</strong>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমার বর্তমান বাসা   <strong>{profile.currentResidence}</strong>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির{" "}
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      <strong>{profile.currentHall}</strong>   হল অফ রেসিডেন্স বিল্ডিং এ{" "}
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      {<strong>{profile.currentRoom}</strong>}   রুমে{" "}
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      {<strong>{profile.currentBed}</strong>}   বেডে থাকি।
+                    </div>
+                    {/* <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                      <span className="text-gray-500">🎓</span>
+                      <span>
+                        Studies{" "}
+                        <strong>BSc. in Computer Science and Engineering</strong> at{" "}
+                        <strong>Islamic University of Technology (IUT)</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
+                      <span className="text-gray-500">🎓</span>
+                      <span>
+                        Studied at <strong>Dhaka Residential Model College</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
+                      <span className="text-gray-500">🏫</span>
+                      <span>
+                        Went to <strong>Viqarunnisa Noon School and College</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
+                      <span className="text-gray-500">🏠</span>
+                      <span>
+                        Lives in <strong>Dhaka, Bangladesh</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
+                      <span className="text-gray-500">📍</span>
+                      <span>
+                        From <strong>Sylhet, Bangladesh</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
+                      <span className="text-gray-500">📱</span>
+                      <span className="text-blue-600 cursor-pointer hover:underline">
+                        sarah.ahmed.dev
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
+                      <span className="text-gray-500">💼</span>
+                      <span>
+                        Works at <strong>Tech Solutions Ltd</strong> as{" "}
+                        <strong>Software Developer</strong>
+                      </span>
+                    </div> */}
+                  </div>
+                </form>
+              )}
             </div>
 
             {/* Photos Card */}
