@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./AddPostModal.css";
 
-export default function AddPostModal({ onClose, onSubmit }) {
+export default function AddPostModal({ onClose, onSubmit, isSubmitting = false }) {
   const [formData, setFormData] = useState({
     type: "lost",
     title: "",
@@ -193,16 +193,34 @@ export default function AddPostModal({ onClose, onSubmit }) {
 
           {/* Form Actions */}
           <div className="form-actions">
-            <button type="button" className="cancel-btn" onClick={handleClose}>
+            <button 
+              type="button" 
+              className="cancel-btn" 
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="submit-btn">
-              <span className="submit-icon">📝</span>
-              Create Post
+            <button 
+              type="submit" 
+              className={`submit-btn ${isSubmitting ? 'submitting' : ''}`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="submit-spinner">⏳</span>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <span className="submit-icon">📝</span>
+                  Create Post
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import LostFoundCard from "./components/LostFoundCard.jsx";
 import AddPostModal from "./components/AddPostModal.jsx";
+import { 
+  getLostAndFoundPosts, 
+  createLostAndFoundPost, 
+  markPostAsResolved 
+} from "../../services/lostAndFoundApi.js";
 import "./LostAndFound.css";
 
 // Sample data - in a real app, this would come from a database
@@ -79,10 +84,13 @@ const SAMPLE_POSTS = [
 ];
 
 export default function LostAndFound() {
-  const [posts, setPosts] = useState(SAMPLE_POSTS);
+  const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Filter posts based on type and search term
   const filteredPosts = useMemo(() => {
@@ -96,30 +104,85 @@ export default function LostAndFound() {
     });
   }, [posts, filter, searchTerm]);
 
+  // Fetch posts from API
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedPosts = await getLostAndFoundPosts({
+        type: filter,
+        search: searchTerm
+      });
+      setPosts(fetchedPosts);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again.');
+      // Fallback to sample data if API fails
+      setPosts(SAMPLE_POSTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Add new post
-  const handleAddPost = (newPost) => {
-    const post = {
-      ...newPost,
-      id: Date.now(),
-      date: new Date().toISOString().split("T")[0],
-      time: new Date().toLocaleTimeString("en-US", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      status: "active",
-    };
-    setPosts([post, ...posts]);
-    setShowAddModal(false);
+  const handleAddPost = async (newPost) => {
+    try {
+      setSubmitting(true);
+      const createdPost = await createLostAndFoundPost(newPost);
+      setPosts([createdPost, ...posts]);
+      setShowAddModal(false);
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError('Failed to create post. Please try again.');
+      // Fallback: add to local state with temporary ID
+      const post = {
+        ...newPost,
+        id: Date.now(),
+        date: new Date().toISOString().split("T")[0],
+        time: new Date().toLocaleTimeString("en-US", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        status: "active",
+        user: "Current User"
+      };
+      setPosts([post, ...posts]);
+      setShowAddModal(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Mark post as resolved
-  const handleResolvePost = (postId) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId ? { ...post, status: "resolved" } : post
-      )
-    );
+  const handleResolvePost = async (postId) => {
+    try {
+      await markPostAsResolved(postId);
+      setPosts(
+        posts.map((post) =>
+          post.id === postId ? { ...post, status: "resolved" } : post
+        )
+      );
+    } catch (err) {
+      console.error('Error resolving post:', err);
+      setError('Failed to resolve post. Please try again.');
+      // Fallback: update local state anyway
+      setPosts(
+        posts.map((post) =>
+          post.id === postId ? { ...post, status: "resolved" } : post
+        )
+      );
+    }
+  };
+
+  // Load posts on component mount and when filter/search changes
+  useEffect(() => {
+    fetchPosts();
+  }, [filter, searchTerm]);
+
+  // Refresh posts function
+  const handleRefresh = () => {
+    fetchPosts();
   };
 
   return (
@@ -141,6 +204,15 @@ export default function LostAndFound() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="error-message animate-slide-in-top">
+            <span className="error-icon">⚠️</span>
+            {error}
+            <button className="error-dismiss" onClick={() => setError(null)}>×</button>
+          </div>
+        )}
+
         {/* Controls Section */}
         <div className="controls-section animate-slide-in-bottom">
           <div className="search-filter-container">
@@ -154,6 +226,7 @@ export default function LostAndFound() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -164,18 +237,21 @@ export default function LostAndFound() {
                 <button
                   className={`filter-btn ${filter === "all" ? "active" : ""}`}
                   onClick={() => setFilter("all")}
+                  disabled={loading}
                 >
                   All Posts
                 </button>
                 <button
                   className={`filter-btn ${filter === "lost" ? "active" : ""}`}
                   onClick={() => setFilter("lost")}
+                  disabled={loading}
                 >
                   <span className="lost-icon">❌</span> Lost
                 </button>
                 <button
                   className={`filter-btn ${filter === "found" ? "active" : ""}`}
                   onClick={() => setFilter("found")}
+                  disabled={loading}
                 >
                   <span className="found-icon">✅</span> Found
                 </button>
@@ -183,11 +259,21 @@ export default function LostAndFound() {
             </div>
           </div>
 
-          {/* Add Post Button */}
-          <div className="add-post-container">
+          {/* Action Buttons */}
+          <div className="action-buttons-container">
+            <button
+              className="refresh-btn"
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh posts"
+            >
+              <span className={`refresh-icon ${loading ? 'spinning' : ''}`}>🔄</span>
+              Refresh
+            </button>
             <button
               className="add-post-btn"
               onClick={() => setShowAddModal(true)}
+              disabled={loading}
             >
               <span className="add-icon">+</span>
               Add Post
@@ -205,7 +291,13 @@ export default function LostAndFound() {
 
         {/* Posts Grid */}
         <div className="posts-grid">
-          {filteredPosts.length === 0 ? (
+          {loading ? (
+            <div className="loading-container animate-fade-in-scale">
+              <div className="loading-spinner"></div>
+              <h3>Loading posts...</h3>
+              <p>Please wait while we fetch the latest posts</p>
+            </div>
+          ) : filteredPosts.length === 0 ? (
             <div className="no-posts animate-fade-in-scale">
               <div className="no-posts-icon">🔍</div>
               <h3>No posts found</h3>
@@ -229,6 +321,7 @@ export default function LostAndFound() {
         <AddPostModal
           onClose={() => setShowAddModal(false)}
           onSubmit={handleAddPost}
+          isSubmitting={submitting}
         />
       )}
     </div>
