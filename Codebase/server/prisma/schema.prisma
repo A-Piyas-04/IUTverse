@@ -36,6 +36,7 @@ model User {
   questionPapers QuestionPaper[]
 
   jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
+  jobComments JobComment[] // Comments made by this user on jobs
 }
 
 model Profile {
@@ -75,6 +76,28 @@ model Job {
   postedBy     User     @relation("UserJobs", fields: [postedById], references: [id])
   postedById   Int
   createdAt    DateTime @default(now())
+  
+  comments     JobComment[] // Comments on this job
+}
+
+model JobComment {
+  id          Int      @id @default(autoincrement())
+  content     String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       Int
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Self-referencing relationship for replies
+  parentComment   JobComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  parentCommentId Int?
+  replies         JobComment[] @relation("CommentReplies")
+  
+  @@index([jobId])
+  @@index([authorId])
+  @@index([parentCommentId])
 }
 
 model Post {

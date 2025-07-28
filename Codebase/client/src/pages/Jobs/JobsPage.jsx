@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ApiService from "../../services/api.js";
 import "./JobsPage.css";
 
 export default function JobsPage() {
+  const navigate = useNavigate();
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All Jobs");
   const [jobs, setJobs] = useState([]);
@@ -16,14 +18,51 @@ export default function JobsPage() {
     compensation: "",
     deadline: "",
   });
+  const [comments, setComments] = useState({});
+  const [newComment, setNewComment] = useState({});
+  const [loadingComments, setLoadingComments] = useState({});
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [showReplies, setShowReplies] = useState({});
+  const [replyInputs, setReplyInputs] = useState({});
 
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
-      const res = await ApiService.getJobs();
-      if (res.success) {
-        setJobs(res.data);
-      } else {
+      setError(null);
+      try {
+        const res = await ApiService.getJobs();
+        if (res.success) {
+          setJobs(res.data);
+          // Load comments for each job
+          const commentPromises = res.data.map(async (job) => {
+            try {
+              const commentsRes = await ApiService.getJobComments(job.id);
+              if (commentsRes.success) {
+                return { jobId: job.id, comments: commentsRes.data };
+              }
+              return { jobId: job.id, comments: [] };
+            } catch (error) {
+              console.error(
+                `Failed to load comments for job ${job.id}:`,
+                error
+              );
+              return { jobId: job.id, comments: [] };
+            }
+          });
+          const commentsData = await Promise.all(commentPromises);
+          const commentsMap = {};
+          commentsData.forEach(({ jobId, comments }) => {
+            commentsMap[jobId] = comments;
+          });
+          setComments(commentsMap);
+        } else {
+          setJobs([]);
+          setError(res.error || "Failed to load jobs");
+        }
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        setError("Failed to load jobs. Please try again.");
         setJobs([]);
       }
       setLoading(false);
@@ -48,19 +87,43 @@ export default function JobsPage() {
 
   const handleSubmitJob = async (e) => {
     e.preventDefault();
-    const jobToAdd = {
-      title: newJob.title,
-      type: newJob.type,
-      description: newJob.description,
-      requirements: newJob.requirements.split("\n").filter((req) => req.trim()),
-      compensation: newJob.compensation,
-      deadline: newJob.deadline ? new Date(newJob.deadline).toISOString() : null,
-    };
-    const res = await ApiService.createJob(jobToAdd);
-    if (res.success) {
-      // Refresh jobs from backend
-      const jobsRes = await ApiService.getJobs();
-      if (jobsRes.success) setJobs(jobsRes.data);
+    setError(null);
+    try {
+      const jobToAdd = {
+        title: newJob.title,
+        type: newJob.type,
+        description: newJob.description,
+        requirements: newJob.requirements
+          .split("\n")
+          .filter((req) => req.trim()),
+        compensation: newJob.compensation,
+        deadline: newJob.deadline
+          ? new Date(newJob.deadline).toISOString()
+          : null,
+      };
+      const res = await ApiService.createJob(jobToAdd);
+      if (res.success) {
+        // Refresh jobs from backend
+        const jobsRes = await ApiService.getJobs();
+        if (jobsRes.success) {
+          setJobs(jobsRes.data);
+          // Initialize empty comments for new jobs
+          const newCommentsMap = { ...comments };
+          jobsRes.data.forEach((job) => {
+            if (!newCommentsMap[job.id]) {
+              newCommentsMap[job.id] = [];
+            }
+          });
+          setComments(newCommentsMap);
+        }
+        setSuccess("Job posted successfully!");
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        setError(res.error || "Failed to create job");
+      }
+    } catch (error) {
+      console.error("Error creating job:", error);
+      setError("Failed to create job. Please try again.");
     }
     setNewJob({
       title: "",
@@ -84,6 +147,116 @@ export default function JobsPage() {
     });
   };
 
+  const handleAddComment = async (jobId, commentText) => {
+    if (!commentText.trim()) return;
+
+    setLoadingComments((prev) => ({ ...prev, [jobId]: true }));
+    setError(null);
+
+    try {
+      // Add comment via API
+      const res = await ApiService.createJobComment(jobId, commentText.trim());
+      if (res.success) {
+        // Update local comments state
+        setComments((prevComments) => ({
+          ...prevComments,
+          [jobId]: [...(prevComments[jobId] || []), res.data],
+        }));
+
+        // Clear the input
+        setNewComment((prev) => ({
+          ...prev,
+          [jobId]: "",
+        }));
+      } else {
+        console.error("Failed to add comment:", res.error);
+        setError(res.error || "Failed to add comment");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      setError("Failed to add comment. Please try again.");
+    } finally {
+      setLoadingComments((prev) => ({ ...prev, [jobId]: false }));
+    }
+  };
+
+  const handleAddReply = async (jobId, commentId, replyText) => {
+    if (!replyText.trim()) return;
+
+    setLoadingComments((prev) => ({
+      ...prev,
+      [`${jobId}-${commentId}`]: true,
+    }));
+    setError(null);
+
+    try {
+      const res = await ApiService.replyToComment(
+        jobId,
+        commentId,
+        replyText.trim()
+      );
+      if (res.success) {
+        // Update local comments state - add reply to the parent comment
+        setComments((prevComments) => {
+          const updatedComments = { ...prevComments };
+          const jobComments = [...(updatedComments[jobId] || [])];
+          const commentIndex = jobComments.findIndex((c) => c.id === commentId);
+
+          if (commentIndex !== -1) {
+            jobComments[commentIndex] = {
+              ...jobComments[commentIndex],
+              replies: [...(jobComments[commentIndex].replies || []), res.data],
+            };
+          }
+
+          updatedComments[jobId] = jobComments;
+          return updatedComments;
+        });
+
+        // Clear the reply input
+        setReplyInputs((prev) => ({
+          ...prev,
+          [commentId]: "",
+        }));
+      } else {
+        console.error("Failed to add reply:", res.error);
+        setError(res.error || "Failed to add reply");
+      }
+    } catch (error) {
+      console.error("Error adding reply:", error);
+      setError("Failed to add reply. Please try again.");
+    } finally {
+      setLoadingComments((prev) => ({
+        ...prev,
+        [`${jobId}-${commentId}`]: false,
+      }));
+    }
+  };
+
+  const toggleReplies = (commentId) => {
+    setShowReplies((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
+  };
+
+  const refreshComments = async (jobId) => {
+    setLoadingComments((prev) => ({ ...prev, [jobId]: true }));
+    try {
+      const res = await ApiService.getJobComments(jobId);
+      if (res.success) {
+        setComments((prev) => ({
+          ...prev,
+          [jobId]: res.data,
+        }));
+      }
+    } catch (error) {
+      console.error("Error refreshing comments:", error);
+    } finally {
+      setLoadingComments((prev) => ({ ...prev, [jobId]: false }));
+    }
+  };
+
   // Filter jobs based on selected category
   const filteredJobs =
     selectedCategory === "All Jobs"
@@ -91,11 +264,45 @@ export default function JobsPage() {
       : jobs.filter((job) => job.type === selectedCategory);
 
   return (
-    <div className="w-screen h-screen min-h-screen min-w-full bg-[background: linear-gradient(135deg, #e6fce8 50%, #e1fcee 100%);] text-gray-900 font-sans flex flex-col" important>
+    <div
+      className="w-screen h-screen min-h-screen min-w-full bg-[background: linear-gradient(135deg, #e6fce8 50%, #e1fcee 100%);] text-gray-900 font-sans flex flex-col"
+      important
+    >
       {/* TOP NAVBAR */}
       <Navbar />
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white mt-[80px]">
+        {/* Error Display */}
+        {error && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg">
+            <div className="flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-2 text-red-500 hover:text-red-700"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Success Display */}
+        {success && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
+            <div className="flex items-center gap-2">
+              <span>✅</span>
+              <span>{success}</span>
+              <button
+                onClick={() => setSuccess(null)}
+                className="ml-2 text-green-500 hover:text-green-700"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
         {/* LEFT SIDEBAR */}
         <aside className="flex flex-col w-[320px] max-w-xs p-4 text-gray-800 space-y-4 backdrop-blur-md bg-green-50/60 rounded-2xl shadow-xl mt-6 animate-fade-in-left">
           <h3 className="font-semibold text-xl border-b border-green-200 pb-2 ml-[10px] mb-2 tracking-wide">
@@ -215,7 +422,7 @@ export default function JobsPage() {
                   >
                     <option value="Internship">Internship</option>
                     <option value="Freelance">Freelance</option>
-                    <option value="PartTime">Part-time</option>
+                    <option value="Part-time">Part-time</option>
                     <option value="Volunteer">Volunteer</option>
                   </select>
                 </div>
@@ -309,16 +516,37 @@ export default function JobsPage() {
                 {/* Post Header */}
                 <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
                   <img
-                    src={job.postedBy?.profileImg || "/profile_picture.jpg"}
+                    src={
+                      job.postedBy?.profile?.profilePicture ||
+                      job.postedBy?.profileImg ||
+                      "/profile_picture.jpg"
+                    }
                     alt="Profile"
-                    className="w-[35px] h-[35px] mr-[12px] rounded-full mt-[30px]"
+                    className="w-[35px] h-[35px] mr-[12px] rounded-full mt-[30px] cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() =>
+                      job.postedBy?.id &&
+                      navigate(`/profile/${job.postedBy.id}`)
+                    }
                   />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
+                    <h4
+                      className="font-semibold text-[15px] text-gray-900 mt-[30px] cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() =>
+                        job.postedBy?.id &&
+                        navigate(`/profile/${job.postedBy.id}`)
+                      }
+                    >
                       {job.postedBy?.name || "Unknown"}
                     </h4>
                     <p className="text-[13px] text-gray-500 flex items-center gap-1">
-                      {job.createdAt ? new Date(job.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : ""} • <span className="text-blue-500">🌐</span>
+                      {job.createdAt
+                        ? new Date(job.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })
+                        : ""}{" "}
+                      • <span className="text-blue-500">🌐</span>
                     </p>
                   </div>
                   <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
@@ -332,7 +560,9 @@ export default function JobsPage() {
                       {job.title}
                     </h3>
                     <span
-                      className={`px-3 py-1 mr-[5px] rounded-[15px] text-xs font-medium border ${getTypeColor(job.type)}`}
+                      className={`px-3 py-1 mr-[5px] rounded-[15px] text-xs font-medium border ${getTypeColor(
+                        job.type
+                      )}`}
                     >
                       {job.type}
                     </span>
@@ -360,24 +590,226 @@ export default function JobsPage() {
                     )}
                     {job.deadline && (
                       <span className="flex items-center gap-1">
-                        📅 Deadline: {new Date(job.deadline).toLocaleDateString("en-US")}
+                        📅 Deadline:{" "}
+                        {new Date(job.deadline).toLocaleDateString("en-US")}
                       </span>
                     )}
                   </div>
                 </div>
                 {/* Action Buttons */}
                 <div className="flex justify-between py-1 mt-[12px] mb-[12px]">
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 ml-[10px] mr-[35px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                  <button
+                    onClick={() => refreshComments(job.id)}
+                    className="flex items-center justify-center gap-2 py-2 px-4 ml-[10px] mr-[35px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1"
+                    disabled={loadingComments[job.id]}
+                  >
                     <span>💬</span>
-                    <span>Comment</span>
+                    <span>
+                      {loadingComments[job.id]
+                        ? "Loading..."
+                        : `Comment (${(comments[job.id] || []).length})`}
+                    </span>
                   </button>
                   <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[10px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
                     <span>📩</span>
                     <span>Apply</span>
                   </button>
                 </div>
+
+                {/* Comments Section */}
+                {comments[job.id] && comments[job.id].length > 0 && (
+                  <div className="px-4 ml-[10px] mb-4">
+                    <div className="border-t border-gray-200 pt-3">
+                      {comments[job.id].map((comment) => (
+                        <div
+                          key={comment.id}
+                          className="flex items-start gap-3 mb-3"
+                        >
+                          <img
+                            src={
+                              comment.author?.profile?.profilePicture ||
+                              comment.author?.avatar ||
+                              comment.author?.profileImg ||
+                              "/profile_picture.jpg"
+                            }
+                            alt="Commenter"
+                            className="w-[25px] h-[25px] rounded-full flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
+                            onClick={() =>
+                              comment.author?.id &&
+                              navigate(`/profile/${comment.author.id}`)
+                            }
+                          />
+                          <div className="flex-1">
+                            <div className="bg-gray-100 rounded-lg px-3 py-2">
+                              <p
+                                className="font-semibold text-[13px] text-gray-900 mb-1 cursor-pointer hover:text-blue-600 transition-colors"
+                                onClick={() =>
+                                  comment.author?.id &&
+                                  navigate(`/profile/${comment.author.id}`)
+                                }
+                              >
+                                {comment.author?.name || "Unknown User"}
+                              </p>
+                              <p className="text-[13px] text-gray-700">
+                                {comment.content}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3 text-[11px] text-gray-500 ml-3 mt-1">
+                              <span>
+                                {new Date(comment.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </span>
+                              <button
+                                onClick={() => toggleReplies(comment.id)}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                Reply
+                              </button>
+                              {comment.replies &&
+                                comment.replies.length > 0 && (
+                                  <button
+                                    onClick={() => toggleReplies(comment.id)}
+                                    className="hover:text-blue-600 transition-colors"
+                                  >
+                                    {showReplies[comment.id] ? "Hide" : "Show"}{" "}
+                                    {comment.replies.length}{" "}
+                                    {comment.replies.length === 1
+                                      ? "reply"
+                                      : "replies"}
+                                  </button>
+                                )}
+                            </div>
+
+                            {/* Reply Input */}
+                            {showReplies[comment.id] && (
+                              <div className="ml-6 mt-2">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src="/profile_picture.jpg"
+                                    alt="Me"
+                                    className="w-[20px] h-[20px] rounded-full"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Write a reply..."
+                                    value={replyInputs[comment.id] || ""}
+                                    onChange={(e) =>
+                                      setReplyInputs((prev) => ({
+                                        ...prev,
+                                        [comment.id]: e.target.value,
+                                      }))
+                                    }
+                                    onKeyPress={(e) => {
+                                      if (e.key === "Enter") {
+                                        handleAddReply(
+                                          job.id,
+                                          comment.id,
+                                          replyInputs[comment.id] || ""
+                                        );
+                                      }
+                                    }}
+                                    className="flex-1 px-2 py-1 rounded-full bg-gray-100 text-[12px] outline-none focus:bg-white focus:ring-1 focus:ring-green-300 transition-all"
+                                    disabled={
+                                      loadingComments[`${job.id}-${comment.id}`]
+                                    }
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      handleAddReply(
+                                        job.id,
+                                        comment.id,
+                                        replyInputs[comment.id] || ""
+                                      )
+                                    }
+                                    disabled={
+                                      loadingComments[`${job.id}-${comment.id}`]
+                                    }
+                                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-1 rounded-full text-[12px] font-medium transition-all duration-200"
+                                  >
+                                    {loadingComments[`${job.id}-${comment.id}`]
+                                      ? "..."
+                                      : "Reply"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Display Replies */}
+                            {showReplies[comment.id] &&
+                              comment.replies &&
+                              comment.replies.length > 0 && (
+                                <div className="ml-6 mt-2 space-y-2">
+                                  {comment.replies.map((reply) => (
+                                    <div
+                                      key={reply.id}
+                                      className="flex items-start gap-2"
+                                    >
+                                      <img
+                                        src={
+                                          reply.author?.profile
+                                            ?.profilePicture ||
+                                          reply.author?.avatar ||
+                                          reply.author?.profileImg ||
+                                          "/profile_picture.jpg"
+                                        }
+                                        alt="Replier"
+                                        className="w-[20px] h-[20px] rounded-full flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all"
+                                        onClick={() =>
+                                          reply.author?.id &&
+                                          navigate(
+                                            `/profile/${reply.author.id}`
+                                          )
+                                        }
+                                      />
+                                      <div className="flex-1">
+                                        <div className="bg-gray-50 rounded-lg px-3 py-2">
+                                          <p
+                                            className="font-semibold text-[12px] text-gray-900 mb-1 cursor-pointer hover:text-blue-600 transition-colors"
+                                            onClick={() =>
+                                              reply.author?.id &&
+                                              navigate(
+                                                `/profile/${reply.author.id}`
+                                              )
+                                            }
+                                          >
+                                            {reply.author?.name ||
+                                              "Unknown User"}
+                                          </p>
+                                          <p className="text-[12px] text-gray-700">
+                                            {reply.content}
+                                          </p>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 ml-2 mt-1">
+                                          {new Date(
+                                            reply.createdAt
+                                          ).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Comment Input */}
-                <div className="flex items-center gap-2 p-4 pt-2 ">
+                <div className="flex items-center gap-2 p-4 pt-2">
                   <img
                     src="/profile_picture.jpg"
                     alt="Me"
@@ -386,16 +818,39 @@ export default function JobsPage() {
                   <input
                     type="text"
                     placeholder="Write a comment..."
-                    className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
+                    value={newComment[job.id] || ""}
+                    onChange={(e) =>
+                      setNewComment((prev) => ({
+                        ...prev,
+                        [job.id]: e.target.value,
+                      }))
+                    }
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        handleAddComment(job.id, newComment[job.id] || "");
+                      }
+                    }}
+                    disabled={loadingComments[job.id]}
+                    className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none focus:bg-white focus:ring-2 focus:ring-green-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
+                  <button
+                    onClick={() =>
+                      handleAddComment(job.id, newComment[job.id] || "")
+                    }
+                    disabled={
+                      loadingComments[job.id] ||
+                      !(newComment[job.id] || "").trim()
+                    }
+                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed"
+                  >
+                    {loadingComments[job.id] ? "..." : "Post"}
+                  </button>
                 </div>
               </div>
             ))
           ) : (
             <div className="w-full bg-[#f9fafb] rounded-[12px] p-8 text-center">
-              <p className="text-gray-500 text-lg">
-                No jobs at this moment
-              </p>
+              <p className="text-gray-500 text-lg">No jobs at this moment</p>
             </div>
           )}
         </section>
@@ -409,9 +864,16 @@ export default function JobsPage() {
               <li
                 key={i}
                 className="flex items-center gap-3 hover:text-green-700 mb-[5px] transition group cursor-pointer"
+                onClick={() =>
+                  job.postedBy?.id && navigate(`/profile/${job.postedBy.id}`)
+                }
               >
                 <img
-                  src={job.postedBy?.profileImg || "/profile_picture.jpg"}
+                  src={
+                    job.postedBy?.profile?.profilePicture ||
+                    job.postedBy?.profileImg ||
+                    "/profile_picture.jpg"
+                  }
                   alt="User"
                   className="h-[30px] w-[30px] mr-[8px] rounded-full bg-gray-300 border-2 border-green-400 shadow group-hover:scale-110 transition-transform duration-200"
                 />

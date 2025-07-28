@@ -35,4 +35,7 @@ router.put("/profile", authenticateToken, profileController.updateProfile);
 // Update user name (protected)
 router.put("/user", authenticateToken, userController.updateUserName);
 
+// Get user by ID (public - for viewing other profiles)
+router.get("/user/:userId", userController.getUserById);
+
 module.exports = router;

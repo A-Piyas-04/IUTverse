@@ -125,6 +125,13 @@ class ApiService {
     });
   }
 
+  // Get user by ID (for future use)
+  async getUserById(userId) {
+    return this.request(`/user/${userId}`, {
+      method: "GET",
+    });
+  }
+
   // Job endpoints
   async getJobs() {
     return this.request("/jobs", { method: "GET" });
@@ -134,6 +141,46 @@ class ApiService {
     return this.request("/jobs", {
       method: "POST",
       body: JSON.stringify(jobData),
+    });
+  }
+
+  // Job Comment endpoints
+  async getJobComments(jobId) {
+    return this.request(`/jobs/${jobId}/comments`, {
+      method: "GET",
+    });
+  }
+
+  async createJobComment(jobId, content) {
+    return this.request(`/jobs/${jobId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async replyToComment(jobId, commentId, content) {
+    return this.request(`/jobs/${jobId}/comments/${commentId}/reply`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async updateJobComment(commentId, content) {
+    return this.request(`/jobs/comments/${commentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async deleteJobComment(commentId) {
+    return this.request(`/jobs/comments/${commentId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getJobCommentById(commentId) {
+    return this.request(`/jobs/comments/${commentId}`, {
+      method: "GET",
     });
   }
 }

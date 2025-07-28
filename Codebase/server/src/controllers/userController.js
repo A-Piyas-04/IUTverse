@@ -55,6 +55,40 @@ const updateUserName = async (req, res) => {
   }
 };
 
+const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!userId || isNaN(Number(userId))) {
+      return res.status(400).json({
+        message: "Valid user ID is required",
+      });
+    }
+
+    // Get user by ID
+    const user = await userService.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error getting user by ID:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching user",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   updateUserName,
+  getUserById,
 };

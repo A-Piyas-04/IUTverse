@@ -179,6 +179,28 @@ class UserService {
     }
   }
 
+  // Get user by ID
+  async getUserById(userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          department: true,
+          batch: true,
+          studentId: true,
+          createdAt: true,
+        },
+      });
+      return user;
+    } catch (error) {
+      console.error("Error getting user by ID:", error);
+      throw error;
+    }
+  }
+
   // Close database connection
   async disconnect() {
     await prisma.$disconnect();

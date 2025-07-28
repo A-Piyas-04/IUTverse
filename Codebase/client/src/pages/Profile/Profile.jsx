@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ApiService from "../../services/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
+  const { userId } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Posts");
   const [profile, setProfile] = useState(null);
+  const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showIntroForm, setShowIntroForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+
+  // Check if this is the current user's profile or someone else's
+  const isOwnProfile = !userId || userId === user?.id?.toString();
+
   const [introForm, setIntroForm] = useState({
     name: "",
     bio: "",
@@ -26,24 +34,86 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log("User not loaded yet, skipping profile fetch");
+      return;
+    }
+
     const fetchProfile = async () => {
       setLoading(true);
-      const res = await ApiService.getProfileByUserId(user.id);
-      if (res.success && res.data) {
-        setProfile(res.data);
-      } else {
+      try {
+        const targetUserId = userId || user.id;
+        console.log("=== PROFILE FETCH DEBUG ===");
+        console.log("URL userId:", userId);
+        console.log("Current user.id:", user.id);
+        console.log("Target User ID:", targetUserId);
+        console.log("isOwnProfile:", isOwnProfile);
+
+        // Fetch profile data
+        const profileRes = await ApiService.getProfileByUserId(targetUserId);
+        if (profileRes.success && profileRes.data) {
+          setProfile(profileRes.data);
+        } else {
+          setProfile(null);
+        }
+
+        // If viewing someone else's profile, we need to get their user info
+        if (!isOwnProfile) {
+          console.log("Fetching other user's data...");
+          try {
+            // Test with hardcoded ID first to isolate the issue
+            const testUserId = 1;
+            console.log("Testing with user ID:", testUserId);
+
+            const userRes = await ApiService.getUserById(testUserId);
+            console.log("API Response:", userRes);
+
+            if (userRes.success && userRes.data) {
+              console.log(
+                "SUCCESS! Setting profileUser with name:",
+                userRes.data.name
+              );
+              setProfileUser({
+                id: testUserId,
+                name: userRes.data.name || "Unknown User",
+                email: userRes.data.email,
+                department: userRes.data.department,
+                batch: userRes.data.batch,
+                studentId: userRes.data.studentId,
+              });
+            } else {
+              console.warn("API call failed:", userRes);
+              setProfileUser({
+                id: targetUserId,
+                name: "Unknown User",
+              });
+            }
+          } catch (userError) {
+            console.error("Error in API call:", userError);
+            setProfileUser({
+              id: targetUserId,
+              name: "Unknown User",
+            });
+          }
+        } else {
+          console.log("Using current user data");
+          setProfileUser(user);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
         setProfile(null);
+        setProfileUser(null);
       }
       setLoading(false);
     };
+
     fetchProfile();
 
-    // Initialize form with user name if available
-    if (user.name) {
+    // Initialize form with user name if available and it's own profile
+    if (isOwnProfile && user.name) {
       setIntroForm((prev) => ({ ...prev, name: user.name }));
     }
-  }, [user]);
+  }, [user, userId, isOwnProfile]);
 
   const handleIntroChange = (e) => {
     setIntroForm({ ...introForm, [e.target.name]: e.target.value });
@@ -146,11 +216,13 @@ export default function Profile() {
     }
   };
 
-  const navigate = () => {};
   const [users, setUsers] = useState([]);
 
-  // Use user name from context or fallback to hardcoded value
-  const userName = user?.name || "Guest";
+  // Use appropriate user name based on whose profile we're viewing
+  const displayUser = isOwnProfile ? user : profileUser;
+  const userName = displayUser?.name || "Unknown User";
+
+  console.log("Final userName:", userName, "from displayUser:", displayUser);
 
   const tabs = [
     "Posts",
@@ -202,8 +274,24 @@ export default function Profile() {
 
   return (
     <div className="h-screen bg-gray-100 overflow-y-auto">
-      {" "}
       <Navbar />
+      {!isOwnProfile && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+          <div className="max-w-6xl mx-auto flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <span className="text-lg">←</span>
+              <span className="font-medium">Back</span>
+            </button>
+            <div className="text-gray-700">
+              <span className="text-sm">Viewing profile of </span>
+              <span className="font-semibold">{userName}</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Main Container - Facebook uses max-width with centered content */}
       <div className="max-w-[1100px] mx-auto bg-white mt-[80px]">
         {/* Cover Photo Section */}
@@ -218,10 +306,12 @@ export default function Profile() {
               }}
             />
             {/* Edit Cover Photo Button - Positioned over the cover photo */}
-            <button className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200 text-sm font-medium">
-              <span className="text-base">📷</span>
-              <span className="text-gray-700">Edit cover photo</span>
-            </button>
+            {isOwnProfile && (
+              <button className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200 text-sm font-medium">
+                <span className="text-base">📷</span>
+                <span className="text-gray-700">Edit cover photo</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -240,16 +330,18 @@ export default function Profile() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 mb-4">
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
-                  <span className="text-lg">+</span>
-                  <span>Add to story</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium">
-                  <span>✏️</span>
-                  <span>Edit profile</span>
-                </button>
-              </div>
+              {isOwnProfile && (
+                <div className="flex gap-2 mb-4">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
+                    <span className="text-lg">+</span>
+                    <span>Add to story</span>
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium">
+                    <span>✏️</span>
+                    <span>Edit profile</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Name and Info */}
@@ -307,115 +399,121 @@ export default function Profile() {
               {loading ? (
                 <p>Loading profile...</p>
               ) : !profile ? (
-                showIntroForm ? (
-                  <form onSubmit={handleIntroSubmit} className="space-y-2">
-                    <input
-                      name="name"
-                      value={introForm.name}
-                      onChange={handleIntroChange}
-                      placeholder="Full Name"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="bio"
-                      value={introForm.bio}
-                      onChange={handleIntroChange}
-                      placeholder="Bio"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="schoolName"
-                      value={introForm.schoolName}
-                      onChange={handleIntroChange}
-                      placeholder="School Name"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="collegeName"
-                      value={introForm.collegeName}
-                      onChange={handleIntroChange}
-                      placeholder="College Name"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentProgram"
-                      value={introForm.currentProgram}
-                      onChange={handleIntroChange}
-                      placeholder="Current Program"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentYear"
-                      value={introForm.currentYear}
-                      onChange={handleIntroChange}
-                      placeholder="Current Year"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentSemester"
-                      value={introForm.currentSemester}
-                      onChange={handleIntroChange}
-                      placeholder="Current Semester"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="hometown"
-                      value={introForm.hometown}
-                      onChange={handleIntroChange}
-                      placeholder="Hometown"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentResidence"
-                      value={introForm.currentResidence}
-                      onChange={handleIntroChange}
-                      placeholder="Current Residence"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentHall"
-                      value={introForm.currentHall}
-                      onChange={handleIntroChange}
-                      placeholder="Current Hall"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentRoom"
-                      value={introForm.currentRoom}
-                      onChange={handleIntroChange}
-                      placeholder="Current Room"
-                      className="w-full p-2 border rounded"
-                    />
-                    <input
-                      name="currentBed"
-                      value={introForm.currentBed}
-                      onChange={handleIntroChange}
-                      placeholder="Current Bed"
-                      className="w-full p-2 border rounded"
-                    />
+                isOwnProfile ? (
+                  showIntroForm ? (
+                    <form onSubmit={handleIntroSubmit} className="space-y-2">
+                      <input
+                        name="name"
+                        value={introForm.name}
+                        onChange={handleIntroChange}
+                        placeholder="Full Name"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="bio"
+                        value={introForm.bio}
+                        onChange={handleIntroChange}
+                        placeholder="Bio"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="schoolName"
+                        value={introForm.schoolName}
+                        onChange={handleIntroChange}
+                        placeholder="School Name"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="collegeName"
+                        value={introForm.collegeName}
+                        onChange={handleIntroChange}
+                        placeholder="College Name"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentProgram"
+                        value={introForm.currentProgram}
+                        onChange={handleIntroChange}
+                        placeholder="Current Program"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentYear"
+                        value={introForm.currentYear}
+                        onChange={handleIntroChange}
+                        placeholder="Current Year"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentSemester"
+                        value={introForm.currentSemester}
+                        onChange={handleIntroChange}
+                        placeholder="Current Semester"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="hometown"
+                        value={introForm.hometown}
+                        onChange={handleIntroChange}
+                        placeholder="Hometown"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentResidence"
+                        value={introForm.currentResidence}
+                        onChange={handleIntroChange}
+                        placeholder="Current Residence"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentHall"
+                        value={introForm.currentHall}
+                        onChange={handleIntroChange}
+                        placeholder="Current Hall"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentRoom"
+                        value={introForm.currentRoom}
+                        onChange={handleIntroChange}
+                        placeholder="Current Room"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentBed"
+                        value={introForm.currentBed}
+                        onChange={handleIntroChange}
+                        placeholder="Current Bed"
+                        className="w-full p-2 border rounded"
+                      />
+                      <button
+                        type="submit"
+                        className="w-full py-2 px-4 bg-blue-500 text-white rounded"
+                      >
+                        Save Intro
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowIntroForm(false)}
+                        className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded mt-2"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
                     <button
-                      type="submit"
-                      className="w-full py-2 px-4 bg-blue-500 text-white rounded"
+                      onClick={() => setShowIntroForm(true)}
+                      className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
                     >
-                      Save Intro
+                      Add intro
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowIntroForm(false)}
-                      className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded mt-2"
-                    >
-                      Cancel
-                    </button>
-                  </form>
+                  )
                 ) : (
-                  <button
-                    onClick={() => setShowIntroForm(true)}
-                    className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
-                  >
-                    Add intro
-                  </button>
+                  <div className="text-center text-gray-500 py-4">
+                    <p>This user hasn't added an intro yet.</p>
+                  </div>
                 )
-              ) : (
+              ) : isOwnProfile ? (
                 <form onSubmit={handleEditSubmit} className="space-y-2">
                   <button
                     type="button"
@@ -586,6 +684,63 @@ export default function Profile() {
                     </div>
                   )}
                 </form>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমি <strong>{displayUser?.name || "Unknown User"}</strong>
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমি <strong>{profile.schoolName}</strong> থেকে এসএসসি পাশ
+                    করেছি
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    এবং <strong>{profile.collegeName}</strong> থেকে এইচএসসি পাশ
+                    করেছি
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentDepartment}</strong> ডিপার্টমেন্টে{" "}
+                    <br />
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentProgram}</strong> প্রোগ্রামে <br />
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentYear}</strong> বর্ষে <br />
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentSemester}</strong> সেমিস্টারে
+                    অধ্যয়নরত আছি।
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমার স্টুডেন্ট আইডি <strong>{profile.studentId}</strong>
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমার হোমটাউন <strong>{profile.hometown}</strong>
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমার বর্তমান বাসা{" "}
+                    <strong>{profile.currentResidence}</strong>
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentHall}</strong> হল অফ রেসিডেন্স
+                    বিল্ডিং এ
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentRoom}</strong> রুমে
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    <strong>{profile.currentBed}</strong> বেডে থাকি।
+                  </div>
+                </div>
               )}
             </div>
 
