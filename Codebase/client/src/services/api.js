@@ -183,6 +183,37 @@ class ApiService {
       method: "GET",
     });
   }
+
+  // Job Application endpoints
+  async applyToJob(jobId) {
+    return this.request(`/jobs/${jobId}/apply`, {
+      method: "POST",
+    });
+  }
+
+  async removeJobApplication(jobId) {
+    return this.request(`/jobs/${jobId}/apply`, {
+      method: "DELETE",
+    });
+  }
+
+  async getJobApplications(jobId) {
+    return this.request(`/jobs/${jobId}/applications`, {
+      method: "GET",
+    });
+  }
+
+  async getJobApplicationCount(jobId) {
+    return this.request(`/jobs/${jobId}/applications/count`, {
+      method: "GET",
+    });
+  }
+
+  async getUserApplicationStatus(jobId) {
+    return this.request(`/jobs/${jobId}/application-status`, {
+      method: "GET",
+    });
+  }
 }
 
 export default new ApiService();

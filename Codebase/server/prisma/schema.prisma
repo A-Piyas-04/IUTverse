@@ -37,6 +37,7 @@ model User {
 
   jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
   jobComments JobComment[] // Comments made by this user on jobs
+  jobApplications JobApplication[] @relation("JobApplications") // Applications made by this user
 }
 
 model Profile {
@@ -78,6 +79,20 @@ model Job {
   createdAt    DateTime @default(now())
   
   comments     JobComment[] // Comments on this job
+  applications JobApplication[] // Applications for this job
+}
+
+model JobApplication {
+  id          Int      @id @default(autoincrement())
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       Int
+  applicant   User     @relation("JobApplications", fields: [applicantId], references: [id])
+  applicantId Int
+  appliedAt   DateTime @default(now())
+  
+  @@unique([jobId, applicantId]) // One application per user per job
+  @@index([jobId])
+  @@index([applicantId])
 }
 
 model JobComment {
