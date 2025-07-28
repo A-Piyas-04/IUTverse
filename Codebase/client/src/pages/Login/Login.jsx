@@ -69,8 +69,9 @@ export default function LoginPage() {
     logout();
   };
 
-  if (isAuthenticated) {
-    const userEmail = user ? user.email : email;
+  if (loggedIn) {
+    const userData = authUtils.getUserData();
+    const userEmail = userData ? userData.email : email;
     
     return (
       <div className="auth-bg center">
