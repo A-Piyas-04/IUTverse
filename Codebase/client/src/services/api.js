@@ -91,6 +91,27 @@ class ApiService {
       method: 'GET',
     });
   }
+
+  // Profile endpoints
+  async getProfileByUserId(userId) {
+    return this.request(`/profile/${userId}`, {
+      method: 'GET',
+    });
+  }
+
+  async createProfile(profileData) {
+    return this.request('/profile', {
+      method: 'POST',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  async updateProfile(profileData) {
+    return this.request('/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  }
 }
 
 export default new ApiService();
