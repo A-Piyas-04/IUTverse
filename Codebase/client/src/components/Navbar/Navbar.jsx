@@ -39,10 +39,10 @@ export default function Navbar({
         {/* Left: Logo + Search */}
         <div className="flex items-center gap-4 justify-start">
           <img
-            src="../../../public/iut_logo.png"
+            src="/iut_logo.png"
             alt="IUTVerse Logo"
             className="h-[50px] w-[40px] shadow-lg hover:scale-105 transition-transform cursor-pointer"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/")}
           />
           <input
             type="text"
@@ -69,7 +69,7 @@ export default function Navbar({
         {/* Right: Profile + Logout */}
         <div className="flex items-center gap-4 justify-end">
           <img
-            src="../../../public/profile_picture.jpg"
+            src="/profile_picture.jpg"
             alt="User"
             className="h-[45px] w-[45px] rounded-full shadow hover:scale-105 transition cursor-pointer"
             onClick={() => navigate("/profile")}
