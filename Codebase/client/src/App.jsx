@@ -16,12 +16,12 @@ import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
 
-
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Homepage />} />
+        <Route path="/home" element={<Homepage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/catcorner" element={<CatCorner />} />
@@ -38,8 +38,8 @@ function App() {
         {/* New Event Hub route */}
         <Route path="/eventhub" element={<EventHub />} />
 
-        {/* Catch‑all: redirect to home or login */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        {/* Catch‑all: redirect to root */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

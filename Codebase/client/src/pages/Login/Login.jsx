@@ -1,14 +1,15 @@
-import './login.css';
-import { useState } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
-import loginImage from '../../assets/login.png';
+import "./login.css";
+import { useState } from "react";
+import { useNavigate, NavLink } from "react-router-dom";
+import loginImage from "../../assets/login.png";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
@@ -18,30 +19,29 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (email && password) {
-      setLoggedIn(true);
+      if (!validateIUTEmail(email)) {
+        setMessage("Please enter a valid IUT email address.");
+        return;
+      }
+      setLoading(true);
+      setMessage("");
+      // Simulate login (replace with real API call)
+      setTimeout(() => {
+        setLoading(false);
+        setLoggedIn(true);
+        localStorage.setItem("user", JSON.stringify({ email }));
+        navigate("/home");
+      }, 1000);
     }
   };
-
-  const navigate = useNavigate();
 
   const handleLogout = () => {
     setEmail("");
     setPassword("");
     setLoggedIn(false);
-    setMessage('');
-    localStorage.removeItem('user');
+    setMessage("");
+    localStorage.removeItem("user");
   };
-
-  if (loggedIn) {
-    return (
-      <div className="auth-bg center">
-        <div className="auth-appname">Welcome, {email}</div>
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="auth-bg">
@@ -79,17 +79,13 @@ export default function LoginPage() {
             required
             disabled={loading}
           />
-          
-          {message && (
-            <div className="message error">
-              {message}
-            </div>
-          )}
-          
+
+          {message && <div className="message error">{message}</div>}
+
           <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
-          
+
           <div className="auth-link">
             Don't have a password yet? <a href="/signup">Get started here</a>
           </div>
