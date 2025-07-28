@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import PostModal from "../../components/PostModal.jsx";
 import { authUtils } from "../../utils/auth.js";
+import "./Homepage.css";
 
 export default function HomePage() {
   
@@ -58,17 +59,15 @@ export default function HomePage() {
   };
   
   return (
-    <div className="w-screen h-screen min-h-screen min-w-full bg-white text-gray-900 font-sans flex flex-col">
+    <div className="homepage">
      <Navbar />
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-[linear-gradient(135deg,_#d1ffd6_50%,_#dbffec_100%)] mt-[80px]">
+      <main className="main-content animate-fade-in-up">
         {/* LEFT SIDEBAR */}
-        <aside className="flex flex-col w-[320px] max-w-xs p-4 text-gray-800 space-y-4 backdrop-blur-md bg-green-50/60 rounded-2xl shadow-xl mt-6 animate-fade-in-left ">
-          <h3 className="font-semibold text-xl border-b border-green-200 pb-2 ml-[10px] mb-2 tracking-wide">
-            Menu
-          </h3>
-          <ul className="space-y-4 text-base">
+        <aside className="left-sidebar animate-fade-in-left">
+          <h3 className="menu-title">Menu</h3>
+          <ul className="menu-list">
             {[
               {
                 label: (
@@ -99,18 +98,18 @@ export default function HomePage() {
             ].map((item, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 mb-[12px] hover:text-green-700 transition group cursor-pointer"
+                className="menu-item"
               >
                 {typeof item.icon === "string" ? (
                   <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center ${item.bg} shadow group-hover:scale-110 transition-transform duration-200`}
+                    className={`menu-icon ${item.bg}`}
                   >
-                    <span className="text-xl">{item.icon}</span>
+                    <span className="menu-icon-text">{item.icon}</span>
                   </div>
                 ) : (
                   item.icon
                 )}
-                <span className="group-hover:font-semibold transition-all duration-200">
+                <span className="menu-label">
                   {item.label}
                 </span>
               </li>
@@ -119,29 +118,29 @@ export default function HomePage() {
         </aside>
 
         {/* CENTER FEED */}
-        <section className="flex-1 flex flex-col items-center px-2 py-6 overflow-y-auto min-h-0 max-w-[600px] mx-auto space-y-8">
+        <section className="center-feed">
           {/* Post box */}
-          <div className="w-full bg-[#f9fafb] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-4">
-            <div className="flex items-center gap-3 mb-[10px] mt-[8px]">
+          <div className="post-box">
+            <div className="post-input-container">
               <img
                 src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
                 alt="Profile"
-                className="h-[30px] w-[35px] mr-[12px] rounded-full shadow-md border-2 border-green-400 hover:scale-105 transition-transform duration-200"
+                className="profile-img"
               />
               <input
                 type="text"
                 placeholder="What's on your mind?"
-                className="w-full px-4 py-2 rounded-full bg-white text-gray-800 placeholder-gray-400 border border-green-100 focus:outline-none focus:ring-2 focus:ring-green-300 transition shadow-inner hover:shadow-green-200/30"
+                className="post-input"
               />
             </div>
-            <div className="flex gap-6 text-sm mb-[10px] font-semibold justify-around">
-              <button className="flex items-center gap-1 text-red-500 hover:underline active:scale-95 transition-transform duration-200">
+            <div className="post-actions">
+              <button className="action-btn live-video">
                 📹 Live video
               </button>
-              <button className="flex items-center gap-1 text-green-600 hover:underline active:scale-95 transition-transform duration-200">
+              <button className="action-btn photo-video">
                 🖼️ Photo/video
               </button>
-              <button className="flex items-center gap-1 text-yellow-500 hover:underline active:scale-95 transition-transform duration-200">
+              <button className="action-btn feeling">
                 😊 Feeling/activity
               </button>
             </div>
@@ -151,47 +150,47 @@ export default function HomePage() {
           {userPosts.map((post, index) => (
             <div
               key={index}
-              className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px] min-w-full cursor-pointer hover:shadow-lg transition"
+              className="post"
               onClick={() => setSelectedPost(post)}
             >
               {/* Post Header */}
-              <div className="flex items-start gap-3 p-4 pb-3">
+              <div className="post-header">
                 <img
                   src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
                   alt="Profile"
-                  className="w-[35px] h-[40px] mr-[12px] rounded-full mt-[30px]"
+                  className="profile-img"
                 />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
+                <div className="post-user-info">
+                  <h4 className="post-username">
                     {post.name}
                   </h4>
-                  <p className="text-[13px] text-gray-500 flex items-center gap-1">
+                  <p className="post-meta">
                     {post.date} • <span className="text-blue-500">🌐</span>
                   </p>
                 </div>
-                <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
+                <button className="post-options-btn">
                   <span className="text-xl">⋯</span>
                 </button>
               </div>
 
               {/* Post Content */}
-              <div className="px-4 pb-3">
-                <div className="text-[15px] mb-[12px] text-gray-900 leading-relaxed whitespace-pre-line">
+              <div className="post-content">
+                <div className="post-text">
                   {post.content}
                 </div>
                 {post.img && (
                   <img
                     src={post.img}
                     alt="Post"
-                    className="w-full h-auto rounded-lg mt-3 shadow-md"
+                    className="post-image"
                   />
                 )}
               </div>
 
               {/* Reactions and Comments Count */}
-              <div className="flex justify-between items-center px-4 py-2 text-[13px] text-gray-600">
-                <div className="flex items-center gap-1">
-                  <div className="flex">
+              <div className="post-stats">
+                <div className="post-reactions">
+                  <div className="reaction-icons">
                     <span className="text-blue-500">👍</span>
                     <span className="text-red-500">❤️</span>
                   </div>
@@ -203,8 +202,8 @@ export default function HomePage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-around  py-1">
-                <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[5px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+              <div className="post-actions-buttons">
+                <button className="post-action-btn">
                   <span>👍</span>
                   <span>Like</span>
                 </button>
@@ -230,11 +229,9 @@ export default function HomePage() {
         </section>
 
         {/* RIGHT SIDEBAR */}
-        <aside className="flex flex-col w-[320px] max-w-xs p-4 backdrop-blur-md bg-green-50/60 rounded-2xl shadow-xl mt-6 animate-fade-in-right text-gray-800">
-          <h3 className="font-semibold text-xl border-b border-green-200 pb-2 mb-4 tracking-wide">
-            Contacts
-          </h3>
-          <ul className="space-y-4 text-base mb-[15px]">
+        <aside className="right-sidebar animate-fade-in-right">
+          <h3 className="contacts-title">Contacts</h3>
+          <ul className="contacts-list">
             {[
               "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
               "Irfan Shafee",
@@ -244,14 +241,14 @@ export default function HomePage() {
             ].map((name, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 hover:text-green-700 mb-[5px] transition group cursor-pointer"
+                className="contact-item"
               >
                 <img
                   src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
                   alt="User"
-                  className="h-[30px] w-[30px] mr-[8px] rounded-full bg-gray-300 border-2 border-green-400 shadow group-hover:scale-110 transition-transform duration-200"
+                  className="contact-img"
                 />
-                <span className="group-hover:font-semibold transition-all duration-200">
+                <span className="contact-name">
                   {name}
                 </span>
               </li>
