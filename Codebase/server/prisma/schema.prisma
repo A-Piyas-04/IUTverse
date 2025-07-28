@@ -34,6 +34,9 @@ model User {
   lostAndFounds  LostAndFound[]
   uploadedCats   Cat[]
   questionPapers QuestionPaper[]
+  catPosts       CatPost[]
+  catPostLikes   CatPostLike[]
+  catPostComments CatPostComment[]
 }
 
 model Profile {
@@ -159,4 +162,39 @@ model QuestionPaper {
   semester     String
   fileUrl      String
   uploadedAt   DateTime @default(now())
+}
+
+model CatPost {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  caption     String
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  likes       CatPostLike[]
+  comments    CatPostComment[]
+}
+
+model CatPostLike {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  catPost   CatPost @relation(fields: [catPostId], references: [id], onDelete: Cascade)
+  catPostId Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, catPostId])
+}
+
+model CatPostComment {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  catPost   CatPost @relation(fields: [catPostId], references: [id], onDelete: Cascade)
+  catPostId Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

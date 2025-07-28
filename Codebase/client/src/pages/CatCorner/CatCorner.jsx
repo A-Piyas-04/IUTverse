@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar/Navbar.jsx';
 import Sidebar from "./view/Sidebar/Sidebar.jsx";
 import FeedCard from '../../components/CatComponents/FeedCard/FeedCard';
@@ -7,6 +7,8 @@ import CatBreak from './view/CatBreak/CatBreak.jsx';
 import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
 // import CatGame from './view/CatGame/CatGame.jsx';
+import { getCatPosts, createCatPost, toggleLikeCatPost, addCommentToCatPost } from '../../services/catPostApi.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import './CatCorner.css';
 
 const INITIAL_POSTS = [
@@ -23,24 +25,139 @@ const INITIAL_POSTS = [
 ];
 
 export default function CatCorner() {
+  const { user, isAuthenticated } = useAuth();
   const [view, setView] = useState('Posts');
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAddPost, setShowAddPost] = useState(false);
   const [newPost, setNewPost] = useState({ caption: '', image: null, imagePreview: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleAddPost = () => {
-    if (newPost.caption.trim() && newPost.image) {
-      const post = {
-        id: Date.now(),
+  // Fetch posts on component mount
+  useEffect(() => {
+    if (view === 'Posts') {
+      fetchPosts();
+    }
+  }, [view]);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedPosts = await getCatPosts();
+      setPosts(fetchedPosts || []);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again.');
+      // Fallback to initial posts if API fails
+      setPosts(INITIAL_POSTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddPost = async () => {
+    // Debug: Check authentication status
+    const token = localStorage.getItem('iutverse_auth_token');
+    const userData = localStorage.getItem('iutverse_user_data');
+    console.log('Token exists:', !!token);
+    console.log('User data exists:', !!userData);
+    console.log('Auth context user:', user);
+    console.log('Auth context isAuthenticated:', isAuthenticated);
+    
+    if (!isAuthenticated) {
+      setError('You are not authenticated. Please log in.');
+      return;
+    }
+    
+    if (!newPost.caption.trim() || !newPost.image) {
+      setError('Please provide both a caption and an image.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      console.log('Attempting to create cat post with:', {
         caption: newPost.caption,
-        image: newPost.imagePreview,
-        user: 'Current User', // In real app, get from auth context
-        time: 'Just now',
-        type: 'image'
-      };
-      setPosts([post, ...posts]);
-      setNewPost({ caption: '', image: null, imagePreview: '' });
-      setShowAddPost(false);
+        imageSize: newPost.image?.size,
+        imageType: newPost.image?.type
+      });
+      
+      const result = await createCatPost({
+        caption: newPost.caption,
+        image: newPost.image
+      });
+
+      console.log('Create cat post result:', result);
+
+      if (result.success) {
+        // Add the new post to the beginning of the posts array
+        setPosts(prevPosts => [result.data, ...prevPosts]);
+        
+        // Reset form
+        setNewPost({ caption: '', image: null, imagePreview: '' });
+        setShowAddPost(false);
+        
+        // Show success message
+        alert('Cat post shared successfully! 🐱');
+      } else {
+        setError(result.error || 'Failed to create cat post');
+      }
+    } catch (error) {
+      console.error('Error creating cat post:', error);
+      setError('Failed to create cat post');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleLikePost = async (postId) => {
+    try {
+      const result = await toggleLikeCatPost(postId);
+      
+      // Update the post in the local state
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { 
+                ...post, 
+                likes: result.likes || post.likes || 0,
+                isLiked: result.isLiked !== undefined ? result.isLiked : !post.isLiked
+              }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error('Error liking post:', err);
+      setError('Failed to like post. Please try again.');
+    }
+  };
+
+  const handleAddComment = async (postId, commentText) => {
+    if (!commentText.trim()) return;
+    
+    try {
+      const commentData = { content: commentText };
+      const newComment = await addCommentToCatPost(postId, commentData);
+      
+      // Update the post's comments in local state
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { 
+                ...post, 
+                comments: [...(post.comments || []), newComment],
+                commentCount: (post.commentCount || 0) + 1
+              }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      setError('Failed to add comment. Please try again.');
     }
   };
 
@@ -157,23 +274,77 @@ export default function CatCorner() {
                         <button 
                           className="btn-primary"
                           onClick={handleAddPost}
-                          disabled={!newPost.caption.trim() || !newPost.image}
+                          disabled={!newPost.caption.trim() || !newPost.image || submitting}
                         >
-                          Share
+                          {submitting ? 'Sharing...' : 'Share'}
                         </button>
                       </div>
                     </div>
                   </>
                 )}
 
+                {/* Error Message */}
+                {error && (
+                  <div className="error-message" style={{
+                    background: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    marginBottom: '16px'
+                  }}>
+                    {error}
+                    <button 
+                      onClick={() => setError(null)}
+                      style={{
+                        float: 'right',
+                        background: 'none',
+                        border: 'none',
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                        fontSize: '16px'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loading && (
+                  <div className="loading-message" style={{
+                    textAlign: 'center',
+                    padding: '40px',
+                    color: '#6b7280'
+                  }}>
+                    Loading posts...
+                  </div>
+                )}
+
                 {/* Posts Grid */}
-                <div className="feed-grid">
-                  {posts.map((post) => (
-                    <div className="feed-card" key={post.id}>
-                      <FeedCard post={post} />
-                    </div>
-                  ))}
-                </div>
+                {!loading && (
+                  <div className="feed-grid">
+                    {posts.length > 0 ? (
+                      posts.map((post) => (
+                        <div className="feed-card" key={post.id}>
+                          <FeedCard 
+                            post={post} 
+                            onLike={() => handleLikePost(post.id)}
+                            onComment={(commentText) => handleAddComment(post.id, commentText)}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-posts-message" style={{
+                        textAlign: 'center',
+                        padding: '40px',
+                        color: '#6b7280'
+                      }}>
+                        No posts yet. Be the first to share a cat moment! 🐱
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
 

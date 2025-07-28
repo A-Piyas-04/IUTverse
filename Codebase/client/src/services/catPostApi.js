@@ -1,4 +1,4 @@
-// API service for Lost and Found functionality
+// API service for Cat Post functionality
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -57,22 +57,16 @@ const getAuthHeaders = (isFormData = false) => {
   return headers;
 };
 
-// Get all lost and found posts
-export const getLostAndFoundPosts = async (filters = {}) => {
+// Get all cat posts
+export const getCatPosts = async (filters = {}) => {
   try {
     const queryParams = new URLSearchParams();
     
-    if (filters.type && filters.type !== 'all') {
-      queryParams.append('type', filters.type);
-    }
     if (filters.search) {
       queryParams.append('search', filters.search);
     }
-    if (filters.status) {
-      queryParams.append('status', filters.status);
-    }
     
-    const url = `${API_BASE_URL}/lost-and-found${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `${API_BASE_URL}/cat-posts${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -81,60 +75,36 @@ export const getLostAndFoundPosts = async (filters = {}) => {
     
     return await handleResponse(response);
   } catch (error) {
-    console.error('Error fetching lost and found posts:', error);
+    console.error('Error fetching cat posts:', error);
     throw error;
   }
 };
 
-// Create a new lost and found post
-export const createLostAndFoundPost = async (postData) => {
+// Create a new cat post
+export const createCatPost = async (postData) => {
   try {
-    console.log('API - Creating lost and found post with data:', postData);
+    console.log('API - Creating cat post with data:', postData);
     
-    // Check if postData is already FormData
-    let formDataToSend;
-    if (postData instanceof FormData) {
-      formDataToSend = postData;
-      console.log('API - Using existing FormData');
-    } else {
-      // Convert to FormData
-      formDataToSend = new FormData();
-      
-      // Add text fields
-      Object.keys(postData).forEach(key => {
-        if (key !== 'image' && postData[key] !== undefined && postData[key] !== null) {
-          formDataToSend.append(key, postData[key]);
-          console.log(`API - Added field ${key}:`, postData[key]);
-        }
-      });
-      
-      // Add image file if present
-      if (postData.image) {
-        formDataToSend.append('image', postData.image);
-        console.log('API - Added image file:', postData.image.name, postData.image.size, 'bytes');
-      }
-      
-      console.log('API - Converted to FormData');
+    const formData = new FormData();
+    formData.append('caption', postData.caption);
+    
+    if (postData.image) {
+      formData.append('image', postData.image);
     }
     
-    // Log FormData contents
-    console.log('API - FormData contents:');
-    for (let [key, value] of formDataToSend.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
+    console.log('API - FormData entries:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
     }
     
-    const headers = getAuthHeaders(true);
-    console.log('API - Request headers:', headers);
-    console.log('API - Making request to:', `${API_BASE_URL}/lost-and-found`);
+    const headers = getAuthHeaders(true); // true for FormData
     
-    const response = await fetch(`${API_BASE_URL}/lost-and-found`, {
+    console.log('API - Making request to:', `${API_BASE_URL}/cat-posts`);
+    
+    const response = await fetch(`${API_BASE_URL}/cat-posts`, {
       method: 'POST',
       headers: headers,
-      body: formDataToSend
+      body: formData
     });
     
     console.log('API - Response status:', response.status);
@@ -160,7 +130,7 @@ export const createLostAndFoundPost = async (postData) => {
     
     return responseData;
   } catch (error) {
-    console.error('API - Error creating lost and found post:', error);
+    console.error('API - Error creating cat post:', error);
     console.error('API - Error message:', error.message);
     console.error('API - Error stack:', error.stack);
     
@@ -173,92 +143,78 @@ export const createLostAndFoundPost = async (postData) => {
   }
 };
 
-// Update a lost and found post (e.g., mark as resolved)
-export const updateLostAndFoundPost = async (postId, updateData) => {
+// Get a specific cat post by ID
+export const getCatPostById = async (postId) => {
   try {
-    const formData = new FormData();
-    
-    // Add all text fields to FormData
-    Object.keys(updateData).forEach(key => {
-      if (key !== 'image' && updateData[key] !== undefined && updateData[key] !== null) {
-        formData.append(key, updateData[key]);
-      }
-    });
-    
-    // Add image file if present
-    if (updateData.image && updateData.image instanceof File) {
-      formData.append('image', updateData.image);
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/lost-and-found/${postId}`, {
-      method: 'PATCH',
-      headers: getAuthHeaders(true), // true indicates FormData
-      body: formData
-    });
-    
-    return await handleResponse(response);
-  } catch (error) {
-    console.error('Error updating lost and found post:', error);
-    throw error;
-  }
-};
-
-// Delete a lost and found post
-export const deleteLostAndFoundPost = async (postId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/lost-and-found/${postId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    
-    return await handleResponse(response);
-  } catch (error) {
-    console.error('Error deleting lost and found post:', error);
-    throw error;
-  }
-};
-
-// Get a specific lost and found post by ID
-export const getLostAndFoundPostById = async (postId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/lost-and-found/${postId}`, {
+    const response = await fetch(`${API_BASE_URL}/cat-posts/${postId}`, {
       method: 'GET',
       headers: getAuthHeaders()
     });
     
     return await handleResponse(response);
   } catch (error) {
-    console.error('Error fetching lost and found post:', error);
+    console.error('Error fetching cat post:', error);
     throw error;
   }
 };
 
-// Mark a post as resolved
-export const markPostAsResolved = async (postId) => {
+// Like/unlike a cat post
+export const toggleLikeCatPost = async (postId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/lost-and-found/${postId}/resolve`, {
-      method: 'PATCH',
+    const response = await fetch(`${API_BASE_URL}/cat-posts/${postId}/like`, {
+      method: 'POST',
       headers: getAuthHeaders()
     });
     
     return await handleResponse(response);
   } catch (error) {
-    console.error('Error marking post as resolved:', error);
+    console.error('Error toggling like on cat post:', error);
     throw error;
   }
 };
 
-// Mark a post as active
-export const markPostAsActive = async (postId) => {
+// Add a comment to a cat post
+export const addCommentToCatPost = async (postId, commentData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/lost-and-found/${postId}/activate`, {
-      method: 'PATCH',
+    const response = await fetch(`${API_BASE_URL}/cat-posts/${postId}/comments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(commentData)
+    });
+    
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error adding comment to cat post:', error);
+    throw error;
+  }
+};
+
+// Get comments for a cat post
+export const getCatPostComments = async (postId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cat-posts/${postId}/comments`, {
+      method: 'GET',
       headers: getAuthHeaders()
     });
     
     return await handleResponse(response);
   } catch (error) {
-    console.error('Error marking post as active:', error);
+    console.error('Error fetching cat post comments:', error);
+    throw error;
+  }
+};
+
+// Delete a cat post (only by the author)
+export const deleteCatPost = async (postId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cat-posts/${postId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error deleting cat post:', error);
     throw error;
   }
 };
