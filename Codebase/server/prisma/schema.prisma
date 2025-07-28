@@ -34,6 +34,8 @@ model User {
   lostAndFounds  LostAndFound[]
   uploadedCats   Cat[]
   questionPapers QuestionPaper[]
+
+  jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
 }
 
 model Profile {
@@ -53,6 +55,26 @@ model Profile {
   currentRoom      String?
   currentBed       String?
   user User @relation(fields: [userId], references: [id])
+}
+
+enum JobType {
+  Internship
+  Freelance
+  PartTime
+  Volunteer
+}
+
+model Job {
+  id           Int      @id @default(autoincrement())
+  title        String
+  type         JobType
+  description  String
+  requirements String[]
+  compensation String?
+  deadline     DateTime?
+  postedBy     User     @relation("UserJobs", fields: [postedById], references: [id])
+  postedById   Int
+  createdAt    DateTime @default(now())
 }
 
 model Post {

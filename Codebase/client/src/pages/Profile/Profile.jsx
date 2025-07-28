@@ -4,12 +4,14 @@ import ApiService from "../../services/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("Posts");
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showIntroForm, setShowIntroForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [introForm, setIntroForm] = useState({
+    name: "",
     bio: "",
     schoolName: "",
     collegeName: "",
@@ -36,39 +38,119 @@ export default function Profile() {
       setLoading(false);
     };
     fetchProfile();
+
+    // Initialize form with user name if available
+    if (user.name) {
+      setIntroForm((prev) => ({ ...prev, name: user.name }));
+    }
   }, [user]);
 
   const handleIntroChange = (e) => {
     setIntroForm({ ...introForm, [e.target.name]: e.target.value });
   };
 
+  const handleEditProfile = () => {
+    // Populate form with existing data
+    setIntroForm({
+      name: user?.name || "",
+      bio: profile?.bio || "",
+      schoolName: profile?.schoolName || "",
+      collegeName: profile?.collegeName || "",
+      currentProgram: profile?.currentProgram || "",
+      currentYear: profile?.currentYear || "",
+      currentSemester: profile?.currentSemester || "",
+      hometown: profile?.hometown || "",
+      currentResidence: profile?.currentResidence || "",
+      currentHall: profile?.currentHall || "",
+      currentRoom: profile?.currentRoom || "",
+      currentBed: profile?.currentBed || "",
+    });
+    setShowEditForm(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      // Extract name from form data
+      const { name, ...profileData } = introForm;
+
+      // Update user name if provided and different from current
+      if (name && name.trim() && name.trim() !== user?.name) {
+        const nameUpdateResult = await ApiService.updateUserName(name.trim());
+        if (!nameUpdateResult.success) {
+          alert(`Failed to update name: ${nameUpdateResult.error}`);
+          return;
+        }
+        // Update user context with new name
+        updateUser({ name: name.trim() });
+      }
+
+      // Update profile with remaining data
+      const res = await ApiService.updateProfile(profileData);
+      if (res.success) {
+        setShowEditForm(false);
+        setProfile(res.data);
+
+        // Optionally refresh user data in context if name was updated
+        if (name && name.trim() && name.trim() !== user?.name) {
+          alert("Name and profile updated successfully!");
+        } else {
+          alert("Profile updated successfully!");
+        }
+      } else {
+        alert(`Failed to update profile: ${res.error}`);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("An error occurred while updating profile");
+    }
+  };
+
   const handleIntroSubmit = async (e) => {
     e.preventDefault();
-    const res = await ApiService.createProfile(introForm);
-    if (res.success) {
-      setShowIntroForm(false);
-      setProfile(res.data);
-    } else {
-      alert("Failed to create profile");
+
+    try {
+      // Extract name from form data
+      const { name, ...profileData } = introForm;
+
+      // Update user name if provided
+      if (name && name.trim()) {
+        const nameUpdateResult = await ApiService.updateUserName(name.trim());
+        if (!nameUpdateResult.success) {
+          alert(`Failed to update name: ${nameUpdateResult.error}`);
+          return;
+        }
+        // Update user context with new name
+        updateUser({ name: name.trim() });
+      }
+
+      // Create or update profile with remaining data
+      const res = await ApiService.createProfile(profileData);
+      if (res.success) {
+        setShowIntroForm(false);
+        setProfile(res.data);
+
+        // Show appropriate success message
+        if (name && name.trim()) {
+          alert("Name and profile created successfully!");
+        } else {
+          alert("Profile created successfully!");
+        }
+      } else {
+        alert(`Failed to create profile: ${res.error}`);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("An error occurred while updating profile");
     }
   };
 
   const navigate = () => {};
   const [users, setUsers] = useState([]);
 
-  const userName = "নুরেন ফাহমিদ";
-  const schoolName = "বাংলাদেশ এলিমেন্টারি স্কুল";
-  const collegeName = "চট্টগ্রাম ক্যান্টনমেন্ট পাবলিক কলেজ";
-  const currentDepartment = "কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং";
-  const currentProgram = "কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং";
-  const currentYear = "২য়";
-  const currentSemester = "২য়";
-  const studentId = "২২০০৪২১২১";
-  const hometown = "চট্টগ্রাম, বাংলাদেশ";
-  const currentResidence = "গাজীপুর, বাংলাদেশ";
-  const currentHall = "সাউথ হল অফ রেসিডেন্স";
-  const currentRoom = "রুম ৫০৩";
-  const currentBed = "এ";
+  // Use user name from context or fallback to hardcoded value
+  const userName = user?.name || "Guest";
 
   const tabs = [
     "Posts",
@@ -228,6 +310,13 @@ export default function Profile() {
                 showIntroForm ? (
                   <form onSubmit={handleIntroSubmit} className="space-y-2">
                     <input
+                      name="name"
+                      value={introForm.name}
+                      onChange={handleIntroChange}
+                      placeholder="Full Name"
+                      className="w-full p-2 border rounded"
+                    />
+                    <input
                       name="bio"
                       value={introForm.bio}
                       onChange={handleIntroChange}
@@ -327,110 +416,175 @@ export default function Profile() {
                   </button>
                 )
               ) : (
-                <form onSubmit={handleIntroSubmit} className="space-y-2">
+                <form onSubmit={handleEditSubmit} className="space-y-2">
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleEditProfile}
                     className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
                   >
                     Edit intro
                   </button>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
+                  {showEditForm ? (
+                    <>
+                      <input
+                        name="name"
+                        value={introForm.name}
+                        onChange={handleIntroChange}
+                        placeholder="Full Name"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="bio"
+                        value={introForm.bio}
+                        onChange={handleIntroChange}
+                        placeholder="Bio"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="schoolName"
+                        value={introForm.schoolName}
+                        onChange={handleIntroChange}
+                        placeholder="School Name"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="collegeName"
+                        value={introForm.collegeName}
+                        onChange={handleIntroChange}
+                        placeholder="College Name"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentProgram"
+                        value={introForm.currentProgram}
+                        onChange={handleIntroChange}
+                        placeholder="Current Program"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentYear"
+                        value={introForm.currentYear}
+                        onChange={handleIntroChange}
+                        placeholder="Current Year"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentSemester"
+                        value={introForm.currentSemester}
+                        onChange={handleIntroChange}
+                        placeholder="Current Semester"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="hometown"
+                        value={introForm.hometown}
+                        onChange={handleIntroChange}
+                        placeholder="Hometown"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentResidence"
+                        value={introForm.currentResidence}
+                        onChange={handleIntroChange}
+                        placeholder="Current Residence"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentHall"
+                        value={introForm.currentHall}
+                        onChange={handleIntroChange}
+                        placeholder="Current Hall"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentRoom"
+                        value={introForm.currentRoom}
+                        onChange={handleIntroChange}
+                        placeholder="Current Room"
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        name="currentBed"
+                        value={introForm.currentBed}
+                        onChange={handleIntroChange}
+                        placeholder="Current Bed"
+                        className="w-full p-2 border rounded"
+                      />
+                      <button
+                        type="submit"
+                        className="w-full py-2 px-4 bg-blue-500 text-white rounded"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowEditForm(false)}
+                        className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded mt-2"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমি <strong> {useAuth().user.name}</strong>
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমি <strong> {profile.schoolName}</strong>   থেকে এসএসসি
+                        পাশ করেছি
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        এবং <strong> {profile.collegeName}</strong>   থেকে
+                        এইচএসসি পাশ করেছি
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        <strong>{profile.currentDepartment}</strong>  
+                        ডিপার্টমেন্টে <br />
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        {<strong>{profile.currentProgram}</strong>}   প্রোগ্রামে{" "}
+                        <br />
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        {<strong>{profile.currentYear}</strong>}   বর্ষে <br />
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        {<strong>{profile.currentSemester}</strong>}  
+                        সেমিস্টারে অধ্যয়নরত আছি।
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমার স্টুডেন্ট আইডি  {" "}
+                        <strong>{profile.studentId}</strong>
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমার হোমটাউন   <strong>{profile.hometown}</strong>
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমার বর্তমান বাসা  {" "}
+                        <strong>{profile.currentResidence}</strong>
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির{" "}
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        <strong>{profile.currentHall}</strong>   হল অফ রেসিডেন্স
+                        বিল্ডিং এ{" "}
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        {<strong>{profile.currentRoom}</strong>}   রুমে{" "}
+                      </div>
+                      <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                        {<strong>{profile.currentBed}</strong>}   বেডে থাকি।
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমি <strong> {profile.userName}</strong>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমি <strong> {profile.schoolName}</strong>   থেকে এসএসসি পাশ করেছি
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      এবং <strong> {profile.collegeName}</strong>   থেকে এইচএসসি পাশ করেছি
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      <strong>{profile.currentDepartment}</strong>   ডিপার্টমেন্টে <br />
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      {<strong>{profile.currentProgram}</strong>}   প্রোগ্রামে <br />
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      {<strong>{profile.currentYear}</strong>}   বর্ষে <br />
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      {<strong>{profile.currentSemester}</strong>}   সেমিস্টারে অধ্যয়নরত
-                      আছি।
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমার স্টুডেন্ট আইডি   <strong>{profile.studentId}</strong>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমার হোমটাউন   <strong>{profile.hometown}</strong>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমার বর্তমান বাসা   <strong>{profile.currentResidence}</strong>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির{" "}
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      <strong>{profile.currentHall}</strong>   হল অফ রেসিডেন্স বিল্ডিং এ{" "}
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      {<strong>{profile.currentRoom}</strong>}   রুমে{" "}
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      {<strong>{profile.currentBed}</strong>}   বেডে থাকি।
-                    </div>
-                    {/* <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                      <span className="text-gray-500">🎓</span>
-                      <span>
-                        Studies{" "}
-                        <strong>BSc. in Computer Science and Engineering</strong> at{" "}
-                        <strong>Islamic University of Technology (IUT)</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                      <span className="text-gray-500">🎓</span>
-                      <span>
-                        Studied at <strong>Dhaka Residential Model College</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                      <span className="text-gray-500">🏫</span>
-                      <span>
-                        Went to <strong>Viqarunnisa Noon School and College</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                      <span className="text-gray-500">🏠</span>
-                      <span>
-                        Lives in <strong>Dhaka, Bangladesh</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                      <span className="text-gray-500">📍</span>
-                      <span>
-                        From <strong>Sylhet, Bangladesh</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                      <span className="text-gray-500">📱</span>
-                      <span className="text-blue-600 cursor-pointer hover:underline">
-                        sarah.ahmed.dev
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[15px] text-gray-700 mb-[5px]">
-                      <span className="text-gray-500">💼</span>
-                      <span>
-                        Works at <strong>Tech Solutions Ltd</strong> as{" "}
-                        <strong>Software Developer</strong>
-                      </span>
-                    </div> */}
-                  </div>
+                  )}
                 </form>
               )}
             </div>
