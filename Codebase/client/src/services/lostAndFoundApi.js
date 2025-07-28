@@ -89,49 +89,86 @@ export const getLostAndFoundPosts = async (filters = {}) => {
 // Create a new lost and found post
 export const createLostAndFoundPost = async (postData) => {
   try {
-    console.log('API - createLostAndFoundPost called with:', postData);
+    console.log('API - Creating lost and found post with data:', postData);
     
     // Check if postData is already FormData
     let formDataToSend;
     if (postData instanceof FormData) {
-      console.log('API - postData is already FormData');
       formDataToSend = postData;
-      
-      // Log FormData contents for debugging
-      console.log('API - FormData entries:');
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0] + ': ' + (pair[1] instanceof File ? 
-          `File: ${pair[1].name} (${pair[1].size} bytes)` : pair[1]));
-      }
+      console.log('API - Using existing FormData');
     } else {
-      console.log('API - Converting postData to FormData');
+      // Convert to FormData
       formDataToSend = new FormData();
       
-      // Add all text fields to FormData
+      // Add text fields
       Object.keys(postData).forEach(key => {
         if (key !== 'image' && postData[key] !== undefined && postData[key] !== null) {
           formDataToSend.append(key, postData[key]);
-          console.log(`API - Added ${key}: ${postData[key]} to FormData`);
+          console.log(`API - Added field ${key}:`, postData[key]);
         }
       });
       
       // Add image file if present
-      if (postData.image && postData.image instanceof File) {
+      if (postData.image) {
         formDataToSend.append('image', postData.image);
-        console.log(`API - Added image: ${postData.image.name} (${postData.image.size} bytes) to FormData`);
+        console.log('API - Added image file:', postData.image.name, postData.image.size, 'bytes');
+      }
+      
+      console.log('API - Converted to FormData');
+    }
+    
+    // Log FormData contents
+    console.log('API - FormData contents:');
+    for (let [key, value] of formDataToSend.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`  ${key}: ${value}`);
       }
     }
     
-    console.log('API - Sending request to:', `${API_BASE_URL}/lost-and-found`);
+    const headers = getAuthHeaders(true);
+    console.log('API - Request headers:', headers);
+    console.log('API - Making request to:', `${API_BASE_URL}/lost-and-found`);
+    
     const response = await fetch(`${API_BASE_URL}/lost-and-found`, {
       method: 'POST',
-      headers: getAuthHeaders(true), // true indicates FormData
+      headers: headers,
       body: formDataToSend
     });
     
-    return await handleResponse(response);
+    console.log('API - Response status:', response.status);
+    console.log('API - Response ok:', response.ok);
+    console.log('API - Response headers:', Object.fromEntries(response.headers.entries()));
+    
+    // Try to get response text for debugging
+    const responseText = await response.text();
+    console.log('API - Response text:', responseText);
+    
+    // Parse response if it's JSON
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('API - Failed to parse response as JSON:', parseError);
+      throw new Error(`Server returned non-JSON response: ${responseText}`);
+    }
+    
+    if (!response.ok) {
+      throw new Error(responseData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return responseData;
   } catch (error) {
-    console.error('Error creating lost and found post:', error);
+    console.error('API - Error creating lost and found post:', error);
+    console.error('API - Error message:', error.message);
+    console.error('API - Error stack:', error.stack);
+    
+    // Re-throw with more context
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to server. Please check if the server is running.');
+    }
+    
     throw error;
   }
 };

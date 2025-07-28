@@ -78,13 +78,15 @@ export default function LostAndFound() {
   // Add new post
   const handleAddPost = async (formData) => {
     try {
-      console.log('Submitting form data:');
+      console.log('LostAndFound - handleAddPost called');
+      console.log('LostAndFound - Submitting form data:');
       for (let [key, value] of formData.entries()) {
         console.log(key, value);
       }
       
+      console.log('LostAndFound - About to call createLostAndFoundPost API');
       const response = await createLostAndFoundPost(formData);
-      console.log('Post creation response:', response);
+      console.log('LostAndFound - Post creation response:', response);
       
       // Handle the response - extract the created post
       let createdPost = null;
@@ -119,8 +121,15 @@ export default function LostAndFound() {
         setShowAddModal(false);
       }
     } catch (error) {
-      console.error('Error creating post:', error);
-      alert('Failed to create post. Please try again.');
+      console.error('LostAndFound - Error creating post:', error);
+      console.error('LostAndFound - Error message:', error.message);
+      console.error('LostAndFound - Error stack:', error.stack);
+      console.error('LostAndFound - Error name:', error.name);
+      
+      // Show detailed error to user
+      const errorMessage = error.message || 'Unknown error occurred';
+      console.log('LostAndFound - Showing error to user:', errorMessage);
+      alert(`Failed to create post: ${errorMessage}\n\nCheck browser console for more details.`);
     }
   };
 
