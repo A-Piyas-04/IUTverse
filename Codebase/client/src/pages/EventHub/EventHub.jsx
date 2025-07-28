@@ -109,12 +109,14 @@ const SAMPLE_EVENTS = [
 
 // Available clubs for filtering
 const AVAILABLE_CLUBS = [
-  "IUT Programming Club",
-  "IUT Cultural Club", 
-  "IUT Debate Club",
-  "IUT Robotics Club",
-  "IUT Photography Club",
-  "IUT Music Club"
+  "IUT Computer Society",
+  "IUT Automobile Society", 
+  "IUT Debating Society",
+  "IUT Robotics Society",
+  "IUT Photographic Society",
+  "IUT SIKS",
+  "IUT Al-Fazari Interstellar Society",
+  "Al Biruni Society of Scientific Studies"
 ];
 
 export default function EventHub() {
