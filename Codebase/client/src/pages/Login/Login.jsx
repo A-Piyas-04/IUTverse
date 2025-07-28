@@ -117,17 +117,13 @@ export default function LoginPage() {
             required
             disabled={loading}
           />
-          
-          {message && (
-            <div className="message error">
-              {message}
-            </div>
-          )}
-          
+
+          {message && <div className="message error">{message}</div>}
+
           <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
-          
+
           <div className="auth-link">
             Don't have a password yet? <a href="/signup">Get started here</a>
           </div>
