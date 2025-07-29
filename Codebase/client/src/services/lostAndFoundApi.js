@@ -38,7 +38,7 @@ const handleResponse = async (response) => {
 
 // Helper function to get auth headers
 const getAuthHeaders = (isFormData = false) => {
-  const token = localStorage.getItem('iutverse_auth_token');
+  const token = localStorage.getItem('authToken');
   const headers = {};
   
   if (!isFormData) {
