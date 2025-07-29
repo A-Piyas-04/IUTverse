@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar/Navbar.jsx';
 import Sidebar from "./view/Sidebar/Sidebar.jsx";
 import FeedCard from '../../components/CatComponents/FeedCard/FeedCard';
@@ -6,7 +6,7 @@ import CatProfiles from './view/CatProfiles/CatProfiles.jsx';
 import CatBreak from './view/CatBreak/CatBreak.jsx';
 import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
-// import CatGame from './view/CatGame/CatGame.jsx';
+import { createCatPost, getCatPosts } from '../../services/catPostApi.js';
 import './CatCorner.css';
 
 const INITIAL_POSTS = [
@@ -24,23 +24,109 @@ const INITIAL_POSTS = [
 
 export default function CatCorner() {
   const [view, setView] = useState('Posts');
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
   const [showAddPost, setShowAddPost] = useState(false);
   const [newPost, setNewPost] = useState({ caption: '', image: null, imagePreview: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleAddPost = () => {
-    if (newPost.caption.trim() && newPost.image) {
-      const post = {
-        id: Date.now(),
-        caption: newPost.caption,
-        image: newPost.imagePreview,
-        user: 'Current User', // In real app, get from auth context
-        time: 'Just now',
-        type: 'image'
-      };
-      setPosts([post, ...posts]);
-      setNewPost({ caption: '', image: null, imagePreview: '' });
-      setShowAddPost(false);
+
+  // Fetch posts on component mount
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getCatPosts(1, 20); // Get first 20 posts
+      
+      if (response.success) {
+        // Transform backend data to match frontend format
+        const transformedPosts = response.data.posts.map(post => ({
+          id: post.id,
+          image: post.image ? `http://localhost:3000${post.image}` : '/assets/default-cat.jpg',
+          caption: post.caption,
+          user: post.user?.name || 'Anonymous',
+          time: formatTimeAgo(post.createdAt),
+          type: 'image',
+          likes: post.likes?.length || 0,
+          comments: post.comments?.length || 0,
+        }));
+        setPosts(transformedPosts);
+      } else {
+        // If API fails, fall back to initial posts for demo
+        setPosts(INITIAL_POSTS);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setError('Failed to load posts. Showing demo content.');
+      // Fall back to initial posts for demo
+      setPosts(INITIAL_POSTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to format time ago
+  const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const postDate = new Date(dateString);
+    const diffInMinutes = Math.floor((now - postDate) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const handleAddPost = async () => {
+    if (!newPost.caption.trim() || !newPost.image) {
+      setError('Please provide both a caption and an image.');
+      return;
+    }
+
+
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      const formData = new FormData();
+      formData.append('caption', newPost.caption);
+      formData.append('image', newPost.image);
+      
+      const response = await createCatPost(formData);
+      
+      if (response.success) {
+        // Transform the new post to match frontend format
+        const newPostData = {
+          id: response.data.id,
+          image: response.data.image ? `http://localhost:3000${response.data.image}` : '/assets/default-cat.jpg',
+          caption: response.data.caption,
+          user: response.data.user?.name || 'You',
+          time: 'Just now',
+          type: 'image',
+          likes: 0,
+          comments: 0,
+        };
+        
+        // Add new post to the beginning of the list
+        setPosts([newPostData, ...posts]);
+        
+        // Reset form
+        setNewPost({ caption: '', image: null, imagePreview: '' });
+        setShowAddPost(false);
+      } else {
+        setError(response.message || 'Failed to create post');
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      setError(error.message || 'Failed to create post. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,11 +175,30 @@ export default function CatCorner() {
                   <button 
                     className="add-post-btn-compact"
                     onClick={() => setShowAddPost(!showAddPost)}
+                    disabled={isSubmitting}
                   >
                     <span className="add-post-icon">📸</span>
                     Share
                   </button>
                 </div>
+
+                {error && (
+                  <div className="error-message">
+                    {error}
+                    <button 
+                      className="error-close"
+                      onClick={() => setError(null)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                {loading && (
+                  <div className="loading-message">
+                    Loading posts...
+                  </div>
+                )}
 
                 {/* Add Post Form - Professional Popup */}
                 {showAddPost && (
@@ -157,9 +262,9 @@ export default function CatCorner() {
                         <button 
                           className="btn-primary"
                           onClick={handleAddPost}
-                          disabled={!newPost.caption.trim() || !newPost.image}
+                          disabled={!newPost.caption.trim() || !newPost.image || isSubmitting}
                         >
-                          Share
+                          {isSubmitting ? 'Sharing...' : 'Share'}
                         </button>
                       </div>
                     </div>
@@ -167,13 +272,15 @@ export default function CatCorner() {
                 )}
 
                 {/* Posts Grid */}
-                <div className="feed-grid">
-                  {posts.map((post) => (
-                    <div className="feed-card" key={post.id}>
-                      <FeedCard post={post} />
-                    </div>
-                  ))}
-                </div>
+                {!loading && (
+                  <div className="feed-grid">
+                    {posts.map((post) => (
+                      <div className="feed-card" key={post.id}>
+                        <FeedCard post={post} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
