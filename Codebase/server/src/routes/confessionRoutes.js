@@ -45,7 +45,6 @@ router.delete(
   "/confessions/:id/reactions",
   authenticateToken,
   validateIdParam,
-  validateReactionData,
   confessionController.removeReaction
 );
 router.get(

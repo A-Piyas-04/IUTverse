@@ -245,7 +245,7 @@ model ConfessionReaction {
   reactionType String     // "like", "funny", "relatable", "angry", "insightful"
   createdAt    DateTime   @default(now())
 
-  @@unique([confessionId, userId, reactionType]) // Prevent duplicate reactions
+  @@unique([confessionId, userId]) // One reaction per user per confession
   @@index([confessionId])
   @@index([userId])
 }

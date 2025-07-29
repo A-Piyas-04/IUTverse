@@ -58,10 +58,9 @@ class ConfessionApiService {
   }
 
   // Remove a reaction from a confession (requires authentication)
-  async removeReaction(confessionId, reactionType) {
+  async removeReaction(confessionId) {
     return ApiService.request(`/confessions/${confessionId}/reactions`, {
       method: "DELETE",
-      body: JSON.stringify({ reactionType }),
     });
   }
 
@@ -127,7 +126,7 @@ class ConfessionApiService {
 
   async toggleReaction(confessionId, reactionType, isRemoving = false) {
     const response = isRemoving
-      ? await this.removeReaction(confessionId, reactionType)
+      ? await this.removeReaction(confessionId)
       : await this.addReaction(confessionId, reactionType);
     return this.handleApiResponse(response);
   }
