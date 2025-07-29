@@ -80,7 +80,8 @@ export default function LoginPage() {
     setEmail("");
     setPassword("");
     setMessage('');
-    // Auth context will handle clearing auth data
+    // Use auth context logout function
+    logout();
   };
 
   if (isAuthenticated) {
