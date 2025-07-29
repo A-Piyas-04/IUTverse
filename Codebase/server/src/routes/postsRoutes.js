@@ -12,24 +12,24 @@ const {
 } = require('../controllers/postsController');
 
 // Get all posts for homepage feed
-router.get('/posts', authenticateToken, getAllPosts);
+router.get('/', authenticateToken, getAllPosts);
 
 // Get current user's posts
-router.get('/posts/my-posts', authenticateToken, getCurrentUserPosts);
+router.get('/my-posts', authenticateToken, getCurrentUserPosts);
 
 // Create a new post
-router.post('/posts', authenticateToken, createPost);
+router.post('/', authenticateToken, createPost);
 
 // Get posts by specific user ID
-router.get('/posts/user/:userId', authenticateToken, getPostsByUserId);
+router.get('/user/:userId', authenticateToken, getPostsByUserId);
 
 // Delete a post
-router.delete('/posts/:postId', authenticateToken, deletePost);
+router.delete('/:postId', authenticateToken, deletePost);
 
 // Like/unlike a post
-router.post('/posts/:postId/like', authenticateToken, toggleLike);
+router.post('/:postId/like', authenticateToken, toggleLike);
 
 // Get post reactions
-router.get('/posts/:postId/reactions', authenticateToken, getPostReactions);
+router.get('/:postId/reactions', authenticateToken, getPostReactions);
 
 module.exports = router;

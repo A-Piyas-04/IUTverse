@@ -6,62 +6,62 @@ const jobCommentController = require("../controllers/jobCommentController");
 const jobApplicationController = require("../controllers/jobApplicationController");
 
 // Public - Jobs
-router.get("/jobs", jobController.getAllJobs);
-router.get("/jobs/:id", jobController.getJobById);
+router.get("/", jobController.getAllJobs);
+router.get("/:id", jobController.getJobById);
 
 // Public - Comments (can view comments without authentication)
-router.get("/jobs/:jobId/comments", jobCommentController.getCommentsByJobId);
-router.get("/jobs/comments/:commentId", jobCommentController.getCommentById);
+router.get("/:jobId/comments", jobCommentController.getCommentsByJobId);
+router.get("/comments/:commentId", jobCommentController.getCommentById);
 
 // Public - Job Applications (view count and list)
 router.get(
-  "/jobs/:jobId/applications",
+  "/:jobId/applications",
   jobApplicationController.getJobApplications
 );
 router.get(
-  "/jobs/:jobId/applications/count",
+  "/:jobId/applications/count",
   jobApplicationController.getApplicationCount
 );
 
 // Protected - Jobs
-router.post("/jobs", authenticateToken, jobController.createJob);
-router.put("/jobs/:id", authenticateToken, jobController.updateJob);
+router.post("/", authenticateToken, jobController.createJob);
+router.put("/:id", authenticateToken, jobController.updateJob);
 
 // Protected - Comments
 router.post(
-  "/jobs/:jobId/comments",
+  "/:jobId/comments",
   authenticateToken,
   jobCommentController.createComment
 );
 router.post(
-  "/jobs/:jobId/comments/:commentId/reply",
+  "/:jobId/comments/:commentId/reply",
   authenticateToken,
   jobCommentController.createReply
 );
 router.put(
-  "/jobs/comments/:commentId",
+  "/comments/:commentId",
   authenticateToken,
   jobCommentController.updateComment
 );
 router.delete(
-  "/jobs/comments/:commentId",
+  "/comments/:commentId",
   authenticateToken,
   jobCommentController.deleteComment
 );
 
 // Protected - Job Applications
 router.post(
-  "/jobs/:jobId/apply",
+  "/:jobId/apply",
   authenticateToken,
   jobApplicationController.applyToJob
 );
 router.delete(
-  "/jobs/:jobId/apply",
+  "/:jobId/apply",
   authenticateToken,
   jobApplicationController.removeApplication
 );
 router.get(
-  "/jobs/:jobId/application-status",
+  "/:jobId/application-status",
   authenticateToken,
   jobApplicationController.getUserApplicationStatus
 );
