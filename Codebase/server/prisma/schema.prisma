@@ -38,6 +38,10 @@ model User {
   jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
   jobComments JobComment[] // Comments made by this user on jobs
   jobApplications JobApplication[] @relation("JobApplications") // Applications made by this user
+  
+  // Confession relations (for tracking reactions and poll votes only)
+  confessionReactions ConfessionReaction[] @relation("ConfessionReactions")
+  confessionPollVotes ConfessionPollVote[] @relation("ConfessionPollVotes")
 }
 
 model Profile {
@@ -219,4 +223,69 @@ model QuestionPaper {
   semester     String
   fileUrl      String
   uploadedAt   DateTime @default(now())
+}
+
+// Confession Models
+model Confession {
+  id        Int      @id @default(autoincrement())
+  content   String
+  tag       String
+  createdAt DateTime @default(now())
+
+  reactions ConfessionReaction[]
+  poll      ConfessionPoll?
+}
+
+model ConfessionReaction {
+  id           Int        @id @default(autoincrement())
+  confession   Confession @relation(fields: [confessionId], references: [id], onDelete: Cascade)
+  confessionId Int
+  user         User       @relation("ConfessionReactions", fields: [userId], references: [id])
+  userId       Int
+  reactionType String     // "like", "funny", "relatable", "angry", "insightful"
+  createdAt    DateTime   @default(now())
+
+  @@unique([confessionId, userId, reactionType]) // Prevent duplicate reactions
+  @@index([confessionId])
+  @@index([userId])
+}
+
+model ConfessionPoll {
+  id           Int                    @id @default(autoincrement())
+  confession   Confession             @relation(fields: [confessionId], references: [id], onDelete: Cascade)
+  confessionId Int                    @unique
+  question     String
+  totalVotes   Int                    @default(0)
+  createdAt    DateTime               @default(now())
+
+  options ConfessionPollOption[]
+  votes   ConfessionPollVote[]
+}
+
+model ConfessionPollOption {
+  id       Int            @id @default(autoincrement())
+  poll     ConfessionPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId   Int
+  text     String
+  votes    Int            @default(0)
+  orderIndex Int          // To maintain option order
+
+  pollVotes ConfessionPollVote[]
+
+  @@index([pollId])
+}
+
+model ConfessionPollVote {
+  id       Int                  @id @default(autoincrement())
+  poll     ConfessionPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId   Int
+  option   ConfessionPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId Int
+  user     User                 @relation("ConfessionPollVotes", fields: [userId], references: [id])
+  userId   Int
+  votedAt  DateTime             @default(now())
+
+  @@unique([pollId, userId]) // One vote per poll per user
+  @@index([pollId])
+  @@index([userId])
 }
