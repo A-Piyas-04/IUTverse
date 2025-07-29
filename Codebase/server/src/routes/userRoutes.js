@@ -1,8 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const postsService = require('../services/postsService');
 const profileController = require('../controllers/profileController');
+const userController = require("../controllers/userController");
+const postsService = require('../services/postsService');
 
 // Get user profile with posts (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {
@@ -56,10 +57,16 @@ router.get('/dashboard', authenticateToken, async (req, res) => {
 });
 
 // Get profile by userId (public)
-router.get('/profile/:userId', profileController.getProfile);
+router.get("/profile/:userId", profileController.getProfile);
 // Create profile (protected)
-router.post('/profile', authenticateToken, profileController.createProfile);
+router.post("/profile", authenticateToken, profileController.createProfile);
 // Update profile (protected)
-router.put('/profile', authenticateToken, profileController.updateProfile);
+router.put("/profile", authenticateToken, profileController.updateProfile);
+
+// Update user name (protected)
+router.put("/user", authenticateToken, userController.updateUserName);
+
+// Get user by ID (public - for viewing other profiles)
+router.get("/user/:userId", userController.getUserById);
 
 module.exports = router;

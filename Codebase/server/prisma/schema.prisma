@@ -34,6 +34,10 @@ model User {
   lostAndFounds  LostAndFound[]
   uploadedCats   Cat[]
   questionPapers QuestionPaper[]
+
+  jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
+  jobComments JobComment[] // Comments made by this user on jobs
+  jobApplications JobApplication[] @relation("JobApplications") // Applications made by this user
 }
 
 model Profile {
@@ -53,6 +57,62 @@ model Profile {
   currentRoom      String?
   currentBed       String?
   user User @relation(fields: [userId], references: [id])
+}
+
+enum JobType {
+  Internship
+  Freelance
+  PartTime
+  Volunteer
+}
+
+model Job {
+  id           Int      @id @default(autoincrement())
+  title        String
+  type         JobType
+  description  String
+  requirements String[]
+  compensation String?
+  deadline     DateTime?
+  postedBy     User     @relation("UserJobs", fields: [postedById], references: [id])
+  postedById   Int
+  createdAt    DateTime @default(now())
+  
+  comments     JobComment[] // Comments on this job
+  applications JobApplication[] // Applications for this job
+}
+
+model JobApplication {
+  id          Int      @id @default(autoincrement())
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       Int
+  applicant   User     @relation("JobApplications", fields: [applicantId], references: [id])
+  applicantId Int
+  appliedAt   DateTime @default(now())
+  
+  @@unique([jobId, applicantId]) // One application per user per job
+  @@index([jobId])
+  @@index([applicantId])
+}
+
+model JobComment {
+  id          Int      @id @default(autoincrement())
+  content     String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       Int
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Self-referencing relationship for replies
+  parentComment   JobComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  parentCommentId Int?
+  replies         JobComment[] @relation("CommentReplies")
+  
+  @@index([jobId])
+  @@index([authorId])
+  @@index([parentCommentId])
 }
 
 model Post {
@@ -119,13 +179,15 @@ model LostAndFound {
   id          Int      @id @default(autoincrement())
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
-  type        String
+  type        String   // "lost" or "found"
   title       String
   description String
-  image       String
+  image       String?
   location    String
-  hallOrDept  String
+  contact     String
+  status      String   @default("active") // "active" or "resolved"
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Cat {

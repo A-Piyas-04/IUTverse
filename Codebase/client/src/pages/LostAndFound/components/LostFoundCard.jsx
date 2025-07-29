@@ -9,8 +9,28 @@ export default function LostFoundCard({ post, onResolve, className = "" }) {
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
+  };
+  
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) {
+      // Return placeholder image based on post type
+      const color = post.type === 'lost' ? 'ef4444' : '10b981';
+      return `https://placehold.co/400x300/${color}/ffffff?text=${encodeURIComponent(post.title)}`;
+    }
+    
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Otherwise, construct the full URL with the API base
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}${imagePath}`;
   };
 
   const getStatusColor = (status) => {
@@ -75,7 +95,15 @@ export default function LostFoundCard({ post, onResolve, className = "" }) {
 
       {/* Card Image */}
       <div className="card-image">
-        <img src={post.image} alt={post.title} />
+        <img 
+          src={getImageUrl(post.image)} 
+          alt={post.title}
+          onError={(e) => {
+            // Fallback to placeholder if image fails to load
+            const color = post.type === 'lost' ? 'ef4444' : '10b981';
+            e.target.src = `https://placehold.co/400x300/${color}/ffffff?text=${encodeURIComponent(post.title)}`;
+          }}
+        />
         <div className="image-overlay">
           <div className="image-actions">
             <button className="image-action-btn" onClick={handleShare}>
@@ -96,11 +124,11 @@ export default function LostFoundCard({ post, onResolve, className = "" }) {
           </div>
           <div className="meta-item">
             <span className="meta-icon">🕒</span>
-            <span className="meta-text">{formatDate(post.date)} at {post.time}</span>
+            <span className="meta-text">{formatDate(post.createdAt)}</span>
           </div>
           <div className="meta-item">
             <span className="meta-icon">👤</span>
-            <span className="meta-text">{post.user}</span>
+            <span className="meta-text">{post.user?.name || 'Anonymous'}</span>
           </div>
         </div>
 

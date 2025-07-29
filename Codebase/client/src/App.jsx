@@ -62,6 +62,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/profile/:userId"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/catcorner"
         element={
           <ProtectedRoute>
