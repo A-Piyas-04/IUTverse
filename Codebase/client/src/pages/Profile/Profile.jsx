@@ -37,7 +37,6 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) {
-      console.log("User not loaded yet, skipping profile fetch");
       return;
     }
 
@@ -45,11 +44,6 @@ export default function Profile() {
       setLoading(true);
       try {
         const targetUserId = userId || user.id;
-        console.log("=== PROFILE FETCH DEBUG ===");
-        console.log("URL userId:", userId);
-        console.log("Current user.id:", user.id);
-        console.log("Target User ID:", targetUserId);
-        console.log("isOwnProfile:", isOwnProfile);
 
         // Fetch profile data
         const profileRes = await ApiService.getProfileByUserId(targetUserId);
@@ -61,48 +55,40 @@ export default function Profile() {
 
         // If viewing someone else's profile, we need to get their user info
         if (!isOwnProfile) {
-          console.log("Fetching other user's data...");
           try {
-            // Test with hardcoded ID first to isolate the issue
-            const testUserId = 1;
-            console.log("Testing with user ID:", testUserId);
-
-            const userRes = await ApiService.getUserById(testUserId);
-            console.log("API Response:", userRes);
+            console.log("Fetching user data for ID:", targetUserId);
+            const userRes = await ApiService.getUserById(targetUserId);
+            console.log("User API response:", userRes);
 
             if (userRes.success && userRes.data) {
-              console.log(
-                "SUCCESS! Setting profileUser with name:",
-                userRes.data.name
-              );
+              console.log("Setting profileUser with data:", userRes.data);
+              const userData = userRes.data.data || userRes.data; // Handle nested data structure
               setProfileUser({
-                id: testUserId,
-                name: userRes.data.name || "Unknown User",
-                email: userRes.data.email,
-                department: userRes.data.department,
-                batch: userRes.data.batch,
-                studentId: userRes.data.studentId,
+                id: targetUserId,
+                name: userData.name || "Unknown User",
+                email: userData.email,
+                department: userData.department,
+                batch: userData.batch,
+                studentId: userData.studentId,
               });
             } else {
-              console.warn("API call failed:", userRes);
+              console.log("API call failed, setting fallback");
               setProfileUser({
                 id: targetUserId,
                 name: "Unknown User",
               });
             }
           } catch (userError) {
-            console.error("Error in API call:", userError);
+            console.error("Error fetching user:", userError);
             setProfileUser({
               id: targetUserId,
               name: "Unknown User",
             });
           }
         } else {
-          console.log("Using current user data");
           setProfileUser(user);
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
         setProfile(null);
         setProfileUser(null);
       }
@@ -343,8 +329,6 @@ export default function Profile() {
   // Use appropriate user name based on whose profile we're viewing
   const displayUser = isOwnProfile ? user : profileUser;
   const userName = displayUser?.name || "Unknown User";
-
-  console.log("Final userName:", userName, "from displayUser:", displayUser);
 
   const tabs = [
     "Posts",
@@ -945,7 +929,8 @@ export default function Profile() {
                         <strong>আসসালামু আলাইকুম ভাই/আপু।</strong>
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                        আমি <strong> {useAuth().user.name}</strong>
+                        আমি{" "}
+                        <strong> {displayUser?.name || "Unknown User"}</strong>
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                         আমি <strong> {profile.schoolName}</strong>   থেকে এসএসসি
