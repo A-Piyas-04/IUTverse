@@ -289,8 +289,31 @@ export default function Profile() {
     e.preventDefault();
 
     try {
-      // Extract name from form data
-      const { name, ...profileData } = introForm;
+      // Extract name from form data and format program
+      const { name, currentProgram, currentDepartment, bio, ...otherData } =
+        introForm;
+
+      // Determine the final department value
+      let finalDepartment = currentDepartment;
+
+      // If the bio category doesn't allow manual selection, use bio as department
+      if (!isDepartmentSelectable() && bio) {
+        finalDepartment = bio;
+      }
+
+      // Format the program field for backend
+      const formattedProgram =
+        currentProgram && finalDepartment
+          ? `${
+              currentProgram === "Bachelor" ? "BSc" : "MSc"
+            } in ${finalDepartment}`
+          : "";
+
+      const profileData = {
+        ...otherData,
+        bio,
+        currentProgram: formattedProgram,
+      };
 
       // Update user name if provided
       if (name && name.trim()) {
@@ -507,104 +530,247 @@ export default function Profile() {
               ) : !profile ? (
                 isOwnProfile ? (
                   showIntroForm ? (
-                    <form onSubmit={handleIntroSubmit} className="space-y-2">
-                      <input
-                        name="name"
-                        value={introForm.name}
-                        onChange={handleIntroChange}
-                        placeholder="Full Name"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="bio"
-                        value={introForm.bio}
-                        onChange={handleIntroChange}
-                        placeholder="Bio"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="schoolName"
-                        value={introForm.schoolName}
-                        onChange={handleIntroChange}
-                        placeholder="School Name"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="collegeName"
-                        value={introForm.collegeName}
-                        onChange={handleIntroChange}
-                        placeholder="College Name"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentProgram"
-                        value={introForm.currentProgram}
-                        onChange={handleIntroChange}
-                        placeholder="Current Program"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentYear"
-                        value={introForm.currentYear}
-                        onChange={handleIntroChange}
-                        placeholder="Current Year"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentSemester"
-                        value={introForm.currentSemester}
-                        onChange={handleIntroChange}
-                        placeholder="Current Semester"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="hometown"
-                        value={introForm.hometown}
-                        onChange={handleIntroChange}
-                        placeholder="Hometown"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentResidence"
-                        value={introForm.currentResidence}
-                        onChange={handleIntroChange}
-                        placeholder="Current Residence"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentHall"
-                        value={introForm.currentHall}
-                        onChange={handleIntroChange}
-                        placeholder="Current Hall"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentRoom"
-                        value={introForm.currentRoom}
-                        onChange={handleIntroChange}
-                        placeholder="Current Room"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentBed"
-                        value={introForm.currentBed}
-                        onChange={handleIntroChange}
-                        placeholder="Current Bed"
-                        className="w-full p-2 border rounded"
-                      />
-                      <button
-                        type="submit"
-                        className="w-full py-2 px-4 bg-blue-500 text-white rounded"
-                      >
-                        Save Intro
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowIntroForm(false)}
-                        className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded mt-2"
-                      >
-                        Cancel
-                      </button>
+                    <form onSubmit={handleIntroSubmit} className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name
+                          </label>
+                          <input
+                            name="name"
+                            value={introForm.name}
+                            onChange={handleIntroChange}
+                            placeholder="Enter your full name"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              School Name
+                            </label>
+                            <input
+                              name="schoolName"
+                              value={introForm.schoolName}
+                              onChange={handleIntroChange}
+                              placeholder="Your school name"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              College Name
+                            </label>
+                            <input
+                              name="collegeName"
+                              value={introForm.collegeName}
+                              onChange={handleIntroChange}
+                              placeholder="Your college name"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Department Category
+                          </label>
+                          <select
+                            name="bio"
+                            value={introForm.bio}
+                            onChange={handleIntroChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">Select Department Category</option>
+                            {departmentCategories.map((category) => (
+                              <option key={category} value={category}>
+                                {category}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Program Type
+                            </label>
+                            <select
+                              name="currentProgram"
+                              value={introForm.currentProgram}
+                              onChange={handleIntroChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Program Type</option>
+                              <option value="Bachelor">Bachelor</option>
+                              <option value="Master">Master</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Specific Department
+                            </label>
+                            <select
+                              name="currentDepartment"
+                              value={introForm.currentDepartment}
+                              onChange={handleIntroChange}
+                              disabled={
+                                !introForm.currentProgram || !introForm.bio
+                              }
+                              className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                !introForm.currentProgram || !introForm.bio
+                                  ? "bg-gray-100 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              <option value="">
+                                Select Specific Department
+                              </option>
+                              {introForm.bio &&
+                                getAvailableDepartments().map((dept) => (
+                                  <option key={dept} value={dept}>
+                                    {dept}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Current Year
+                              </label>
+                              <select
+                                name="currentYear"
+                                value={introForm.currentYear}
+                                onChange={handleIntroChange}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">Select Year</option>
+                                <option value="1st">1st Year</option>
+                                <option value="2nd">2nd Year</option>
+                                <option value="3rd">3rd Year</option>
+                                <option value="4th">4th Year</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1 w-[120px]">
+                                Current Semester
+                              </label>
+                              <select
+                                name="currentSemester"
+                                value={introForm.currentSemester}
+                                onChange={handleIntroChange}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">Select Semester</option>
+                                <option value="1st">1st</option>
+                                <option value="2nd">2nd</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Hometown
+                            </label>
+                            <input
+                              name="hometown"
+                              value={introForm.hometown}
+                              onChange={handleIntroChange}
+                              placeholder="Your hometown"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Current Residence
+                            </label>
+                            <input
+                              name="currentResidence"
+                              value={introForm.currentResidence}
+                              onChange={handleIntroChange}
+                              placeholder="Current residence"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Current Hall
+                            </label>
+                            <select
+                              name="currentHall"
+                              value={introForm.currentHall}
+                              onChange={handleIntroChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Hall</option>
+                              <option value="South">South</option>
+                              <option value="North">North</option>
+                              <option value="Utility">Utility</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Room Number
+                            </label>
+                            <input
+                              name="currentRoom"
+                              value={introForm.currentRoom}
+                              onChange={handleIntroChange}
+                              placeholder="Room number"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Bed Number
+                            </label>
+                            <select
+                              name="currentBed"
+                              value={introForm.currentBed}
+                              onChange={handleIntroChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Bed</option>
+                              <option value="A">A</option>
+                              <option value="B">B</option>
+                              <option value="C">C</option>
+                              <option value="D">D</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                          Save Intro
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowIntroForm(false)}
+                          className="flex-1 py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </form>
                   ) : (
                     <button
