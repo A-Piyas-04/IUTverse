@@ -84,4 +84,4 @@ export default function AnalyticsWidget({ data }) {
       </div>
     </div>
   );
-} 
+}

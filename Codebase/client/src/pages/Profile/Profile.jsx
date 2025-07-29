@@ -14,6 +14,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [showIntroForm, setShowIntroForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
 
   // Check if this is the current user's profile or someone else's
   const isOwnProfile = !userId || userId === user?.id?.toString();
@@ -24,6 +25,7 @@ export default function Profile() {
     schoolName: "",
     collegeName: "",
     currentProgram: "",
+    currentDepartment: "",
     currentYear: "",
     currentSemester: "",
     hometown: "",
@@ -116,17 +118,93 @@ export default function Profile() {
   }, [user, userId, isOwnProfile]);
 
   const handleIntroChange = (e) => {
-    setIntroForm({ ...introForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // If program type changes, reset department
+    if (name === "currentProgram") {
+      setIntroForm({
+        ...introForm,
+        [name]: value,
+        currentDepartment: "", // Reset department when program changes
+      });
+    }
+    // If bio (department category) changes, reset currentDepartment
+    else if (name === "bio") {
+      setIntroForm({
+        ...introForm,
+        [name]: value,
+        currentDepartment: "", // Reset currentDepartment when bio changes
+      });
+    } else {
+      setIntroForm({ ...introForm, [name]: value });
+    }
+  };
+
+  // Bio/Department category options
+  const departmentCategories = [
+    "Computer Science and Engineering",
+    "Mechanical and Productional Engineering",
+    "Electrical and Electronical Engineering",
+    "Business and Technology Management",
+    "Civil and Environmental Engineering",
+  ];
+
+  // Function to get available department options based on bio selection
+  const getAvailableDepartments = () => {
+    const bio = introForm.bio;
+
+    if (bio === "Computer Science and Engineering") {
+      return ["Computer Science and Engineering", "Software Engineering"];
+    } else if (bio === "Mechanical and Productional Engineering") {
+      return [
+        "Mechanical and Productional Engineering",
+        "Industrial and Productional Engineering",
+      ];
+    } else {
+      // For other bio values, currentDepartment should be the same as bio
+      return [bio];
+    }
+  };
+
+  // Function to check if department selection should be enabled
+  const isDepartmentSelectable = () => {
+    const bio = introForm.bio;
+    return (
+      bio === "Computer Science and Engineering" ||
+      bio === "Mechanical and Productional Engineering"
+    );
+  };
+
+  // Function to format the final program value for backend
+  const getFormattedProgram = () => {
+    if (!introForm.currentProgram || !introForm.currentDepartment) return "";
+    const prefix = introForm.currentProgram === "Bachelor" ? "BSc" : "MSc";
+    return `${prefix} in ${introForm.currentDepartment}`;
   };
 
   const handleEditProfile = () => {
+    // Parse existing program data if it exists
+    let programType = "";
+    let department = "";
+
+    if (profile?.currentProgram) {
+      if (profile.currentProgram.startsWith("BSc")) {
+        programType = "Bachelor";
+        department = profile.currentProgram.replace("BSc in ", "");
+      } else if (profile.currentProgram.startsWith("MSc")) {
+        programType = "Master";
+        department = profile.currentProgram.replace("MSc in ", "");
+      }
+    }
+
     // Populate form with existing data
     setIntroForm({
       name: user?.name || "",
       bio: profile?.bio || "",
       schoolName: profile?.schoolName || "",
       collegeName: profile?.collegeName || "",
-      currentProgram: profile?.currentProgram || "",
+      currentProgram: programType,
+      currentDepartment: department,
       currentYear: profile?.currentYear || "",
       currentSemester: profile?.currentSemester || "",
       hometown: profile?.hometown || "",
@@ -137,19 +215,43 @@ export default function Profile() {
     });
     setShowEditForm(true);
   };
-
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    setFormLoading(true);
 
     try {
-      // Extract name from form data
-      const { name, ...profileData } = introForm;
+      // Extract name from form data and format program
+      const { name, currentProgram, currentDepartment, bio, ...otherData } =
+        introForm;
+
+      // Determine the final department value
+      let finalDepartment = currentDepartment;
+
+      // If the bio category doesn't allow manual selection, use bio as department
+      if (!isDepartmentSelectable() && bio) {
+        finalDepartment = bio;
+      }
+
+      // Format the program field for backend
+      const formattedProgram =
+        currentProgram && finalDepartment
+          ? `${
+              currentProgram === "Bachelor" ? "BSc" : "MSc"
+            } in ${finalDepartment}`
+          : "";
+
+      const profileData = {
+        ...otherData,
+        bio,
+        currentProgram: formattedProgram,
+      };
 
       // Update user name if provided and different from current
       if (name && name.trim() && name.trim() !== user?.name) {
         const nameUpdateResult = await ApiService.updateUserName(name.trim());
         if (!nameUpdateResult.success) {
           alert(`Failed to update name: ${nameUpdateResult.error}`);
+          setFormLoading(false);
           return;
         }
         // Update user context with new name
@@ -162,18 +264,38 @@ export default function Profile() {
         setShowEditForm(false);
         setProfile(res.data);
 
-        // Optionally refresh user data in context if name was updated
-        if (name && name.trim() && name.trim() !== user?.name) {
-          alert("Name and profile updated successfully!");
-        } else {
-          alert("Profile updated successfully!");
+        // Refresh the profile data to show updated information
+        const updatedProfile = await ApiService.getProfileByUserId(user.id);
+        if (updatedProfile.success) {
+          setProfile(updatedProfile.data);
         }
+
+        // Show success message
+        const message =
+          name && name.trim() && name.trim() !== user?.name
+            ? "Name and profile updated successfully!"
+            : "Profile updated successfully!";
+
+        // Create a temporary success message element
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+
+        // Remove the message after 3 seconds
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => document.body.removeChild(successDiv), 300);
+        }, 3000);
       } else {
         alert(`Failed to update profile: ${res.error}`);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("An error occurred while updating profile");
+      alert("An error occurred while updating profile. Please try again.");
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -514,115 +636,309 @@ export default function Profile() {
                   </div>
                 )
               ) : isOwnProfile ? (
-                <form onSubmit={handleEditSubmit} className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={handleEditProfile}
-                    className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
-                  >
-                    Edit intro
-                  </button>
+                <div className="space-y-2">
+                  {!showEditForm ? (
+                    <button
+                      type="button"
+                      onClick={handleEditProfile}
+                      className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mb-4 text-sm flex items-center justify-center gap-2"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      Edit Profile
+                    </button>
+                  ) : null}
 
                   {showEditForm ? (
-                    <>
-                      <input
-                        name="name"
-                        value={introForm.name}
-                        onChange={handleIntroChange}
-                        placeholder="Full Name"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="bio"
-                        value={introForm.bio}
-                        onChange={handleIntroChange}
-                        placeholder="Bio"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="schoolName"
-                        value={introForm.schoolName}
-                        onChange={handleIntroChange}
-                        placeholder="School Name"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="collegeName"
-                        value={introForm.collegeName}
-                        onChange={handleIntroChange}
-                        placeholder="College Name"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentProgram"
-                        value={introForm.currentProgram}
-                        onChange={handleIntroChange}
-                        placeholder="Current Program"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentYear"
-                        value={introForm.currentYear}
-                        onChange={handleIntroChange}
-                        placeholder="Current Year"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentSemester"
-                        value={introForm.currentSemester}
-                        onChange={handleIntroChange}
-                        placeholder="Current Semester"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="hometown"
-                        value={introForm.hometown}
-                        onChange={handleIntroChange}
-                        placeholder="Hometown"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentResidence"
-                        value={introForm.currentResidence}
-                        onChange={handleIntroChange}
-                        placeholder="Current Residence"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentHall"
-                        value={introForm.currentHall}
-                        onChange={handleIntroChange}
-                        placeholder="Current Hall"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentRoom"
-                        value={introForm.currentRoom}
-                        onChange={handleIntroChange}
-                        placeholder="Current Room"
-                        className="w-full p-2 border rounded"
-                      />
-                      <input
-                        name="currentBed"
-                        value={introForm.currentBed}
-                        onChange={handleIntroChange}
-                        placeholder="Current Bed"
-                        className="w-full p-2 border rounded"
-                      />
-                      <button
-                        type="submit"
-                        className="w-full py-2 px-4 bg-blue-500 text-white rounded"
-                      >
-                        Save Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowEditForm(false)}
-                        className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded mt-2"
-                      >
-                        Cancel
-                      </button>
-                    </>
+                    <form onSubmit={handleEditSubmit} className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name
+                          </label>
+                          <input
+                            name="name"
+                            value={introForm.name}
+                            onChange={handleIntroChange}
+                            placeholder="Enter your full name"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              School Name
+                            </label>
+                            <input
+                              name="schoolName"
+                              value={introForm.schoolName}
+                              onChange={handleIntroChange}
+                              placeholder="Your school name"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              College Name
+                            </label>
+                            <input
+                              name="collegeName"
+                              value={introForm.collegeName}
+                              onChange={handleIntroChange}
+                              placeholder="Your college name"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Department Category
+                          </label>
+                          <select
+                            name="bio"
+                            value={introForm.bio}
+                            onChange={handleIntroChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">Select Department Category</option>
+                            {departmentCategories.map((category) => (
+                              <option key={category} value={category}>
+                                {category}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Program Type
+                            </label>
+                            <select
+                              name="currentProgram"
+                              value={introForm.currentProgram}
+                              onChange={handleIntroChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Program Type</option>
+                              <option value="Bachelor">Bachelor</option>
+                              <option value="Master">Master</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Specific Department
+                            </label>
+                            <select
+                              name="currentDepartment"
+                              value={introForm.currentDepartment}
+                              onChange={handleIntroChange}
+                              disabled={
+                                !introForm.currentProgram || !introForm.bio
+                              }
+                              className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                !introForm.currentProgram || !introForm.bio
+                                  ? "bg-gray-100 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              <option value="">
+                                Select Specific Department
+                              </option>
+                              {introForm.bio &&
+                                getAvailableDepartments().map((dept) => (
+                                  <option key={dept} value={dept}>
+                                    {dept}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Current Year
+                              </label>
+                              <select
+                                name="currentYear"
+                                value={introForm.currentYear}
+                                onChange={handleIntroChange}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">Select Year</option>
+                                <option value="1st">1st Year</option>
+                                <option value="2nd">2nd Year</option>
+                                <option value="3rd">3rd Year</option>
+                                <option value="4th">4th Year</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1 w-[120px]">
+                                Current Semester
+                              </label>
+                              <select
+                                name="currentSemester"
+                                value={introForm.currentSemester}
+                                onChange={handleIntroChange}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">Select Semester</option>
+                                <option value="1st">1st</option>
+                                <option value="2nd">2nd</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Hometown
+                            </label>
+                            <input
+                              name="hometown"
+                              value={introForm.hometown}
+                              onChange={handleIntroChange}
+                              placeholder="Your hometown"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Current Residence
+                            </label>
+                            <input
+                              name="currentResidence"
+                              value={introForm.currentResidence}
+                              onChange={handleIntroChange}
+                              placeholder="Current residence"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Current Hall
+                            </label>
+                            <select
+                              name="currentHall"
+                              value={introForm.currentHall}
+                              onChange={handleIntroChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Hall</option>
+                              <option value="South">South</option>
+                              <option value="North">North</option>
+                              <option value="Utility">Utility</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Room Number
+                            </label>
+                            <input
+                              name="currentRoom"
+                              value={introForm.currentRoom}
+                              onChange={handleIntroChange}
+                              placeholder="Room number"
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Bed Number
+                            </label>
+                            <select
+                              name="currentBed"
+                              value={introForm.currentBed}
+                              onChange={handleIntroChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Bed</option>
+                              <option value="A">A</option>
+                              <option value="B">B</option>
+                              <option value="C">C</option>
+                              <option value="D">D</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <button
+                          type="submit"
+                          disabled={formLoading}
+                          className={`flex-1 py-3 px-4 font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            formLoading
+                              ? "bg-blue-400 cursor-not-allowed"
+                              : "bg-blue-600 hover:bg-blue-700"
+                          } text-white`}
+                        >
+                          {formLoading ? (
+                            <div className="flex items-center justify-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Saving...
+                            </div>
+                          ) : (
+                            "Save Changes"
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowEditForm(false)}
+                          disabled={formLoading}
+                          className={`flex-1 py-3 px-4 font-medium rounded-lg transition-colors ${
+                            formLoading
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                          }`}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
                   ) : (
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
@@ -640,11 +956,12 @@ export default function Profile() {
                         এইচএসসি পাশ করেছি
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                        আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
+                        আমি বর্তমানে
+                        <strong>ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে</strong>{" "}
+                        <br />
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                        <strong>{profile.currentDepartment}</strong>  
-                        ডিপার্টমেন্টে <br />
+                        <strong>{profile.bio}</strong>   ডিপার্টমেন্টে <br />
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                         {<strong>{profile.currentProgram}</strong>}   প্রোগ্রামে{" "}
@@ -683,7 +1000,7 @@ export default function Profile() {
                       </div>
                     </div>
                   )}
-                </form>
+                </div>
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
@@ -693,52 +1010,53 @@ export default function Profile() {
                     আমি <strong>{displayUser?.name || "Unknown User"}</strong>
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমি <strong>{profile.schoolName}</strong> থেকে এসএসসি পাশ
+                    আমি <strong> {profile.schoolName}</strong>   থেকে এসএসসি পাশ
                     করেছি
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    এবং <strong>{profile.collegeName}</strong> থেকে এইচএসসি পাশ
-                    করেছি
+                    এবং <strong> {profile.collegeName}</strong>   থেকে এইচএসসি
+                    পাশ করেছি
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমি বর্তমানে ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে <br />
+                    আমি বর্তমানে
+                    <strong>ইসলামিক ইউনিভার্সিটি অফ টেকনোলজিতে</strong> <br />
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentDepartment}</strong> ডিপার্টমেন্টে{" "}
+                    <strong>{profile.bio}</strong>   ডিপার্টমেন্টে <br />
+                  </div>
+                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
+                    {<strong>{profile.currentProgram}</strong>}   প্রোগ্রামে{" "}
                     <br />
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentProgram}</strong> প্রোগ্রামে <br />
+                    {<strong>{profile.currentYear}</strong>}   বর্ষে <br />
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentYear}</strong> বর্ষে <br />
-                  </div>
-                  <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentSemester}</strong> সেমিস্টারে
+                    {<strong>{profile.currentSemester}</strong>}   সেমিস্টারে
                     অধ্যয়নরত আছি।
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমার স্টুডেন্ট আইডি <strong>{profile.studentId}</strong>
+                    আমার স্টুডেন্ট আইডি   <strong>{profile.studentId}</strong>
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমার হোমটাউন <strong>{profile.hometown}</strong>
+                    আমার হোমটাউন   <strong>{profile.hometown}</strong>
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমার বর্তমান বাসা{" "}
+                    আমার বর্তমান বাসা  {" "}
                     <strong>{profile.currentResidence}</strong>
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির
+                    আমি ইসলামিক ইউনিভার্সিটি অফ টেকনোলজির{" "}
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentHall}</strong> হল অফ রেসিডেন্স
-                    বিল্ডিং এ
+                    <strong>{profile.currentHall}</strong>   হল অফ রেসিডেন্স
+                    বিল্ডিং এ{" "}
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentRoom}</strong> রুমে
+                    {<strong>{profile.currentRoom}</strong>}   রুমে{" "}
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    <strong>{profile.currentBed}</strong> বেডে থাকি।
+                    {<strong>{profile.currentBed}</strong>}   বেডে থাকি।
                   </div>
                 </div>
               )}
