@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import EventCard from "./components/EventCard.jsx";
+import AddEventModal from "./components/AddEventModal.jsx";
 import "./EventHub.css";
 
 // Sample event data
@@ -128,6 +129,7 @@ export default function EventHub() {
     club: "All",
     wishlisted: false
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter events based on selected filters
   const filteredEvents = useMemo(() => {
@@ -177,6 +179,13 @@ export default function EventHub() {
               <span className="icon">🎉</span>
             </h1>
             <p className="subtitle">Discover and join exciting events happening at IUT</p>
+            <button 
+              className="add-event-btn"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <span className="btn-icon">➕</span>
+              Add Your Event
+            </button>
           </div>
         </div>
 
@@ -287,6 +296,12 @@ export default function EventHub() {
           </div>
         </div>
       </main>
+
+      {/* Add Event Modal */}
+      <AddEventModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 } 

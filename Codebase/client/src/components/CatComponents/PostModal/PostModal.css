@@ -1,0 +1,266 @@
+.postmodal-overlay {
+  position: fixed;
+  max-width: 100%;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.postmodal-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+  animation: fadeInUp 0.3s ease;
+  position: relative;
+  margin: 0 10px;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.postmodal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: gray;
+}
+
+.postmodal-close:hover {
+  color: black;
+}
+
+.postmodal-header {
+  display: flex;
+  gap: 12px;
+  padding: 24px 24px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.postmodal-avatar {
+  width: 45px;
+  height: 45px;
+  background: orange;
+  border: 2px solid #34d399;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.postmodal-userinfo h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.postmodal-userinfo p {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.postmodal-content {
+  padding: 16px 24px 8px;
+}
+
+.postmodal-caption {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #111827;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.postmodal-media {
+  width: 100%;
+  max-height: 350px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.postmodal-media img,
+.postmodal-media video {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.postmodal-reactions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px;
+  font-size: 14px;
+  color: #4b5563;
+  border-bottom: 1px solid #eee;
+}
+
+.heart {
+  color: red;
+}
+
+.postmodal-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #4b5563;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn:hover {
+  background: #f3f4f6;
+}
+
+.action-btn.liked {
+  color: red;
+}
+
+.postmodal-comments {
+  padding: 16px 24px;
+}
+
+.postmodal-comments h5 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.comments-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 12px;
+}
+
+.comment {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  background: orange;
+  border: 1px solid #6ee7b7;
+  border-radius: 50%;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-body {
+  background: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 12px;
+  flex: 1;
+}
+
+.comment-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.comment-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.comment-text {
+  font-size: 14px;
+  color: #374151;
+}
+
+.no-comments {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.comment-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.comment-form-avatar {
+  width: 30px;
+  height: 30px;
+  background: orange;
+  border-radius: 50%;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  outline: none;
+}
+
+.comment-form button {
+  background: #22c55e;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.comment-form button:hover {
+  background: #16a34a;
+}
