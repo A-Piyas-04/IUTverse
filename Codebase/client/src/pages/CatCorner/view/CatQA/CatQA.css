@@ -47,16 +47,24 @@
   padding: 18px;
   margin-bottom: 20px;
   box-shadow: 0 1px 4px #e0e0e033;
+  overflow: hidden; /* Prevent content from overflowing */
 }
 
 .catqa-question-time {
   color: #f9a846;
   font-weight: bold;
+  white-space: nowrap; /* Keep time on one line */
 }
 
 .catqa-question-text {
   font-size: 1.1rem;
   margin-left: 6px;
+  word-wrap: break-word; /* Break long words */
+  word-break: break-word; /* Break words at any character if needed */
+  overflow-wrap: break-word; /* Modern property for word wrapping */
+  white-space: pre-wrap; /* Preserve whitespace and wrap */
+  line-height: 1.4; /* Better line spacing */
+  max-width: 100%; /* Ensure it doesn't exceed container width */
 }
 
 .catqa-answers-label {
@@ -74,49 +82,67 @@
 .catqa-answer-list {
   padding-left: 30px;
   margin: 0;
+  list-style-type: disc; /* Ensure bullet points are visible */
 }
 
 .catqa-answer-item {
-  margin-bottom: 4px;
+  margin-bottom: 8px; /* Increased spacing between answers */
+  word-wrap: break-word; /* Break long words */
+  word-break: break-word; /* Break words at any character if needed */
+  overflow-wrap: break-word; /* Modern property for word wrapping */
+  white-space: pre-wrap; /* Preserve whitespace and wrap */
+  line-height: 1.4; /* Better line spacing */
+  max-width: 100%; /* Ensure it doesn't exceed container width */
 }
 
 .catqa-answer-time {
   color: #888;
   font-size: 13px;
+  white-space: nowrap; /* Keep time on one line */
 }
 
 .catqa-answer-input-row {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 12px; /* Increased top margin */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .catqa-answer-input {
   flex: 1;
-  padding: 6px;
-  border-radius: 4px;
+  min-width: 200px; /* Minimum width for input */
+  padding: 8px 12px; /* Increased padding */
+  border-radius: 6px; /* Slightly more rounded */
   border: 1px solid #ccc;
+  font-size: 14px;
+  word-wrap: break-word; /* Handle long text in input */
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .catqa-add-btn {
-  padding: 6px 12px;
+  padding: 8px 16px; /* Increased padding */
   background: #f9c846;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px; /* Slightly more rounded */
   cursor: pointer;
   transition: background 0.2s;
+  font-size: 14px;
+  white-space: nowrap; /* Keep button text on one line */
+  min-width: 60px; /* Minimum width for button */
 }
 .catqa-add-btn:hover {
   background: #f7b846;
 }
 
 .catqa-submit-btn, .catqa-cancel-btn {
-  padding: 6px 14px;
+  padding: 8px 16px; /* Increased padding */
   border: none;
-  border-radius: 4px;
+  border-radius: 6px; /* Slightly more rounded */
   cursor: pointer;
   margin-right: 8px;
+  font-size: 14px;
 }
 .catqa-submit-btn {
   background: #f9c846;
@@ -133,15 +159,77 @@
 
 .catqa-textarea {
   width: 100%;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 12px; /* Increased padding */
+  border-radius: 6px; /* Slightly more rounded */
   border: 1px solid #ccc;
   margin-bottom: 12px;
   resize: vertical;
+  font-size: 14px;
+  font-family: inherit; /* Use same font as rest of the app */
+  word-wrap: break-word; /* Handle long text */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4; /* Better line spacing */
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 .catqa-empty {
   text-align: center;
   color: #888;
   margin-top: 40px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .catqa-container {
+    padding: 15px;
+    margin: 10px;
+  }
+  
+  .catqa-question-card {
+    padding: 15px;
+  }
+  
+  .catqa-answer-input-row {
+    flex-direction: column; /* Stack input and button vertically on mobile */
+    align-items: stretch;
+  }
+  
+  .catqa-answer-input {
+    min-width: auto; /* Remove minimum width constraint on mobile */
+    margin-bottom: 8px; /* Add space between input and button */
+  }
+  
+  .catqa-add-btn {
+    align-self: flex-end; /* Align button to the right */
+    min-width: 80px; /* Slightly wider button on mobile */
+  }
+  
+  .catqa-answer-list {
+    padding-left: 20px; /* Reduce left padding on mobile */
+  }
+  
+  .catqa-question-text {
+    margin-left: 0; /* Remove left margin on mobile */
+    margin-top: 4px; /* Add top margin instead */
+  }
+}
+
+@media (max-width: 480px) {
+  .catqa-container {
+    padding: 10px;
+    margin: 5px;
+  }
+  
+  .catqa-title {
+    font-size: 1.5rem; /* Smaller title on very small screens */
+  }
+  
+  .catqa-question-card {
+    padding: 12px;
+  }
+  
+  .catqa-answer-list {
+    padding-left: 15px; /* Further reduce left padding */
+  }
 } 
