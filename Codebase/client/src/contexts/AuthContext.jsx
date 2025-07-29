@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authUtils } from '../utils/auth.js';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { authUtils } from "../utils/auth.js";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -20,13 +20,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       setIsLoading(true);
-      
+
       try {
         // Check if user has a valid token
         if (authUtils.isAuthenticated()) {
           // Validate token with server
           const isValid = await authUtils.validateTokenWithServer();
-          
+
           if (isValid) {
             setIsAuthenticated(true);
             setUser(authUtils.getUserData());
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error("Auth initialization error:", error);
         setIsAuthenticated(false);
         setUser(null);
         authUtils.clearAuthData();
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
           logout();
         }
       } catch (error) {
-        console.error('Periodic token validation error:', error);
+        console.error("Periodic token validation error:", error);
         logout();
       }
     }, 10 * 60 * 1000); // 10 minutes
@@ -97,18 +97,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update user data
+  const updateUser = (userData) => {
+    setUser((prevUser) => ({ ...prevUser, ...userData }));
+    // Optionally update stored user data
+    const token = authUtils.getToken();
+    if (token) {
+      authUtils.setAuthData(token, { ...user, ...userData });
+    }
+  };
+
   const value = {
     isAuthenticated,
     isLoading,
     user,
     login,
     logout,
-    refreshAuth
+    refreshAuth,
+    updateUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
