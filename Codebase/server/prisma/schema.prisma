@@ -42,9 +42,6 @@ model User {
   // Confession relations (for tracking reactions and poll votes only)
   confessionReactions ConfessionReaction[] @relation("ConfessionReactions")
   confessionPollVotes ConfessionPollVote[] @relation("ConfessionPollVotes")
-  lostAndFounds    LostAndFound[]
-  uploadedCats     Cat[]
-  questionPapers   QuestionPaper[]
   catPosts         CatPost[]
   catPostLikes     CatPostLike[]
   catPostComments  CatPostComment[]
