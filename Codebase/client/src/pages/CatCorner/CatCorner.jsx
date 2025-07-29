@@ -44,7 +44,7 @@ export default function CatCorner() {
       setLoading(true);
       setError(null);
       const response = await getCatPosts(1, 20); // Get first 20 posts
-      
+
       if (response.success) {
         // Transform backend data to match frontend format
         const transformedPosts = response.data.posts.map(post => ({
@@ -77,7 +77,7 @@ export default function CatCorner() {
     const now = new Date();
     const postDate = new Date(dateString);
     const diffInMinutes = Math.floor((now - postDate) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -86,9 +86,9 @@ export default function CatCorner() {
 
   // Handle post updates (likes, comments)
   const handlePostUpdate = (postId, updates) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => 
-        post.id === postId 
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
           ? { ...post, ...updates }
           : post
       )
@@ -97,14 +97,14 @@ export default function CatCorner() {
 
   // Handle comment submission
   const handleCommentSubmit = (postId, newComment) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              comments: [...(post.comments || []), newComment],
-              commentsCount: (post.comments?.length || 0) + 1
-            }
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? {
+            ...post,
+            comments: [...(post.comments || []), newComment],
+            commentsCount: (post.comments?.length || 0) + 1
+          }
           : post
       )
     );
@@ -126,13 +126,13 @@ export default function CatCorner() {
     try {
       setIsSubmitting(true);
       setError(null);
-      
+
       const formData = new FormData();
       formData.append('caption', newPost.caption);
       formData.append('image', newPost.image);
-      
+
       const response = await createCatPost(formData);
-      
+
       if (response.success) {
         // Transform the new post to match frontend format
         const newPostData = {
@@ -145,10 +145,10 @@ export default function CatCorner() {
           likes: 0,
           comments: 0,
         };
-        
+
         // Add new post to the beginning of the list
         setPosts([newPostData, ...posts]);
-        
+
         // Reset form
         setNewPost({ caption: '', image: null, imagePreview: '' });
         setShowAddPost(false);
@@ -181,9 +181,9 @@ export default function CatCorner() {
   const renderHeader = () => {
     switch (view) {
       case 'Posts': return '🐾 Cat Feed';
-      case 'Cat Profiles': return '😺 Meet the Campus Cats';
-      case 'Release your Stress': return '🧘‍♂️ Relax with Cats';
-      case 'Random Cat Facts': return '📘 Random Cat Facts';
+      case 'Cat Profiles': return '😺 Meet The Cats';
+      case 'Release your Stress': return '🧘‍♂️ Relax';
+      case 'Random Cat Facts': return '📘 Cat Facts';
       // case 'Cat Game': return '🎮 Cat Game';
       case 'Cat Help Desk': return '❓ Cat Help Desk';
       default: return '';
@@ -204,42 +204,24 @@ export default function CatCorner() {
         {/* CENTER FEED */}
         <section className="center-feed">
           <h1 className="catcorner-header">{renderHeader()}</h1>
-          
+
           {view === 'Posts' && (
             <>
-              {/* Post box */}
-              <div className="post-box">
-                <div className="post-input-container">
-                  <img
-                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                    alt="Profile"
-                    className="profile-img"
-                  />
-                  <input
-                    type="text"
-                    placeholder="What's happening with your cat?"
-                    className="post-input"
-                    onClick={() => setShowAddPost(true)}
-                    readOnly
-                  />
-                </div>
-                <div className="post-actions">
-                  <button className="action-btn live-video">
-                    📹 Live video
-                  </button>
-                  <button className="action-btn photo-video" onClick={() => setShowAddPost(true)}>
-                    🖼️ Photo/video
-                  </button>
-                  <button className="action-btn feeling">
-                    😊 Feeling/activity
-                  </button>
-                </div>
+              {/* Add Post Button */}
+              <div className="add-post-section">
+                <button
+                  className="add-post-btn-compact"
+                  onClick={() => setShowAddPost(true)}
+                >
+                  <span className="add-icon">+</span>
+                  Share Cat Moment
+                </button>
               </div>
 
               {error && (
                 <div className="error-message">
                   {error}
-                  <button 
+                  <button
                     className="error-close"
                     onClick={() => setError(null)}
                   >
@@ -261,20 +243,20 @@ export default function CatCorner() {
                   <div className="add-post-modal">
                     <div className="modal-header">
                       <h3>Share Cat Moment</h3>
-                      <button 
+                      <button
                         className="modal-close-btn"
                         onClick={() => setShowAddPost(false)}
                       >
                         ✕
                       </button>
                     </div>
-                    
+
                     <div className="modal-body">
                       <div className="upload-section">
                         {newPost.imagePreview ? (
                           <div className="image-preview-modal">
                             <img src={newPost.imagePreview} alt="Preview" />
-                            <button 
+                            <button
                               className="remove-image-btn"
                               onClick={() => setNewPost(prev => ({ ...prev, image: null, imagePreview: '' }))}
                             >
@@ -283,9 +265,9 @@ export default function CatCorner() {
                           </div>
                         ) : (
                           <label className="upload-area">
-                            <input 
-                              type="file" 
-                              accept="image/*" 
+                            <input
+                              type="file"
+                              accept="image/*"
                               onChange={handleImageUpload}
                               hidden
                             />
@@ -296,7 +278,7 @@ export default function CatCorner() {
                           </label>
                         )}
                       </div>
-                      
+
                       <textarea
                         className="caption-textarea"
                         placeholder="What's happening with your cat?"
@@ -305,15 +287,15 @@ export default function CatCorner() {
                         rows={3}
                       />
                     </div>
-                    
+
                     <div className="modal-footer">
-                      <button 
+                      <button
                         className="btn-secondary"
                         onClick={() => setShowAddPost(false)}
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="btn-primary"
                         onClick={handleAddPost}
                         disabled={!newPost.caption.trim() || !newPost.image || isSubmitting}
@@ -407,32 +389,19 @@ export default function CatCorner() {
         </section>
 
         {/* RIGHT SIDEBAR */}
-        <aside className="right-sidebar animate-fade-in-right">
-          <h3 className="contacts-title">Cat Friends</h3>
-          <ul className="contacts-list">
-            {[
-              "Whiskers the Explorer",
-              "Luna the Sleepy",
-              "Shadow the Mysterious",
-              "Mittens the Playful",
-              "Ginger the Adventurer",
-            ].map((name, i) => (
-              <li
-                key={i}
-                className="contact-item"
-              >
-                <img
-                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                  alt="Cat"
-                  className="contact-img"
-                />
-                <span className="contact-name">
-                  {name}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <aside className="cat-gui-sidebar animate-fade-in-right">
+          <div className="gui-paw-container">
+            <div className="paw-print"></div>
+            <div className="paw-print small"></div>
+            <div className="paw-print large"></div>
+          </div>
+
+          <div className="gui-shape blob1"></div>
+          <div className="gui-shape blob2"></div>
+          <div className="gui-cat-icon">🐾</div>
+          <div className="gui-cat-icon bottom">😺</div>
         </aside>
+
       </main>
 
       {/* Post Modal */}
@@ -444,7 +413,7 @@ export default function CatCorner() {
           onCommentSubmit={handleCommentSubmit}
         />
       )}
-      
+
       {/* Animations */}
       <style>{`
         @keyframes fade-in-down {
