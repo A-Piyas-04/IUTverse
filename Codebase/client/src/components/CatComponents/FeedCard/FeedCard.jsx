@@ -5,7 +5,7 @@ import PostModal from '../PostModal/PostModal';
 export default function FeedCard({ post, onPostUpdate }) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
-  const [commentCount, setCommentCount] = useState(post.comments || 0);
+  const [commentCount, setCommentCount] = useState(post.commentsCount || post.comments?.length || 0);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -79,9 +79,20 @@ export default function FeedCard({ post, onPostUpdate }) {
         setCommentCount(prev => prev + 1);
         setNewComment('');
         
+        // Create new comment object
+        const newCommentObj = {
+          id: Date.now(),
+          content: newComment.trim(),
+          user: 'Current User',
+          timestamp: new Date().toISOString()
+        };
+        
         // Notify parent component of the update
         if (onPostUpdate) {
-          onPostUpdate(post.id, { comments: commentCount + 1 });
+          onPostUpdate(post.id, { 
+            comments: [...(post.comments || []), newCommentObj],
+            commentsCount: commentCount + 1
+          });
         }
       } else {
         // Original API call
@@ -91,9 +102,20 @@ export default function FeedCard({ post, onPostUpdate }) {
           setCommentCount(prev => prev + 1);
           setNewComment('');
           
+          // Create new comment object from API response
+          const newCommentObj = response.comment || {
+            id: Date.now(),
+            content: newComment.trim(),
+            user: 'Current User',
+            timestamp: new Date().toISOString()
+          };
+          
           // Notify parent component of the update
           if (onPostUpdate) {
-            onPostUpdate(post.id, { comments: commentCount + 1 });
+            onPostUpdate(post.id, { 
+              comments: [...(post.comments || []), newCommentObj],
+              commentsCount: commentCount + 1
+            });
           }
         }
       }
@@ -197,6 +219,17 @@ export default function FeedCard({ post, onPostUpdate }) {
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           onPostUpdate={onPostUpdate}
+          onCommentSubmit={(postId, newComment) => {
+            // Update local comment count
+            setCommentCount(prev => prev + 1);
+            // Notify parent component with proper data structure
+            if (onPostUpdate) {
+              onPostUpdate(postId, { 
+                comments: [...(post.comments || []), newComment],
+                commentsCount: commentCount + 1
+              });
+            }
+          }}
         />
       )}
     </>

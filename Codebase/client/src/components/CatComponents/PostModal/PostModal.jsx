@@ -2,11 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import './PostModal.css';
 import { toggleLike, addComment } from '../../../services/catPostApi';
 
-export default function PostModal({ post, isOpen, onClose, onCommentSubmit }) {
+export default function PostModal({ post, isOpen, onClose, onCommentSubmit, onPostUpdate }) {
   const [comment, setComment] = useState('');
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post?.likes || 0);
   const [comments, setComments] = useState(post?.comments || []);
+  
+  // Update comments when post prop changes
+  useEffect(() => {
+    setComments(post?.comments || []);
+  }, [post]);
   const modalRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -33,15 +38,47 @@ export default function PostModal({ post, isOpen, onClose, onCommentSubmit }) {
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!comment.trim()) return;
-    onCommentSubmit(post.id, {
-      name: "You",
-      text: comment,
-      time: "Just now",
-    });
-    setComment("");
+    
+    try {
+      // Call the backend API to persist the comment
+      if (!DISABLE_AUTH_FOR_TESTING) {
+        const response = await addComment(post.id, comment.trim());
+        if (!response.success) {
+          alert('Failed to add comment');
+          return;
+        }
+      }
+      
+      const newComment = {
+        name: "You",
+        text: comment,
+        time: "Just now",
+      };
+      
+      // Update local comments state
+      setComments(prev => [...prev, newComment]);
+      
+      // Call parent's comment submit handler if provided
+      if (onCommentSubmit) {
+        onCommentSubmit(post.id, newComment);
+      }
+      
+      // Update post in parent component if onPostUpdate is provided
+      if (onPostUpdate) {
+        onPostUpdate(post.id, { 
+          comments: [...comments, newComment],
+          commentsCount: comments.length + 1
+        });
+      }
+      
+      setComment("");
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
+    }
   };
 
   if (!isOpen || !post) return null;

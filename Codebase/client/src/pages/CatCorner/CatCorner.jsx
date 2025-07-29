@@ -6,21 +6,21 @@ import CatProfiles from './view/CatProfiles/CatProfiles.jsx';
 import CatBreak from './view/CatBreak/CatBreak.jsx';
 import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
-import PostModal from '../../components/CatComponents/PostModal/PostModal.jsx';
+
 import { createCatPost, getCatPosts } from '../../services/catPostApi.js';
 import './CatCorner.css';
 
 const INITIAL_POSTS = [
-  { id: 1, image: '/assets/cat1.jpg', caption: 'Lazy afternoon with my fluffy friend 😴', user: 'Alice', time: '2h ago', type: 'image' },
-  { id: 2, image: '/assets/cat2.jpg', caption: 'Playful kitten discovered the yarn ball!', user: 'Bob', time: '4h ago', type: 'image' },
-  { id: 3, image: '/assets/cat3.jpg', caption: 'Morning stretches are essential 🐱', user: 'Charlie', time: '6h ago', type: 'image' },
-  { id: 4, image: '/assets/cat4.jpg', caption: 'Found the perfect sunny spot by the window', user: 'Diana', time: '8h ago', type: 'image' },
-  { id: 5, image: '/assets/cat5.jpg', caption: 'Midnight zoomies session complete! 🏃‍♂️', user: 'Emma', time: '12h ago', type: 'image' },
-  { id: 6, image: '/assets/cat6.jpg', caption: 'Professional box inspector at work', user: 'Frank', time: '1d ago', type: 'image' },
-  { id: 7, image: '/assets/cat7.jpg', caption: 'Caught red-pawed stealing treats again', user: 'Grace', time: '1d ago', type: 'image' },
-  { id: 8, image: '/assets/cat8.jpg', caption: 'Meditation master showing us how it\'s done', user: 'Henry', time: '2d ago', type: 'image' },
-  { id: 9, image: '/assets/cat9.jpg', caption: 'When you realize it\'s Monday morning', user: 'Ivy', time: '2d ago', type: 'image' },
-  { id: 10, image: '/assets/cat10.jpg', caption: 'Helping with homework as usual 📚', user: 'Jack', time: '3d ago', type: 'image' },
+  { id: 1, image: '/assets/cat1.jpg', caption: 'Lazy afternoon with my fluffy friend 😴', user: 'Alice', time: '2h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 2, image: '/assets/cat2.jpg', caption: 'Playful kitten discovered the yarn ball!', user: 'Bob', time: '4h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 3, image: '/assets/cat3.jpg', caption: 'Morning stretches are essential 🐱', user: 'Charlie', time: '6h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 4, image: '/assets/cat4.jpg', caption: 'Found the perfect sunny spot by the window', user: 'Diana', time: '8h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 5, image: '/assets/cat5.jpg', caption: 'Midnight zoomies session complete! 🏃‍♂️', user: 'Emma', time: '12h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 6, image: '/assets/cat6.jpg', caption: 'Professional box inspector at work', user: 'Frank', time: '1d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 7, image: '/assets/cat7.jpg', caption: 'Caught red-pawed stealing treats again', user: 'Grace', time: '1d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 8, image: '/assets/cat8.jpg', caption: 'Meditation master showing us how it\'s done', user: 'Henry', time: '2d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 9, image: '/assets/cat9.jpg', caption: 'When you realize it\'s Monday morning', user: 'Ivy', time: '2d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 10, image: '/assets/cat10.jpg', caption: 'Helping with homework as usual 📚', user: 'Jack', time: '3d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
 ];
 
 export default function CatCorner() {
@@ -31,7 +31,7 @@ export default function CatCorner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
+
 
 
   // Fetch posts on component mount
@@ -55,7 +55,8 @@ export default function CatCorner() {
           time: formatTimeAgo(post.createdAt),
           type: 'image',
           likes: post.likes?.length || 0,
-          comments: post.comments?.length || 0,
+          comments: post.comments || [],
+          commentsCount: post.comments?.length || 0,
         }));
         setPosts(transformedPosts);
       } else {
@@ -110,10 +111,7 @@ export default function CatCorner() {
     );
   };
 
-  // Handle post click to open modal
-  const handlePostClick = (post) => {
-    setSelectedPost(post);
-  };
+
 
   const handleAddPost = async () => {
     if (!newPost.caption.trim() || !newPost.image) {
@@ -309,75 +307,11 @@ export default function CatCorner() {
 
               {/* Posts */}
               {!loading && posts.map((post) => (
-                <div
+                <FeedCard
                   key={post.id}
-                  className="post"
-                  onClick={() => handlePostClick(post)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {/* Post Header */}
-                  <div className="post-header">
-                    <img
-                      src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                      alt="Profile"
-                      className="profile-img"
-                    />
-                    <div className="post-user-info">
-                      <h4 className="post-username">
-                        {post.user}
-                      </h4>
-                      <p className="post-meta">
-                        {post.time} • <span className="text-blue-500">🐱</span>
-                      </p>
-                    </div>
-                    <button className="post-options-btn">
-                      <span className="text-xl">⋯</span>
-                    </button>
-                  </div>
-
-                  {/* Post Content */}
-                  <div className="post-content">
-                    <div className="post-text">
-                      {post.caption}
-                    </div>
-                    {post.image && (
-                      <img
-                        src={post.image}
-                        alt="Cat"
-                        className="post-image"
-                      />
-                    )}
-                  </div>
-
-                  {/* Reactions and Comments Count */}
-                  <div className="post-stats">
-                    <div className="post-reactions">
-                      <div className="reaction-icons">
-                        <span className="text-red-500">❤️</span>
-                      </div>
-                      <span>{post.likes}</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span>{post.comments} comments</span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="post-actions-buttons">
-                    <button className="post-action-btn">
-                      <span>❤️</span>
-                      <span>Like</span>
-                    </button>
-                    <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[5px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                      <span>💬</span>
-                      <span>Comment</span>
-                    </button>
-                    <button className="flex items-center justify-center gap-2 py-2 px-4  hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                      <span>↗️</span>
-                      <span>Share</span>
-                    </button>
-                  </div>
-                </div>
+                  post={post}
+                  onPostUpdate={handlePostUpdate}
+                />
               ))}
             </>
           )}
@@ -404,15 +338,7 @@ export default function CatCorner() {
 
       </main>
 
-      {/* Post Modal */}
-      {selectedPost && (
-        <PostModal
-          post={selectedPost}
-          isOpen={!!selectedPost}
-          onClose={() => setSelectedPost(null)}
-          onCommentSubmit={handleCommentSubmit}
-        />
-      )}
+
 
       {/* Animations */}
       <style>{`

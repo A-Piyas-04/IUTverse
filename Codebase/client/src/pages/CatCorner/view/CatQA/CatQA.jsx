@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getAllQuestions, createQuestion, addAnswer } from '../../../../services/catQAApi';
 import './CatQA.css';
 
 export default function CatQA() {
@@ -6,19 +7,73 @@ export default function CatQA() {
   const [q, setQ] = useState('');
   const [questions, setQuestions] = useState([]);
   const [answerInputs, setAnswerInputs] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Load questions on component mount
+  useEffect(() => {
+    loadQuestions();
+  }, []);
+
+  const loadQuestions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getAllQuestions();
+      
+      if (result.success) {
+        // Transform backend data to match frontend format
+        const transformedQuestions = result.questions.map(q => ({
+          id: q.id,
+          q: q.question,
+          time: new Date(q.createdAt).toLocaleString(),
+          user: q.user?.name || 'Anonymous',
+          answers: q.answers.map(a => ({
+            id: a.id,
+            text: a.answer,
+            time: new Date(a.createdAt).toLocaleString(),
+            user: a.user?.name || 'Anonymous'
+          }))
+        }));
+        setQuestions(transformedQuestions);
+      } else {
+        setError(result.error || 'Failed to load questions');
+      }
+    } catch (err) {
+      setError('Failed to load questions');
+      console.error('Error loading questions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAsk = () => {
     setShowAsk(true);
   };
 
-  const handleSubmitQuestion = () => {
-    if (q.trim()) {
-      setQuestions([
-        ...questions,
-        { q, time: new Date().toLocaleTimeString(), answers: [] },
-      ]);
-      setQ('');
-      setShowAsk(false);
+  const handleSubmitQuestion = async () => {
+    if (!q.trim() || submitting) return;
+    
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      const result = await createQuestion(q.trim());
+      
+      if (result.success) {
+        // Reload questions to get the latest data
+        await loadQuestions();
+        setQ('');
+        setShowAsk(false);
+      } else {
+        setError(result.error || 'Failed to create question');
+      }
+    } catch (err) {
+      setError('Failed to create question');
+      console.error('Error creating question:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -26,25 +81,64 @@ export default function CatQA() {
     setAnswerInputs({ ...answerInputs, [idx]: value });
   };
 
-  const handleAddAnswer = idx => {
+  const handleAddAnswer = async (idx) => {
     const answer = answerInputs[idx]?.trim();
-    if (answer) {
-      const updatedQuestions = [...questions];
-      updatedQuestions[idx].answers.push({
-        text: answer,
-        time: new Date().toLocaleTimeString(),
-      });
-      setQuestions(updatedQuestions);
-      setAnswerInputs({ ...answerInputs, [idx]: '' });
+    if (!answer || submitting) return;
+    
+    const question = questions[idx];
+    if (!question || !question.id) return;
+    
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      const result = await addAnswer(question.id, answer);
+      
+      if (result.success) {
+        // Reload questions to get the latest data
+        await loadQuestions();
+        setAnswerInputs({ ...answerInputs, [idx]: '' });
+      } else {
+        setError(result.error || 'Failed to add answer');
+      }
+    } catch (err) {
+      setError('Failed to add answer');
+      console.error('Error adding answer:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="catqa-container">
       <h2 className="catqa-title">Cat Care Q&amp;A</h2>
+      
+      {error && (
+        <div style={{ 
+          backgroundColor: '#fee', 
+          color: '#c33', 
+          padding: '10px', 
+          borderRadius: '5px', 
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          {error}
+          <button 
+            onClick={() => setError(null)} 
+            style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#c33', cursor: 'pointer' }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+      
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <button onClick={handleAsk} className="catqa-ask-btn">
-          Ask Question
+        <button 
+          onClick={handleAsk} 
+          className="catqa-ask-btn"
+          disabled={submitting || showAsk}
+        >
+          {submitting ? 'Loading...' : 'Ask Question'}
         </button>
       </div>
       {showAsk && (
@@ -58,15 +152,25 @@ export default function CatQA() {
             className="catqa-textarea"
           />
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleSubmitQuestion} className="catqa-submit-btn">Submit</button>
+            <button 
+              onClick={handleSubmitQuestion} 
+              className="catqa-submit-btn"
+              disabled={submitting || !q.trim()}
+            >
+              {submitting ? 'Submitting...' : 'Submit'}
+            </button>
             <button onClick={() => { setShowAsk(false); setQ(''); }} className="catqa-cancel-btn">Cancel</button>
           </div>
         </div>
       )}
       <div>
-        {questions.length === 0 && (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Loading questions...
+          </div>
+        ) : questions.length === 0 ? (
           <div className="catqa-empty">No questions yet. Be the first to ask!</div>
-        )}
+        ) : null}
         {questions.map((item, i) => (
           <div key={i} className="catqa-question-card">
             <div style={{ marginBottom: 8 }}>
@@ -93,7 +197,13 @@ export default function CatQA() {
                 className="catqa-answer-input"
                 onKeyDown={e => { if (e.key === 'Enter') handleAddAnswer(i); }}
               />
-              <button onClick={() => handleAddAnswer(i)} className="catqa-add-btn">Add</button>
+              <button 
+                onClick={() => handleAddAnswer(i)} 
+                className="catqa-add-btn"
+                disabled={submitting || !answerInputs[i]?.trim()}
+              >
+                {submitting ? 'Adding...' : 'Add'}
+              </button>
             </div>
           </div>
         ))}
