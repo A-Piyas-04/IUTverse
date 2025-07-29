@@ -1,34 +1,41 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
-const profileController = require('../controllers/profileController');
+const { authenticateToken } = require("../middleware/auth");
+const profileController = require("../controllers/profileController");
+const userController = require("../controllers/userController");
 
 // Get user profile (protected route)
-router.get('/profile', authenticateToken, (req, res) => {
+router.get("/profile", authenticateToken, (req, res) => {
   res.json({
-    message: 'Profile data',
-    user: req.user
+    message: "Profile data",
+    user: req.user,
   });
 });
 
 // Get user dashboard data (protected route)
-router.get('/dashboard', authenticateToken, (req, res) => {
+router.get("/dashboard", authenticateToken, (req, res) => {
   res.json({
-    message: 'Dashboard data',
+    message: "Dashboard data",
     user: req.user,
     data: {
       posts: [],
       notifications: [],
-      stats: {}
-    }
+      stats: {},
+    },
   });
 });
 
 // Get profile by userId (public)
-router.get('/profile/:userId', profileController.getProfile);
+router.get("/profile/:userId", profileController.getProfile);
 // Create profile (protected)
-router.post('/profile', authenticateToken, profileController.createProfile);
+router.post("/profile", authenticateToken, profileController.createProfile);
 // Update profile (protected)
-router.put('/profile', authenticateToken, profileController.updateProfile);
+router.put("/profile", authenticateToken, profileController.updateProfile);
+
+// Update user name (protected)
+router.put("/user", authenticateToken, userController.updateUserName);
+
+// Get user by ID (public - for viewing other profiles)
+router.get("/user/:userId", userController.getUserById);
 
 module.exports = router;
