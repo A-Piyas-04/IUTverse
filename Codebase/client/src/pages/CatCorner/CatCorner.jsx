@@ -6,6 +6,7 @@ import CatProfiles from './view/CatProfiles/CatProfiles.jsx';
 import CatBreak from './view/CatBreak/CatBreak.jsx';
 import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
+import PostModal from '../../components/CatComponents/PostModal/PostModal.jsx';
 import { createCatPost, getCatPosts } from '../../services/catPostApi.js';
 import './CatCorner.css';
 
@@ -30,6 +31,7 @@ export default function CatCorner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null);
 
 
   // Fetch posts on component mount
@@ -91,6 +93,26 @@ export default function CatCorner() {
           : post
       )
     );
+  };
+
+  // Handle comment submission
+  const handleCommentSubmit = (postId, newComment) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === postId 
+          ? { 
+              ...post, 
+              comments: [...(post.comments || []), newComment],
+              commentsCount: (post.comments?.length || 0) + 1
+            }
+          : post
+      )
+    );
+  };
+
+  // Handle post click to open modal
+  const handlePostClick = (post) => {
+    setSelectedPost(post);
   };
 
   const handleAddPost = async () => {
@@ -169,150 +191,283 @@ export default function CatCorner() {
   };
 
   return (
-    <div className="catcorner-page">
+    <div className="homepage">
       <Navbar />
-      <div className="catcorner fade-in">
-        {/* ✅ Sidebar already styled with CSS — no wrapper or inline styles needed */}
-        <Sidebar selectedView={view} setSelectedView={setView} />
 
-        <main className="catcorner-main">
+      {/* MAIN CONTENT AREA */}
+      <main className="main-content animate-fade-in-up">
+        {/* LEFT SIDEBAR */}
+        <aside className="left-sidebar animate-fade-in-left">
+          <Sidebar selectedView={view} setSelectedView={setView} />
+        </aside>
+
+        {/* CENTER FEED */}
+        <section className="center-feed">
           <h1 className="catcorner-header">{renderHeader()}</h1>
-
-          <div className="catcorner-content">
-            {view === 'Posts' && (
-              <>
-                {/* Add Post Button - Compact */}
-                <div className="add-post-section">
-                  <button 
-                    className="add-post-btn-compact"
-                    onClick={() => setShowAddPost(!showAddPost)}
-                    disabled={isSubmitting}
-                  >
-                    <span className="add-post-icon">📸</span>
-                    Share
+          
+          {view === 'Posts' && (
+            <>
+              {/* Post box */}
+              <div className="post-box">
+                <div className="post-input-container">
+                  <img
+                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                    alt="Profile"
+                    className="profile-img"
+                  />
+                  <input
+                    type="text"
+                    placeholder="What's happening with your cat?"
+                    className="post-input"
+                    onClick={() => setShowAddPost(true)}
+                    readOnly
+                  />
+                </div>
+                <div className="post-actions">
+                  <button className="action-btn live-video">
+                    📹 Live video
+                  </button>
+                  <button className="action-btn photo-video" onClick={() => setShowAddPost(true)}>
+                    🖼️ Photo/video
+                  </button>
+                  <button className="action-btn feeling">
+                    😊 Feeling/activity
                   </button>
                 </div>
+              </div>
 
-                {error && (
-                  <div className="error-message">
-                    {error}
-                    <button 
-                      className="error-close"
-                      onClick={() => setError(null)}
-                    >
-                      ×
+              {error && (
+                <div className="error-message">
+                  {error}
+                  <button 
+                    className="error-close"
+                    onClick={() => setError(null)}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
+              {loading && (
+                <div className="loading-message">
+                  Loading posts...
+                </div>
+              )}
+
+              {/* Add Post Form - Professional Popup */}
+              {showAddPost && (
+                <>
+                  <div className="modal-overlay" onClick={() => setShowAddPost(false)}></div>
+                  <div className="add-post-modal">
+                    <div className="modal-header">
+                      <h3>Share Cat Moment</h3>
+                      <button 
+                        className="modal-close-btn"
+                        onClick={() => setShowAddPost(false)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    <div className="modal-body">
+                      <div className="upload-section">
+                        {newPost.imagePreview ? (
+                          <div className="image-preview-modal">
+                            <img src={newPost.imagePreview} alt="Preview" />
+                            <button 
+                              className="remove-image-btn"
+                              onClick={() => setNewPost(prev => ({ ...prev, image: null, imagePreview: '' }))}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="upload-area">
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={handleImageUpload}
+                              hidden
+                            />
+                            <div className="upload-content">
+                              <span className="upload-icon">📷</span>
+                              <span className="upload-text">Upload Photo</span>
+                            </div>
+                          </label>
+                        )}
+                      </div>
+                      
+                      <textarea
+                        className="caption-textarea"
+                        placeholder="What's happening with your cat?"
+                        value={newPost.caption}
+                        onChange={(e) => setNewPost(prev => ({ ...prev, caption: e.target.value }))}
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div className="modal-footer">
+                      <button 
+                        className="btn-secondary"
+                        onClick={() => setShowAddPost(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="btn-primary"
+                        onClick={handleAddPost}
+                        disabled={!newPost.caption.trim() || !newPost.image || isSubmitting}
+                      >
+                        {isSubmitting ? 'Sharing...' : 'Share'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Posts */}
+              {!loading && posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="post"
+                  onClick={() => handlePostClick(post)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {/* Post Header */}
+                  <div className="post-header">
+                    <img
+                      src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                      alt="Profile"
+                      className="profile-img"
+                    />
+                    <div className="post-user-info">
+                      <h4 className="post-username">
+                        {post.user}
+                      </h4>
+                      <p className="post-meta">
+                        {post.time} • <span className="text-blue-500">🐱</span>
+                      </p>
+                    </div>
+                    <button className="post-options-btn">
+                      <span className="text-xl">⋯</span>
                     </button>
                   </div>
-                )}
 
-                {loading && (
-                  <div className="loading-message">
-                    Loading posts...
-                  </div>
-                )}
-
-                {/* Add Post Form - Professional Popup */}
-                {showAddPost && (
-                  <>
-                    <div className="modal-overlay" onClick={() => setShowAddPost(false)}></div>
-                    <div className="add-post-modal">
-                      <div className="modal-header">
-                        <h3>Share Cat Moment</h3>
-                        <button 
-                          className="modal-close-btn"
-                          onClick={() => setShowAddPost(false)}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      
-                      <div className="modal-body">
-                        <div className="upload-section">
-                          {newPost.imagePreview ? (
-                            <div className="image-preview-modal">
-                              <img src={newPost.imagePreview} alt="Preview" />
-                              <button 
-                                className="remove-image-btn"
-                                onClick={() => setNewPost(prev => ({ ...prev, image: null, imagePreview: '' }))}
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
-                            <label className="upload-area">
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={handleImageUpload}
-                                hidden
-                              />
-                              <div className="upload-content">
-                                <span className="upload-icon">📷</span>
-                                <span className="upload-text">Upload Photo</span>
-                              </div>
-                            </label>
-                          )}
-                        </div>
-                        
-                        <textarea
-                          className="caption-textarea"
-                          placeholder="What's happening with your cat?"
-                          value={newPost.caption}
-                          onChange={(e) => setNewPost(prev => ({ ...prev, caption: e.target.value }))}
-                          rows={3}
-                        />
-                      </div>
-                      
-                      <div className="modal-footer">
-                        <button 
-                          className="btn-secondary"
-                          onClick={() => setShowAddPost(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          className="btn-primary"
-                          onClick={handleAddPost}
-                          disabled={!newPost.caption.trim() || !newPost.image || isSubmitting}
-                        >
-                          {isSubmitting ? 'Sharing...' : 'Share'}
-                        </button>
-                      </div>
+                  {/* Post Content */}
+                  <div className="post-content">
+                    <div className="post-text">
+                      {post.caption}
                     </div>
-                  </>
-                )}
+                    {post.image && (
+                      <img
+                        src={post.image}
+                        alt="Cat"
+                        className="post-image"
+                      />
+                    )}
+                  </div>
 
-                {/* Posts Feed - Vertical Layout */}
-                {!loading && (
-                  <div className="feed-container">
-                    <div className="feed-grid">
-                      {posts.map((post) => (
-                        <FeedCard
-                          key={post.id}
-                          post={{
-                            ...post,
-                            time: post.createdAt ? formatTimeAgo(post.createdAt) : post.time
-                          }}
-                          onPostUpdate={handlePostUpdate}
-                        />
-                      ))}
+                  {/* Reactions and Comments Count */}
+                  <div className="post-stats">
+                    <div className="post-reactions">
+                      <div className="reaction-icons">
+                        <span className="text-red-500">❤️</span>
+                      </div>
+                      <span>{post.likes}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span>{post.comments} comments</span>
                     </div>
                   </div>
-                )}
-              </>
-            )}
 
-            {view === 'Cat Profiles' && (
-              <CatProfiles /> // ✅ New grid layout + softer animations are handled inside the component
-            )}
+                  {/* Action Buttons */}
+                  <div className="post-actions-buttons">
+                    <button className="post-action-btn">
+                      <span>❤️</span>
+                      <span>Like</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-2 px-4 mr-[5px] hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                      <span>💬</span>
+                      <span>Comment</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-2 px-4  hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                      <span>↗️</span>
+                      <span>Share</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
 
-            {view === 'Release your Stress' && <CatBreak />}
-            {view === 'Random Cat Facts' && <CatFacts />}
-            {/* {view === 'Cat Game' && <CatGame />} */}
-            {view === 'Cat Help Desk' && <CatQA />}
-          </div>
-        </main>
-      </div>
+          {view === 'Cat Profiles' && <CatProfiles />}
+          {view === 'Release your Stress' && <CatBreak />}
+          {view === 'Random Cat Facts' && <CatFacts />}
+          {view === 'Cat Help Desk' && <CatQA />}
+        </section>
+
+        {/* RIGHT SIDEBAR */}
+        <aside className="right-sidebar animate-fade-in-right">
+          <h3 className="contacts-title">Cat Friends</h3>
+          <ul className="contacts-list">
+            {[
+              "Whiskers the Explorer",
+              "Luna the Sleepy",
+              "Shadow the Mysterious",
+              "Mittens the Playful",
+              "Ginger the Adventurer",
+            ].map((name, i) => (
+              <li
+                key={i}
+                className="contact-item"
+              >
+                <img
+                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                  alt="Cat"
+                  className="contact-img"
+                />
+                <span className="contact-name">
+                  {name}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </main>
+
+      {/* Post Modal */}
+      {selectedPost && (
+        <PostModal
+          post={selectedPost}
+          isOpen={!!selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onCommentSubmit={handleCommentSubmit}
+        />
+      )}
+      
+      {/* Animations */}
+      <style>{`
+        @keyframes fade-in-down {
+          0% { opacity: 0; transform: translateY(-30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-left {
+          0% { opacity: 0; transform: translateX(-30px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fade-in-right {
+          0% { opacity: 0; transform: translateX(30px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .animate-fade-in-down { animation: fade-in-down 0.7s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-up { animation: fade-in-up 0.7s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-left { animation: fade-in-left 0.7s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-right { animation: fade-in-right 0.7s cubic-bezier(.4,0,.2,1) both; }
+      `}</style>
     </div>
   );
 }
