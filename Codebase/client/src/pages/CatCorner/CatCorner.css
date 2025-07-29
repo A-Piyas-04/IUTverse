@@ -54,28 +54,40 @@
   width: 100%;
 }
 
+/* Vertical Feed Layout - Similar to Homepage */
+.feed-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  gap: 1rem;
+  animation: fadeInUp 0.7s cubic-bezier(.77,0,.18,1);
+}
+
 .feed-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   width: 100%;
   margin-bottom: 2rem;
-  animation: fadeInUp 0.7s cubic-bezier(.77,0,.18,1);
 }
 
 .feed-card, .cat-profile-card {
   background: rgba(255,255,255,0.95);
-  border-radius: 20px;
-  box-shadow: 0 6px 32px #a5d6a744, 0 2px 8px #388e3c11;
-  border: 1.5px solid #c8e6c9;
-  transition: box-shadow 0.25s, transform 0.2s, background 0.3s;
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(200, 230, 201, 0.3);
+  transition: all 0.2s ease;
   cursor: pointer;
   animation: cardPop 0.6s cubic-bezier(.77,0,.18,1);
+  width: 100%;
+  margin-bottom: 1.25rem;
 }
 .feed-card:hover{
-  box-shadow: 0 4px 4px #19391a44, 0 4px 4px #388e3c22;
-  transform: translateY(-2px) scale(1);
-  /* background: rgb(189, 205, 194); */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
  .cat-profile-card:hover {
@@ -531,8 +543,12 @@
   .catcorner-main {
     padding: 1.2rem 0.5rem;
   }
+  .feed-container {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
   .feed-grid {
-    gap: 1.2rem;
+    gap: 1rem;
   }
   .add-post-form {
     padding: 1rem;
@@ -548,8 +564,12 @@
     padding: 0.5rem 0.2rem;
     min-height: 70vh;
   }
+  .feed-container {
+    max-width: 100%;
+    padding: 0;
+  }
   .feed-grid {
-    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
   .form-actions {
     flex-direction: column;
