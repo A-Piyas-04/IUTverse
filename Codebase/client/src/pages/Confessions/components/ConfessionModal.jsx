@@ -1,48 +1,50 @@
 import React, { useState } from "react";
 import "./ConfessionModal.css";
 
-export default function ConfessionModal({ onSubmit, onClose, tags }) {
+export default function ConfessionModal({
+  onSubmit,
+  onClose,
+  tags,
+  submitting = false,
+}) {
   const [content, setContent] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
   const [showPoll, setShowPoll] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!content.trim() || !selectedTag) {
       alert("Please fill in both confession content and select a tag.");
       return;
     }
 
-    if (showPoll && (!pollQuestion.trim() || pollOptions.some(opt => !opt.trim()))) {
+    if (
+      showPoll &&
+      (!pollQuestion.trim() || pollOptions.some((opt) => !opt.trim()))
+    ) {
       alert("Please fill in the poll question and all options.");
       return;
     }
 
-    setIsSubmitting(true);
-
     const confessionData = {
       content: content.trim(),
       tag: selectedTag,
-      poll: showPoll ? {
-        question: pollQuestion.trim(),
-        options: pollOptions.filter(opt => opt.trim()).map(opt => ({
-          text: opt.trim(),
-          votes: 0,
-          percentage: 0
-        })),
-        totalVotes: 0
-      } : null
+      poll: showPoll
+        ? {
+            question: pollQuestion.trim(),
+            options: pollOptions
+              .filter((opt) => opt.trim())
+              .map((opt) => ({
+                text: opt.trim(),
+              })),
+          }
+        : null,
     };
 
-    // Simulate API call
-    setTimeout(() => {
-      onSubmit(confessionData);
-      setIsSubmitting(false);
-    }, 1000);
+    await onSubmit(confessionData);
   };
 
   const addPollOption = () => {
@@ -70,7 +72,9 @@ export default function ConfessionModal({ onSubmit, onClose, tags }) {
       <div className="confession-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">🤐 Submit Anonymous Confession</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <button className="close-btn" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="confession-form">
@@ -101,8 +105,10 @@ export default function ConfessionModal({ onSubmit, onClose, tags }) {
               required
             >
               <option value="">Select a category</option>
-              {tags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
+              {tags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
               ))}
             </select>
           </div>
@@ -116,7 +122,9 @@ export default function ConfessionModal({ onSubmit, onClose, tags }) {
                 onChange={(e) => setShowPoll(e.target.checked)}
                 className="poll-checkbox"
               />
-              <span className="checkbox-text">Add a poll to your confession</span>
+              <span className="checkbox-text">
+                Add a poll to your confession
+              </span>
             </label>
           </div>
 
@@ -144,7 +152,9 @@ export default function ConfessionModal({ onSubmit, onClose, tags }) {
                         type="text"
                         className="poll-option-input"
                         value={option}
-                        onChange={(e) => updatePollOption(index, e.target.value)}
+                        onChange={(e) =>
+                          updatePollOption(index, e.target.value)
+                        }
                         placeholder={`Option ${index + 1}`}
                         required
                       />
@@ -179,20 +189,20 @@ export default function ConfessionModal({ onSubmit, onClose, tags }) {
               type="button"
               className="cancel-btn"
               onClick={onClose}
-              disabled={isSubmitting}
+              disabled={submitting}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="submit-btn"
-              disabled={isSubmitting || !content.trim() || !selectedTag}
+              disabled={submitting || !content.trim() || !selectedTag}
             >
-              {isSubmitting ? "Submitting..." : "🤐 Confess Anonymously"}
+              {submitting ? "Submitting..." : "🤐 Confess Anonymously"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

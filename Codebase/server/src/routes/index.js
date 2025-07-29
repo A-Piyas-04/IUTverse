@@ -4,6 +4,7 @@ const authRoutes = require("./authRoutes");
 const userRoutes = require("./userRoutes");
 const jobRoutes = require("./jobRoutes");
 const lostAndFoundRoutes = require("./lostAndFoundRoutes");
+const confessionRoutes = require("./confessionRoutes");
 
 // Root route
 router.get("/", (req, res) => {
@@ -19,5 +20,8 @@ router.use("/api", jobRoutes);
 
 // Lost and Found routes
 router.use("/api/lost-and-found", lostAndFoundRoutes);
+
+// Confession routes
+router.use("/api", confessionRoutes);
 
 module.exports = router;
