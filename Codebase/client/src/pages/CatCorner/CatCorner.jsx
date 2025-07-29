@@ -82,6 +82,17 @@ export default function CatCorner() {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  // Handle post updates (likes, comments)
+  const handlePostUpdate = (postId, updates) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === postId 
+          ? { ...post, ...updates }
+          : post
+      )
+    );
+  };
+
   const handleAddPost = async () => {
     if (!newPost.caption.trim() || !newPost.image) {
       setError('Please provide both a caption and an image.');
@@ -271,14 +282,21 @@ export default function CatCorner() {
                   </>
                 )}
 
-                {/* Posts Grid */}
+                {/* Posts Feed - Vertical Layout */}
                 {!loading && (
-                  <div className="feed-grid">
-                    {posts.map((post) => (
-                      <div className="feed-card" key={post.id}>
-                        <FeedCard post={post} />
-                      </div>
-                    ))}
+                  <div className="feed-container">
+                    <div className="feed-grid">
+                      {posts.map((post) => (
+                        <FeedCard
+                          key={post.id}
+                          post={{
+                            ...post,
+                            time: post.createdAt ? formatTimeAgo(post.createdAt) : post.time
+                          }}
+                          onPostUpdate={handlePostUpdate}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
