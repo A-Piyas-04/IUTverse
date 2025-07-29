@@ -2,12 +2,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import PostModal from "../../components/PostModal.jsx";
+import PlayerTime from "./view/PlayerTime.jsx";
+import BrainTeaser from "./view/Brainteaser.jsx";
+import IUTFacts from "./view/iutFacts.jsx";
 import { authUtils } from "../../utils/auth.js";
 import { usePosts } from "../../hooks/usePosts.js";
 import "./Homepage.css";
 
 export default function HomePage() {
-  
+
   const navigate = useNavigate();
   const { posts, loading, error, fetchAllPosts, createPost, toggleLike, clearError } = usePosts();
 
@@ -16,6 +19,9 @@ export default function HomePage() {
   const [newPostContent, setNewPostContent] = useState("");
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [showPostCreator, setShowPostCreator] = useState(false);
+  const [showPrayerTimes, setShowPrayerTimes] = useState(false);
+  const [showBrainTeaser, setShowBrainTeaser] = useState(false);
+  const [showIUTFacts, setShowIUTFacts] = useState(false);
   
   // Fetch posts on component mount
   useEffect(() => {
@@ -68,14 +74,39 @@ export default function HomePage() {
   const handleLogout = () => {
     // Clear authentication data
     authUtils.clearAuthData();
-    
+
     // Navigate to login page
     navigate("/login");
   };
-  
+
+  // Handle menu item clicks
+  const handleMenuClick = (label) => {
+    switch (label) {
+      case "Prayer Times":
+        setShowPrayerTimes(true);
+        break;
+      case "IUT Academic Calendar":
+        // TODO: Implement academic calendar popup
+        console.log("Academic Calendar clicked");
+        break;
+      case "Random IUT Fact":
+        setShowIUTFacts(true);
+        break;
+      case "Brain Teaser":
+        setShowBrainTeaser(true);
+        break;
+      case "Today's Weather":
+        // TODO: Implement weather popup
+        console.log("Today's Weather clicked");
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="homepage">
-     <Navbar />
+      <Navbar />
 
       {/* MAIN CONTENT AREA */}
       <main className="main-content animate-fade-in-up">
@@ -83,54 +114,44 @@ export default function HomePage() {
         <aside className="left-sidebar animate-fade-in-left">
           <h3 className="menu-title">Menu</h3>
           <ul className="menu-list">
-            {[
-              {
-                label: (
-                  <span
-                    className="font-bold"
-                    onClick={() => {
-                      navigate("/profile");
-                    }}
-                  >
-                    {userName}
-                  </span>
-                ),
-                icon: (
-                  <img
-                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                    alt="Profile"
-                    className="h-[30px] w-[30px] mr-[12px] rounded-full shadow-md border-2 border-green-400 hover:scale-105 transition-transform duration-200"
-                  />
-                ),
-              },
-              { label: "Friends", icon: "👥", bg: "bg-blue-200" },
-              { label: "Saved", icon: "🔖", bg: "bg-pink-200" },
-              { label: "Memories", icon: "⏰", bg: "bg-blue-100" },
-              { label: "Groups", icon: "🧑‍🤝‍🧑", bg: "bg-blue-300" },
-              { label: "Video", icon: "🎥", bg: "bg-blue-200" },
-              { label: "Marketplace", icon: "🏪", bg: "bg-blue-100" },
-              { label: "Feeds", icon: "📰", bg: "bg-blue-200" },
-            ].map((item, i) => (
-              <li
-                key={i}
-                className="menu-item"
+            {/* Profile Button */}
+            <li className="menu-item">
+              <img
+                src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                alt="Profile"
+                className="h-[30px] w-[30px] mr-[12px] rounded-full shadow-md border-2 border-green-400 hover:scale-105 transition-transform duration-200"
+                onClick={() => navigate("/profile")}
+              />
+              <span
+                className="menu-label font-bold cursor-pointer"
+                onClick={() => navigate("/profile")}
               >
-                {typeof item.icon === "string" ? (
-                  <div
-                    className={`menu-icon ${item.bg}`}
-                  >
-                    <span className="menu-icon-text">{item.icon}</span>
-                  </div>
-                ) : (
-                  item.icon
-                )}
-                <span className="menu-label">
-                  {item.label}
-                </span>
+                {userName}
+              </span>
+            </li>
+
+            {/* New Functional Buttons */}
+            {[
+              { label: "Prayer Times", icon: "🕌", bg: "bg-green-100" },
+              { label: "IUT Academic Calendar", icon: "📅", bg: "bg-blue-100" },
+              { label: "Random IUT Fact", icon: "🎓", bg: "bg-yellow-100" },
+              { label: "Brain Teaser", icon: "🧠", bg: "bg-pink-100" },
+              { label: "Today's Weather", icon: "🌤️", bg: "bg-blue-200" },
+            ].map((item, i) => (
+              <li 
+                key={i} 
+                className="menu-item cursor-pointer"
+                onClick={() => handleMenuClick(item.label)}
+              >
+                <div className={`menu-icon ${item.bg}`}>
+                  <span className="menu-icon-text">{item.icon}</span>
+                </div>
+                <span className="menu-label">{item.label}</span>
               </li>
             ))}
           </ul>
         </aside>
+
 
         {/* CENTER FEED */}
         <section className="center-feed">
@@ -311,6 +332,25 @@ export default function HomePage() {
           </ul>
         </aside>
       </main>
+
+      {/* Prayer Times Modal */}
+      <PlayerTime 
+        isOpen={showPrayerTimes} 
+        onClose={() => setShowPrayerTimes(false)} 
+      />
+
+      {/* Brain Teaser Modal */}
+      <BrainTeaser 
+        isOpen={showBrainTeaser} 
+        onClose={() => setShowBrainTeaser(false)} 
+      />
+
+      {/* IUT Facts Modal */}
+      <IUTFacts 
+        isOpen={showIUTFacts} 
+        onClose={() => setShowIUTFacts(false)} 
+      />
+
       {/* Animations */}
       <style>{`
         @keyframes fade-in-down {
