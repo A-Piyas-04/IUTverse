@@ -31,10 +31,6 @@ model User {
   rsvps     EventRsvp[]
   catVotes  CatVote[]
 
-  lostAndFounds  LostAndFound[]
-  uploadedCats   Cat[]
-  questionPapers QuestionPaper[]
-
   jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
   jobComments JobComment[] // Comments made by this user on jobs
   jobApplications JobApplication[] @relation("JobApplications") // Applications made by this user
@@ -42,6 +38,7 @@ model User {
   // Confession relations (for tracking reactions and poll votes only)
   confessionReactions ConfessionReaction[] @relation("ConfessionReactions")
   confessionPollVotes ConfessionPollVote[] @relation("ConfessionPollVotes")
+  
   lostAndFounds    LostAndFound[]
   uploadedCats     Cat[]
   questionPapers   QuestionPaper[]
