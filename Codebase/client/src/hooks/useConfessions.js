@@ -125,7 +125,7 @@ export const useConfessions = () => {
     [loadAnalytics]
   );
 
-  // Handle reactions
+  // Handle reactions - now supports single reaction per user
   const handleReaction = useCallback(
     async (confessionId, reactionType) => {
       if (!isLoggedIn) {
@@ -133,22 +133,6 @@ export const useConfessions = () => {
       }
 
       try {
-        // Optimistic update
-        setConfessions((prev) =>
-          prev.map((confession) => {
-            if (confession.id === confessionId) {
-              return {
-                ...confession,
-                reactions: {
-                  ...confession.reactions,
-                  [reactionType]: confession.reactions[reactionType] + 1,
-                },
-              };
-            }
-            return confession;
-          })
-        );
-
         const updatedConfession = await confessionApi.toggleReaction(
           confessionId,
           reactionType
@@ -162,26 +146,6 @@ export const useConfessions = () => {
         );
       } catch (err) {
         console.error("Failed to update reaction:", err);
-
-        // Revert optimistic update
-        setConfessions((prev) =>
-          prev.map((confession) => {
-            if (confession.id === confessionId) {
-              return {
-                ...confession,
-                reactions: {
-                  ...confession.reactions,
-                  [reactionType]: Math.max(
-                    0,
-                    confession.reactions[reactionType] - 1
-                  ),
-                },
-              };
-            }
-            return confession;
-          })
-        );
-
         throw err;
       }
     },

@@ -122,36 +122,31 @@ class ConfessionService {
   }
 
   async addReaction(confessionId, userId, reactionType) {
-    // Check if user already reacted with this type
-    const existingReaction = await prisma.confessionReaction.findUnique({
+    // Use upsert to either create new reaction or update existing one
+    // This allows user to change their reaction type
+    return prisma.confessionReaction.upsert({
       where: {
-        confessionId_userId_reactionType: {
+        confessionId_userId: {
           confessionId: Number(confessionId),
           userId: Number(userId),
-          reactionType,
         },
       },
-    });
-
-    if (existingReaction) {
-      throw new Error("User has already reacted with this type");
-    }
-
-    return prisma.confessionReaction.create({
-      data: {
+      create: {
         confessionId: Number(confessionId),
         userId: Number(userId),
+        reactionType,
+      },
+      update: {
         reactionType,
       },
     });
   }
 
-  async removeReaction(confessionId, userId, reactionType) {
+  async removeReaction(confessionId, userId) {
     return prisma.confessionReaction.deleteMany({
       where: {
         confessionId: Number(confessionId),
         userId: Number(userId),
-        reactionType,
       },
     });
   }
@@ -207,10 +202,12 @@ class ConfessionService {
   }
 
   async getUserReactions(confessionId, userId) {
-    return prisma.confessionReaction.findMany({
+    return prisma.confessionReaction.findUnique({
       where: {
-        confessionId: Number(confessionId),
-        userId: Number(userId),
+        confessionId_userId: {
+          confessionId: Number(confessionId),
+          userId: Number(userId),
+        },
       },
       select: {
         reactionType: true,

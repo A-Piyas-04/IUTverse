@@ -134,16 +134,14 @@ const addReaction = async (req, res) => {
 const removeReaction = async (req, res) => {
   try {
     const { id } = req.params;
-    const { reactionType } = req.body;
     const { userId } = req.user;
 
     console.log("[ConfessionController] Removing reaction:", {
       id,
-      reactionType,
       userId,
     });
 
-    await confessionService.removeReaction(id, userId, reactionType);
+    await confessionService.removeReaction(id, userId);
 
     // Return updated confession
     const updatedConfession = await confessionService.getConfessionById(id);
