@@ -7,7 +7,6 @@ const lostAndFoundRoutes = require("./lostAndFoundRoutes");
 const confessionRoutes = require("./confessionRoutes");
 const catPostRoutes = require("./catPostRoutes");
 const catQARoutes = require("./catQARoutes");
-const chatRoutes = require("./chatRoutes");
 
 // Root route
 router.get("/", (req, res) => {
@@ -33,8 +32,5 @@ router.use("/api/cat-posts", catPostRoutes);
 
 // Cat Q&A routes
 router.use("/api/cat-qa", catQARoutes);
-
-// Chat routes
-router.use("/api/chat", chatRoutes);
 
 module.exports = router;
