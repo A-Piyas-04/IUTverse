@@ -47,19 +47,12 @@ model User {
   catPostComments  CatPostComment[]
   catQuestions     CatQuestion[]
   catAnswers       CatAnswer[]
-  
-  // Chat/Messaging relations
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
-  conversations1   Conversation[] @relation("User1Conversations")
-  conversations2   Conversation[] @relation("User2Conversations")
 }
 
 model Profile {
   userId           Int      @id
   bio              String?
   profilePicture   String?
-  coverPicture     String?
   interests        String[]
   badges           String[]
   schoolName       String?   // SSC institution
@@ -361,46 +354,4 @@ model CatAnswer {
   
   user     User?       @relation(fields: [userId], references: [id])
   question CatQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-}
-
-// Chat/Messaging Models
-model Conversation {
-  id          Int      @id @default(autoincrement())
-  user1       User     @relation("User1Conversations", fields: [user1Id], references: [id])
-  user1Id     Int
-  user2       User     @relation("User2Conversations", fields: [user2Id], references: [id])
-  user2Id     Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Track last message for conversation preview
-  lastMessageAt DateTime?
-  lastMessage   String?
-  
-  messages Message[]
-  
-  // Ensure unique conversation between two users (regardless of order)
-  @@unique([user1Id, user2Id])
-  @@index([user1Id])
-  @@index([user2Id])
-  @@index([updatedAt])
-}
-
-model Message {
-  id             Int          @id @default(autoincrement())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId Int
-  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
-  senderId       Int
-  receiver       User         @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId     Int
-  content        String
-  isRead         Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([createdAt])
 }
