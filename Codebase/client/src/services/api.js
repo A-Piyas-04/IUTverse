@@ -15,8 +15,27 @@ class ApiService {
       ...options,
     };
 
+    // Debug logging for search requests
+    if (endpoint.includes("/users/search")) {
+      console.log("🌐 [ApiService.request] Making search request:");
+      console.log("  URL:", url);
+      console.log("  Config:", config);
+      console.log("  Headers:", config.headers);
+    }
+
     try {
       const response = await fetch(url, config);
+
+      // Debug logging for search responses
+      if (endpoint.includes("/users/search")) {
+        console.log("🌐 [ApiService.request] Response received:");
+        console.log("  Status:", response.status);
+        console.log("  OK:", response.ok);
+        console.log(
+          "  Headers:",
+          Object.fromEntries(response.headers.entries())
+        );
+      }
 
       // Check if response is JSON before parsing
       const contentType = response.headers.get("content-type");
@@ -32,7 +51,19 @@ class ApiService {
         };
       }
 
+      // Debug logging for search data
+      if (endpoint.includes("/users/search")) {
+        console.log("🌐 [ApiService.request] Parsed data:", data);
+      }
+
       if (!response.ok) {
+        // Debug logging for errors
+        if (endpoint.includes("/users/search")) {
+          console.error("❌ [ApiService.request] Search request failed:");
+          console.error("  Status:", response.status);
+          console.error("  Data:", data);
+        }
+
         // If unauthorized, clear auth data and redirect to login
         if (response.status === 401 || response.status === 403) {
           // Import auth context dynamically to avoid circular imports
@@ -134,9 +165,21 @@ class ApiService {
 
   // Search users (for chat functionality)
   async searchUsers(query) {
-    return this.request(`/users/search?q=${encodeURIComponent(query)}`, {
-      method: "GET",
-    });
+    console.log("🌐 [ApiService] searchUsers called with query:", query);
+    const encodedQuery = encodeURIComponent(query);
+    const endpoint = `/users/search?q=${encodedQuery}`;
+    console.log("🌐 [ApiService] Making request to endpoint:", endpoint);
+
+    try {
+      const response = await this.request(endpoint, {
+        method: "GET",
+      });
+      console.log("🌐 [ApiService] Search response received:", response);
+      return response;
+    } catch (error) {
+      console.error("❌ [ApiService] Error in searchUsers:", error);
+      throw error;
+    }
   }
 
   // Job endpoints

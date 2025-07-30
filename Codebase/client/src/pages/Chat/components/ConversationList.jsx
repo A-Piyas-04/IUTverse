@@ -6,6 +6,13 @@ const ConversationList = ({
   onSelectConversation,
   loading,
 }) => {
+  // Debug logging to understand the conversations structure
+  console.log("📋 [ConversationList] Rendered with:", {
+    conversationsLength: conversations?.length || 0,
+    conversations: conversations,
+    activeConversation: activeConversation,
+    loading: loading,
+  });
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -34,7 +41,10 @@ const ConversationList = ({
       .toUpperCase();
   };
 
-  if (loading && conversations.length === 0) {
+  // Ensure conversations is always an array
+  const safeConversations = Array.isArray(conversations) ? conversations : [];
+
+  if (loading && safeConversations.length === 0) {
     return (
       <div className="p-6 text-center">
         <div className="loading-state">
@@ -47,7 +57,7 @@ const ConversationList = ({
     );
   }
 
-  if (conversations.length === 0) {
+  if (safeConversations.length === 0) {
     return (
       <div className="p-8 text-center empty-conversations">
         <div className="empty-icon text-4xl mb-4 animate-pulse">📭</div>
@@ -63,63 +73,65 @@ const ConversationList = ({
 
   return (
     <div className="conversation-list">
-      {conversations.map((conversation, index) => (
-        <div
-          key={conversation.id}
-          onClick={() => onSelectConversation(conversation)}
-          className={`conversation-item p-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 ${
-            activeConversation?.id === conversation.id
-              ? "active bg-gradient-to-r from-green-100 to-blue-100 border-r-4 border-green-500"
-              : "hover:shadow-sm"
-          }`}
-          style={{
-            animationDelay: `${index * 0.05}s`,
-            animation: "slideInLeft 0.5s ease-out forwards",
-          }}
-        >
-          <div className="flex items-center space-x-4">
-            {/* Avatar */}
-            <div className="conversation-avatar relative">
-              <div className="avatar-gradient">
-                {getInitials(conversation.otherUser?.name)}
-              </div>
-              <div className="online-indicator"></div>
-            </div>
-
-            <div className="flex-1 min-w-0 conversation-content">
-              {/* Name and Time */}
-              <div className="flex items-center justify-between mb-1">
-                <h4 className="text-sm font-semibold text-gray-900 truncate conversation-name">
-                  {conversation.otherUser?.name || "Unknown User"}
-                </h4>
-                {conversation.lastMessage && (
-                  <span className="message-time text-xs text-gray-500 font-medium">
-                    {formatTime(conversation.lastMessage.sentAt)}
-                  </span>
-                )}
+      {safeConversations
+        .filter((conversation) => conversation && conversation.id) // Filter out invalid conversations
+        .map((conversation, index) => (
+          <div
+            key={conversation.id}
+            onClick={() => onSelectConversation(conversation)}
+            className={`conversation-item p-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 ${
+              activeConversation?.id === conversation.id
+                ? "active bg-gradient-to-r from-green-100 to-blue-100 border-r-4 border-green-500"
+                : "hover:shadow-sm"
+            }`}
+            style={{
+              animationDelay: `${index * 0.05}s`,
+              animation: "slideInLeft 0.5s ease-out forwards",
+            }}
+          >
+            <div className="flex items-center space-x-4">
+              {/* Avatar */}
+              <div className="conversation-avatar relative">
+                <div className="avatar-gradient">
+                  {getInitials(conversation.otherUser?.name)}
+                </div>
+                <div className="online-indicator"></div>
               </div>
 
-              {/* Last message or email */}
-              <div className="last-message-container">
-                {conversation.lastMessage ? (
-                  <p className="text-sm text-gray-600 truncate leading-relaxed">
-                    {conversation.lastMessage.content}
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-400 truncate italic">
-                    {conversation.otherUser?.email}
-                  </p>
-                )}
-              </div>
-            </div>
+              <div className="flex-1 min-w-0 conversation-content">
+                {/* Name and Time */}
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-sm font-semibold text-gray-900 truncate conversation-name">
+                    {conversation.otherUser?.name || "Unknown User"}
+                  </h4>
+                  {conversation.lastMessage && (
+                    <span className="message-time text-xs text-gray-500 font-medium">
+                      {formatTime(conversation.lastMessage.sentAt)}
+                    </span>
+                  )}
+                </div>
 
-            {/* Unread indicator */}
-            <div className="flex flex-col items-end">
-              <div className="unread-badge"></div>
+                {/* Last message or email */}
+                <div className="last-message-container">
+                  {conversation.lastMessage ? (
+                    <p className="text-sm text-gray-600 truncate leading-relaxed">
+                      {conversation.lastMessage.content}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400 truncate italic">
+                      {conversation.otherUser?.email}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Unread indicator */}
+              <div className="flex flex-col items-end">
+                <div className="unread-badge"></div>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 };
