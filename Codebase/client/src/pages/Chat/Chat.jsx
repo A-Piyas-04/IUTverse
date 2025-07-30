@@ -42,31 +42,40 @@ export default function Chat() {
 
   if (loading && conversations.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen chat-page-background">
         <Navbar />
         <div className="flex items-center justify-center h-96">
-          <LoadingSpinner />
+          <div className="text-center">
+            <div className="loading-spinner w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-green-600 font-semibold text-lg">
+              Loading your conversations...
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen chat-page-background w-full">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg shadow-sm border h-[calc(100vh-120px)] flex">
+      <div className="chat-container w-full  mt-[80px]">
+        <div className="chat-main-card bg-white rounded-none shadow-2xl border-0 h-[calc(100vh-80px)] flex overflow-hidden w-full">
           {/* Sidebar - Conversation List */}
-          <div className="w-1/3 border-r border-gray-200 flex flex-col">
+          <div className="sidebar-container w-1/3 border-r border-gray-100 flex flex-col bg-gradient-to-b from-gray-50 to-white">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200">
+            <div className="sidebar-header p-6 border-b border-gray-100 bg-gradient-to-r from-green-600 to-green-700">
               <div className="flex items-center justify-between">
-                <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span className="chat-icon">💬</span>
+                  Messages
+                </h1>
                 <button
                   onClick={() => setShowStartChatModal(true)}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                  className="new-chat-btn bg-white bg-opacity-20 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-opacity-30 transition-all duration-300 flex items-center gap-2 border border-white border-opacity-20"
                 >
+                  <span className="text-lg">✨</span>
                   New Chat
                 </button>
               </div>
@@ -74,21 +83,24 @@ export default function Chat() {
 
             {/* Error Message */}
             {error && (
-              <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="error-message mx-6 mt-4 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl backdrop-blur-sm">
                 <div className="flex justify-between items-center">
-                  <p className="text-red-700 text-sm">{error}</p>
+                  <p className="text-red-700 text-sm font-medium flex items-center gap-2">
+                    <span className="text-red-500">⚠️</span>
+                    {error}
+                  </p>
                   <button
                     onClick={clearError}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 transition-colors duration-200 hover:bg-red-100 rounded-full p-1"
                   >
-                    ×
+                    ✕
                   </button>
                 </div>
               </div>
             )}
 
             {/* Conversation List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto conversation-list-container">
               <ConversationList
                 conversations={conversations}
                 activeConversation={activeConversation}
@@ -99,7 +111,7 @@ export default function Chat() {
           </div>
 
           {/* Main Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col chat-area-container">
             {activeConversation ? (
               <ChatWindow
                 conversation={activeConversation}
@@ -109,15 +121,23 @@ export default function Chat() {
                 loading={loading}
               />
             ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <div className="text-4xl mb-4">💬</div>
-                  <h3 className="text-lg font-medium mb-2">
-                    Select a conversation
+              <div className="flex-1 flex items-center justify-center empty-chat-state">
+                <div className="text-center">
+                  <div className="empty-state-icon text-6xl mb-6 animate-bounce">
+                    💬
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-700 mb-3 gradient-text">
+                    Welcome to Messages
                   </h3>
-                  <p className="text-sm">
-                    Choose a conversation from the list or start a new chat
+                  <p className="text-gray-500 text-lg mb-6">
+                    Select a conversation from the list or start a new chat
                   </p>
+                  <button
+                    onClick={() => setShowStartChatModal(true)}
+                    className="start-chat-cta bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Start Your First Chat ✨
+                  </button>
                 </div>
               </div>
             )}
