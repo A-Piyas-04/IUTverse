@@ -88,7 +88,43 @@ const getUserById = async (req, res) => {
   }
 };
 
+// Search for users by name or email
+const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const currentUserId = req.user.userId;
+
+    if (!q || typeof q !== "string" || q.trim().length === 0) {
+      return res.status(400).json({
+        message: "Search query is required",
+      });
+    }
+
+    const query = q.trim();
+    if (query.length < 2) {
+      return res.status(400).json({
+        message: "Search query must be at least 2 characters long",
+      });
+    }
+
+    // Search for users excluding current user
+    const users = await userService.searchUsers(query, currentUserId);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({
+      message: "An error occurred while searching users",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   updateUserName,
   getUserById,
+  searchUsers,
 };

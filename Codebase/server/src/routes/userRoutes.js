@@ -38,4 +38,7 @@ router.put("/user", authenticateToken, userController.updateUserName);
 // Get user by ID (public - for viewing other profiles)
 router.get("/user/:userId", userController.getUserById);
 
+// Search users (protected - for chat functionality)
+router.get("/users/search", authenticateToken, userController.searchUsers);
+
 module.exports = router;
