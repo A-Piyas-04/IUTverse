@@ -47,6 +47,11 @@ model User {
   catPostComments  CatPostComment[]
   catQuestions     CatQuestion[]
   catAnswers       CatAnswer[]
+  
+  // Chat relations
+  sentMessages     ChatMessage[] @relation("SentMessages")
+  receivedMessages ChatMessage[] @relation("ReceivedMessages")
+  conversations    ConversationParticipant[]
 }
 
 model Profile {
@@ -354,4 +359,46 @@ model CatAnswer {
   
   user     User?       @relation(fields: [userId], references: [id])
   question CatQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// Chat Models
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  participants ConversationParticipant[]
+  messages     ChatMessage[]
+}
+
+model ConversationParticipant {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  userId         Int
+  joinedAt       DateTime     @default(now())
+  
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+  
+  @@unique([conversationId, userId])
+  @@index([conversationId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             Int      @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  receiverId     Int
+  content        String
+  sentAt         DateTime @default(now())
+  isRead         Boolean  @default(false)
+  
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+  receiver     User         @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
 }
