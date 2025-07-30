@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
+const fileUploadService = require("./fileUploadService");
 
 const prisma = new PrismaClient();
 
@@ -197,6 +198,218 @@ class UserService {
       return user;
     } catch (error) {
       console.error("Error getting user by ID:", error);
+      throw error;
+    }
+  }
+
+  // Upload profile picture
+  async uploadProfilePicture(userId, fileBuffer, originalName) {
+    try {
+      // Get current profile to check for existing picture
+      const currentProfile = await prisma.profile.findUnique({
+        where: { userId },
+        select: { profilePicture: true },
+      });
+
+      // Save new profile picture
+      const newPicturePath = await fileUploadService.saveProfilePicture(
+        fileBuffer,
+        originalName
+      );
+
+      // Update profile with new picture path
+      const updatedProfile = await prisma.profile.upsert({
+        where: { userId },
+        update: { profilePicture: newPicturePath },
+        create: {
+          userId,
+          profilePicture: newPicturePath,
+        },
+      });
+
+      // Delete old picture file if it exists
+      if (currentProfile?.profilePicture) {
+        await fileUploadService.deleteFile(currentProfile.profilePicture);
+      }
+
+      return updatedProfile;
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      throw error;
+    }
+  }
+
+  // Upload cover picture
+  async uploadCoverPicture(userId, fileBuffer, originalName) {
+    try {
+      // Get current profile to check for existing picture
+      const currentProfile = await prisma.profile.findUnique({
+        where: { userId },
+        select: { coverPicture: true },
+      });
+
+      // Save new cover picture
+      const newPicturePath = await fileUploadService.saveCoverPicture(
+        fileBuffer,
+        originalName
+      );
+
+      // Update profile with new picture path
+      const updatedProfile = await prisma.profile.upsert({
+        where: { userId },
+        update: { coverPicture: newPicturePath },
+        create: {
+          userId,
+          coverPicture: newPicturePath,
+        },
+      });
+
+      // Delete old picture file if it exists
+      if (currentProfile?.coverPicture) {
+        await fileUploadService.deleteFile(currentProfile.coverPicture);
+      }
+
+      return updatedProfile;
+    } catch (error) {
+      console.error("Error uploading cover picture:", error);
+      throw error;
+    }
+  }
+
+  // Delete profile picture
+  async deleteProfilePicture(userId) {
+    try {
+      // Get current profile picture path
+      const currentProfile = await prisma.profile.findUnique({
+        where: { userId },
+        select: { profilePicture: true },
+      });
+
+      if (!currentProfile?.profilePicture) {
+        throw new Error("No profile picture to delete");
+      }
+
+      // Update profile to remove picture reference
+      const updatedProfile = await prisma.profile.update({
+        where: { userId },
+        data: { profilePicture: null },
+      });
+
+      // Delete the actual file
+      await fileUploadService.deleteFile(currentProfile.profilePicture);
+
+      return updatedProfile;
+    } catch (error) {
+      console.error("Error deleting profile picture:", error);
+      throw error;
+    }
+  }
+
+  // Delete cover picture
+  async deleteCoverPicture(userId) {
+    try {
+      // Get current cover picture path
+      const currentProfile = await prisma.profile.findUnique({
+        where: { userId },
+        select: { coverPicture: true },
+      });
+
+      if (!currentProfile?.coverPicture) {
+        throw new Error("No cover picture to delete");
+      }
+
+      // Update profile to remove picture reference
+      const updatedProfile = await prisma.profile.update({
+        where: { userId },
+        data: { coverPicture: null },
+      });
+
+      // Delete the actual file
+      await fileUploadService.deleteFile(currentProfile.coverPicture);
+
+      return updatedProfile;
+    } catch (error) {
+      console.error("Error deleting cover picture:", error);
+      throw error;
+    }
+  }
+
+  // Get profile pictures
+  async getProfilePictures(userId) {
+    try {
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+        select: {
+          profilePicture: true,
+          coverPicture: true,
+        },
+      });
+
+      return profile || { profilePicture: null, coverPicture: null };
+    } catch (error) {
+      console.error("Error getting profile pictures:", error);
+      throw error;
+    }
+  }
+
+  // Search users by name, email, or student ID
+  async searchUsers(searchTerm, currentUserId) {
+    try {
+      const users = await prisma.user.findMany({
+        where: {
+          AND: [
+            {
+              // Exclude current user from results
+              id: {
+                not: parseInt(currentUserId),
+              },
+            },
+            {
+              OR: [
+                {
+                  name: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  studentId: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          department: true,
+          batch: true,
+          studentId: true,
+          profile: {
+            select: {
+              profilePicture: true,
+            },
+          },
+        },
+        take: 20, // Limit results to prevent performance issues
+        orderBy: {
+          name: "asc",
+        },
+      });
+
+      return users;
+    } catch (error) {
+      console.error("Error searching users:", error);
       throw error;
     }
   }

@@ -88,7 +88,45 @@ const getUserById = async (req, res) => {
   }
 };
 
+const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query; // Search query parameter
+    const currentUserId = req.user.userId; // Current user from token
+
+    // Validate search query
+    if (!q || typeof q !== "string" || q.trim().length === 0) {
+      return res.status(400).json({
+        message: "Search query is required",
+      });
+    }
+
+    const searchTerm = q.trim();
+
+    // Minimum search length
+    if (searchTerm.length < 2) {
+      return res.status(400).json({
+        message: "Search query must be at least 2 characters long",
+      });
+    }
+
+    // Search for users
+    const users = await userService.searchUsers(searchTerm, currentUserId);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({
+      message: "An error occurred while searching users",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   updateUserName,
   getUserById,
+  searchUsers,
 };

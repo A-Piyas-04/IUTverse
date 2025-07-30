@@ -16,6 +16,13 @@ export default function Profile() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
 
+  // Picture upload states
+  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
+  const [showCoverPictureModal, setShowCoverPictureModal] = useState(false);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+  const [coverPictureUrl, setCoverPictureUrl] = useState(null);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+
   // Check if this is the current user's profile or someone else's
   const isOwnProfile = !userId || userId === user?.id?.toString();
 
@@ -347,6 +354,195 @@ export default function Profile() {
     }
   };
 
+  // Picture upload functions
+  const handleProfilePictureUpload = async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    setUploadingPicture(true);
+    try {
+      const response = await ApiService.uploadProfilePicture(file);
+      console.log("Profile picture upload response:", response);
+      if (response.success) {
+        console.log(
+          "Setting profile picture URL to:",
+          response.data.profilePicture
+        );
+        // Add timestamp to prevent caching issues
+        const urlWithTimestamp =
+          response.data.profilePicture + "?t=" + Date.now();
+        setProfilePictureUrl(urlWithTimestamp);
+        setShowProfilePictureModal(false);
+
+        // Show success message
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = "Profile picture updated successfully!";
+        document.body.appendChild(successDiv);
+
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => {
+            if (document.body.contains(successDiv)) {
+              document.body.removeChild(successDiv);
+            }
+          }, 300);
+        }, 3000);
+      } else {
+        alert(`Failed to upload profile picture: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      alert("Failed to upload profile picture");
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
+  const handleCoverPictureUpload = async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    setUploadingPicture(true);
+    try {
+      const response = await ApiService.uploadCoverPicture(file);
+      console.log("Cover picture upload response:", response);
+      if (response.success) {
+        console.log(
+          "Setting cover picture URL to:",
+          response.data.coverPicture
+        );
+        // Add timestamp to prevent caching issues
+        const urlWithTimestamp =
+          response.data.coverPicture + "?t=" + Date.now();
+        setCoverPictureUrl(urlWithTimestamp);
+        setShowCoverPictureModal(false);
+
+        // Show success message
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = "Cover picture updated successfully!";
+        document.body.appendChild(successDiv);
+
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => {
+            if (document.body.contains(successDiv)) {
+              document.body.removeChild(successDiv);
+            }
+          }, 300);
+        }, 3000);
+      } else {
+        alert(`Failed to upload cover picture: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error uploading cover picture:", error);
+      alert("Failed to upload cover picture");
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
+  const handleDeleteProfilePicture = async () => {
+    if (!confirm("Are you sure you want to delete your profile picture?")) {
+      return;
+    }
+
+    try {
+      const response = await ApiService.deleteProfilePicture();
+      if (response.success) {
+        setProfilePictureUrl(null);
+        alert("Profile picture deleted successfully!");
+      } else {
+        alert(`Failed to delete profile picture: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error deleting profile picture:", error);
+      alert("Failed to delete profile picture");
+    }
+  };
+
+  const handleDeleteCoverPicture = async () => {
+    if (!confirm("Are you sure you want to delete your cover picture?")) {
+      return;
+    }
+
+    try {
+      const response = await ApiService.deleteCoverPicture();
+      if (response.success) {
+        setCoverPictureUrl(null);
+        alert("Cover picture deleted successfully!");
+      } else {
+        alert(`Failed to delete cover picture: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error deleting cover picture:", error);
+      alert("Failed to delete cover picture");
+    }
+  };
+
+  // Load profile pictures on component mount and when profile data changes
+  useEffect(() => {
+    const loadProfilePictures = async () => {
+      if (isOwnProfile && user) {
+        try {
+          console.log("Loading profile pictures for own profile...");
+          console.log("Current user:", user);
+          console.log(
+            "Auth token:",
+            localStorage.getItem("iutverse_auth_token")
+          );
+
+          const response = await ApiService.getProfilePictures();
+          console.log("getProfilePictures response:", response);
+          if (response.success) {
+            console.log("Setting initial URLs:", response.data);
+            setProfilePictureUrl(response.data.profilePicture);
+            setCoverPictureUrl(response.data.coverPicture);
+          }
+        } catch (error) {
+          console.error("Error loading profile pictures:", error);
+        }
+      }
+    };
+
+    // Only load on initial mount or when switching between own/other profiles
+    loadProfilePictures();
+  }, [isOwnProfile, user?.id]); // Removed profile from dependencies
+
+  // Separate effect for viewing other users' profiles
+  useEffect(() => {
+    if (!isOwnProfile && profile) {
+      console.log("Setting pictures for other user profile:", profile);
+      setProfilePictureUrl(profile.profilePicture);
+      setCoverPictureUrl(profile.coverPicture);
+    }
+  }, [profile, isOwnProfile]);
+
   const [users, setUsers] = useState([]);
 
   // Use appropriate user name based on whose profile we're viewing
@@ -392,13 +588,22 @@ export default function Profile() {
 
   const profilePicture = (
     <img
-      src="../../../public/profile_picture.jpg"
+      src={profilePictureUrl || "/profile_picture.jpg"}
       alt="Profile"
       className="w-full h-full object-cover"
       onError={(e) => {
-        e.target.style.display = "none";
+        console.log("Profile picture failed to load:", e.target.src);
+        e.target.src = "/profile_picture.jpg";
       }}
     />
+  );
+
+  // Debug: Log current state values
+  console.log(
+    "Current state - profilePictureUrl:",
+    profilePictureUrl,
+    "coverPictureUrl:",
+    coverPictureUrl
   );
 
   return (
@@ -427,19 +632,37 @@ export default function Profile() {
         <div className="relative">
           <div className="w-full h-[348px] bg-gradient-to-br from-green-400 via-green-500 to-green-600 overflow-hidden relative">
             <img
-              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+              src={
+                coverPictureUrl ||
+                "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+              }
               alt="Cover"
               className="w-full h-full object-cover rounded-b-[12px]"
               onError={(e) => {
-                e.target.style.display = "none";
+                e.target.src =
+                  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80";
               }}
             />
             {/* Edit Cover Photo Button - Positioned over the cover photo */}
             {isOwnProfile && (
-              <button className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200 text-sm font-medium">
-                <span className="text-base">📷</span>
-                <span className="text-gray-700">Edit cover photo</span>
-              </button>
+              <div className="absolute bottom-4 right-4 flex gap-2">
+                <button
+                  onClick={() => setShowCoverPictureModal(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200 text-sm font-medium"
+                >
+                  <span className="text-base">📷</span>
+                  <span className="text-gray-700">Edit cover photo</span>
+                </button>
+                {coverPictureUrl && (
+                  <button
+                    onClick={handleDeleteCoverPicture}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition-all duration-200 text-sm font-medium"
+                  >
+                    <span className="text-base">🗑️</span>
+                    <span>Delete</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -453,9 +676,26 @@ export default function Profile() {
                 <div className="w-[168px] h-[168px] rounded-full border-4 border-white shadow-lg bg-gray-300 overflow-hidden">
                   {profilePicture}
                 </div>
-                {/* <button className="absolute bottom-2 right-2 w-9 h-9 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-sm transition-colors">
-                  <span className="text-base">📷</span>
-                </button> */}
+                {isOwnProfile && (
+                  <div className="absolute bottom-2 right-2 flex gap-1">
+                    <button
+                      onClick={() => setShowProfilePictureModal(true)}
+                      className="w-9 h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-sm transition-colors"
+                      title="Upload profile picture"
+                    >
+                      <span className="text-base">📷</span>
+                    </button>
+                    {profilePictureUrl && (
+                      <button
+                        onClick={handleDeleteProfilePicture}
+                        className="w-9 h-9 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm transition-colors"
+                        title="Delete profile picture"
+                      >
+                        <span className="text-sm">�️</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -478,23 +718,6 @@ export default function Profile() {
               <h1 className="text-[32px] font-bold text-gray-900 leading-tight mb-1">
                 {userName}
               </h1>
-              <p className="text-gray-600 text-[15px] mb-2">127 friends</p>
-
-              {/* Friend Avatars */}
-              <div className="flex items-center gap-1">
-                <div className="flex -space-x-1">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div
-                      key={i}
-                      className="w-7 h-7 rounded-full border-2 border-white bg-gray-300"
-                    ></div>
-                  ))}
-                </div>
-                <span className="text-[13px] text-gray-600 ml-2">
-                  Friends with Maria Khan, Alex Rahman, Tania Sultana and 5
-                  others
-                </span>
-              </div>
             </div>
           </div>
 
@@ -523,7 +746,7 @@ export default function Profile() {
           <div className="w-[500px] flex-shrink-0 mr-[10px]">
             {/* Intro Card */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Intro</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">পরিচয়</h3>
 
               {loading ? (
                 <p>Loading profile...</p>
@@ -806,7 +1029,7 @@ export default function Profile() {
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                       </svg>
-                      Edit Profile
+                      Edit পরিচয়
                     </button>
                   ) : null}
 
@@ -1230,34 +1453,6 @@ export default function Profile() {
                 ))}
               </div>
             </div>
-
-            {/* Friends Card */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Friends</h3>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  See all friends
-                </button>
-              </div>
-              <p className="text-gray-600 mb-4 text-sm">127 friends</p>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  "Maria Khan",
-                  "Alex Rahman",
-                  "Tania Sultana",
-                  "Rafiq Hassan",
-                  "Priya Sharma",
-                  "Omar Ali",
-                ].map((name, i) => (
-                  <div key={i} className="text-center">
-                    <div className="w-full aspect-square bg-gray-300 rounded-lg mb-1"></div>
-                    <p className="text-xs text-gray-800 font-medium leading-tight">
-                      {name.length > 12 ? name.substring(0, 12) + "..." : name}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Main Content - Takes remaining space */}
@@ -1393,6 +1588,118 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Profile Picture Upload Modal */}
+      {showProfilePictureModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">
+              Upload Profile Picture
+            </h3>
+
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      handleProfilePictureUpload(file);
+                    }
+                  }}
+                  className="hidden"
+                  id="profile-picture-input"
+                />
+                <label
+                  htmlFor="profile-picture-input"
+                  className="cursor-pointer flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-2xl">📷</span>
+                  </div>
+                  <p className="text-gray-600 mb-2">Click to select an image</p>
+                  <p className="text-sm text-gray-400">
+                    Supported formats: JPEG, PNG, GIF, WebP (Max 5MB)
+                  </p>
+                </label>
+              </div>
+
+              {uploadingPicture && (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <span className="ml-2 text-gray-600">Uploading...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowProfilePictureModal(false)}
+                disabled={uploadingPicture}
+                className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cover Picture Upload Modal */}
+      {showCoverPictureModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Upload Cover Picture</h3>
+
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      handleCoverPictureUpload(file);
+                    }
+                  }}
+                  className="hidden"
+                  id="cover-picture-input"
+                />
+                <label
+                  htmlFor="cover-picture-input"
+                  className="cursor-pointer flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                    <span className="text-2xl">🖼️</span>
+                  </div>
+                  <p className="text-gray-600 mb-2">Click to select an image</p>
+                  <p className="text-sm text-gray-400">
+                    Supported formats: JPEG, PNG, GIF, WebP (Max 5MB)
+                  </p>
+                </label>
+              </div>
+
+              {uploadingPicture && (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <span className="ml-2 text-gray-600">Uploading...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowCoverPictureModal(false)}
+                disabled={uploadingPicture}
+                className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
