@@ -72,7 +72,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="min-h-screen chat-page-background w-full">
+    <div className="min-h-screen w-full overflow-y-hidden">
       <Navbar />
 
       <div className="chat-container w-full  mt-[80px]">
@@ -88,7 +88,7 @@ export default function Chat() {
                 </h1>
                 <button
                   onClick={() => setShowStartChatModal(true)}
-                  className="new-chat-btn bg-white bg-opacity-20 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-opacity-30 transition-all duration-300 flex items-center gap-2 border border-white border-opacity-20"
+                  className="new-chat-btn bg-white bg-opacity-20 backdrop-blur-sm text-black px-4 py-2 rounded-xl text-sm font-medium hover:bg-opacity-30 transition-all duration-300 flex items-center gap-2 border border-white border-opacity-20"
                 >
                   <span className="text-lg">✨</span>
                   New Chat
