@@ -6,9 +6,13 @@ const API_BASE_URL = "/api";
 class ApiService {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+
+    // Don't set Content-Type for FormData, let browser handle it
+    const isFormData = options.body instanceof FormData;
+
     const config = {
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...authUtils.getAuthHeader(),
         ...options.headers,
       },
@@ -122,6 +126,45 @@ class ApiService {
     return this.request("/user", {
       method: "PUT",
       body: JSON.stringify({ name }),
+    });
+  }
+
+  // Profile Picture endpoints
+  async uploadProfilePicture(file) {
+    const formData = new FormData();
+    formData.append("profilePicture", file);
+
+    return this.request("/profile/upload-profile-picture", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  async uploadCoverPicture(file) {
+    const formData = new FormData();
+    formData.append("coverPicture", file);
+
+    return this.request("/profile/upload-cover-picture", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  async deleteProfilePicture() {
+    return this.request("/profile/profile-picture", {
+      method: "DELETE",
+    });
+  }
+
+  async deleteCoverPicture() {
+    return this.request("/profile/cover-picture", {
+      method: "DELETE",
+    });
+  }
+
+  async getProfilePictures() {
+    return this.request("/profile/pictures", {
+      method: "GET",
     });
   }
 
