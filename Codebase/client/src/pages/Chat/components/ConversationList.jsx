@@ -36,63 +36,86 @@ const ConversationList = ({
 
   if (loading && conversations.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500">
-        <div className="animate-pulse">Loading conversations...</div>
+      <div className="p-6 text-center">
+        <div className="loading-state">
+          <div className="loading-spinner w-8 h-8 border-3 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-3"></div>
+          <div className="text-gray-500 font-medium">
+            Loading conversations...
+          </div>
+        </div>
       </div>
     );
   }
 
   if (conversations.length === 0) {
     return (
-      <div className="p-6 text-center text-gray-500">
-        <div className="text-3xl mb-3">📭</div>
-        <h3 className="font-medium mb-1">No conversations yet</h3>
-        <p className="text-sm">Start a new chat to begin messaging</p>
+      <div className="p-8 text-center empty-conversations">
+        <div className="empty-icon text-4xl mb-4 animate-pulse">📭</div>
+        <h3 className="font-semibold text-gray-700 mb-2 text-lg">
+          No conversations yet
+        </h3>
+        <p className="text-sm text-gray-500 leading-relaxed">
+          Start a new chat to begin messaging with your friends
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-gray-100">
-      {conversations.map((conversation) => (
+    <div className="conversation-list">
+      {conversations.map((conversation, index) => (
         <div
           key={conversation.id}
           onClick={() => onSelectConversation(conversation)}
-          className={`conversation-item p-4 cursor-pointer ${
-            activeConversation?.id === conversation.id ? "active" : ""
+          className={`conversation-item p-4 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 ${
+            activeConversation?.id === conversation.id
+              ? "active bg-gradient-to-r from-green-100 to-blue-100 border-r-4 border-green-500"
+              : "hover:shadow-sm"
           }`}
+          style={{
+            animationDelay: `${index * 0.05}s`,
+            animation: "slideInLeft 0.5s ease-out forwards",
+          }}
         >
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             {/* Avatar */}
-            <div className="conversation-avatar">
-              {getInitials(conversation.otherUser?.name)}
+            <div className="conversation-avatar relative">
+              <div className="avatar-gradient">
+                {getInitials(conversation.otherUser?.name)}
+              </div>
+              <div className="online-indicator"></div>
             </div>
 
-            <div className="flex-1 min-w-0">
-              {/* Name */}
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-gray-900 truncate">
+            <div className="flex-1 min-w-0 conversation-content">
+              {/* Name and Time */}
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="text-sm font-semibold text-gray-900 truncate conversation-name">
                   {conversation.otherUser?.name || "Unknown User"}
                 </h4>
                 {conversation.lastMessage && (
-                  <span className="message-time text-gray-500">
+                  <span className="message-time text-xs text-gray-500 font-medium">
                     {formatTime(conversation.lastMessage.sentAt)}
                   </span>
                 )}
               </div>
 
               {/* Last message or email */}
-              <div className="mt-1">
+              <div className="last-message-container">
                 {conversation.lastMessage ? (
-                  <p className="text-sm text-gray-600 truncate">
+                  <p className="text-sm text-gray-600 truncate leading-relaxed">
                     {conversation.lastMessage.content}
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-gray-400 truncate italic">
                     {conversation.otherUser?.email}
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Unread indicator */}
+            <div className="flex flex-col items-end">
+              <div className="unread-badge"></div>
             </div>
           </div>
         </div>

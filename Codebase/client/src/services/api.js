@@ -132,6 +132,13 @@ class ApiService {
     });
   }
 
+  // Search users (for chat functionality)
+  async searchUsers(query) {
+    return this.request(`/users/search?q=${encodeURIComponent(query)}`, {
+      method: "GET",
+    });
+  }
+
   // Job endpoints
   async getJobs() {
     return this.request("/jobs", { method: "GET" });
