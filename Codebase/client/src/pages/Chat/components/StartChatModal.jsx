@@ -9,42 +9,96 @@ const StartChatModal = ({ onStartChat, onClose }) => {
 
   // Search for users
   const searchUsers = async (query) => {
+    console.log("🔍 [StartChatModal] searchUsers called with query:", query);
+
     if (!query.trim()) {
+      console.log("🔍 [StartChatModal] Empty query, clearing users");
       setUsers([]);
       return;
     }
 
     // Don't search for very short queries
     if (query.trim().length < 2) {
+      console.log(
+        "🔍 [StartChatModal] Query too short (<2 chars), clearing users"
+      );
       setUsers([]);
       return;
     }
 
+    const trimmedQuery = query.trim();
+    console.log(
+      "🔍 [StartChatModal] Searching with trimmed query:",
+      trimmedQuery
+    );
+
     try {
       setLoading(true);
       setError(null);
+      console.log(
+        "🔍 [StartChatModal] Setting loading to true, calling ApiService.searchUsers"
+      );
 
       // Use the dedicated search method from ApiService
-      const response = await ApiService.searchUsers(query.trim());
+      const response = await ApiService.searchUsers(trimmedQuery);
+
+      console.log("🔍 [StartChatModal] Raw response from API:", response);
+      console.log("🔍 [StartChatModal] Response.data:", response.data);
+      console.log("🔍 [StartChatModal] Response structure:", {
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        dataLength: Array.isArray(response.data)
+          ? response.data.length
+          : "not array",
+        fullResponse: response,
+      });
 
       // Handle the response structure correctly
-      setUsers(response.data || []);
+      // The API returns: { success: true, data: { success: true, data: Array } }
+      // So we need to access response.data.data for the actual user array
+      const userData = response.data?.data || response.data || [];
+      console.log("🔍 [StartChatModal] Extracted user data:", userData);
+      console.log(
+        "🔍 [StartChatModal] Is userData an array?",
+        Array.isArray(userData)
+      );
+
+      setUsers(userData);
     } catch (err) {
+      console.error("❌ [StartChatModal] Error searching users:", err);
+      console.error("❌ [StartChatModal] Error details:", {
+        message: err.message,
+        stack: err.stack,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setError("Failed to search users. Please try again.");
-      console.error("Error searching users:", err);
       setUsers([]);
     } finally {
+      console.log("🔍 [StartChatModal] Setting loading to false");
       setLoading(false);
     }
   };
 
   // Debounced search
   useEffect(() => {
+    console.log(
+      "⏱️ [StartChatModal] Search debounce triggered, searchQuery:",
+      searchQuery
+    );
+
     const timeoutId = setTimeout(() => {
+      console.log(
+        "⏱️ [StartChatModal] Debounce timeout executed, calling searchUsers with:",
+        searchQuery
+      );
       searchUsers(searchQuery);
     }, 300);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      console.log("⏱️ [StartChatModal] Clearing debounce timeout");
+      clearTimeout(timeoutId);
+    };
   }, [searchQuery]);
 
   const handleStartChat = (userId) => {
@@ -92,7 +146,15 @@ const StartChatModal = ({ onStartChat, onClose }) => {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  console.log("📝 [StartChatModal] Search input changed:", {
+                    oldValue: searchQuery,
+                    newValue: newValue,
+                    length: newValue.length,
+                  });
+                  setSearchQuery(newValue);
+                }}
                 placeholder="Enter name or email..."
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-300 bg-gray-50 focus:bg-white"
                 autoFocus

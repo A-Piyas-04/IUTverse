@@ -4,10 +4,22 @@ import ApiService from "./api.js";
 class ChatApiService {
   // Start or get conversation with another user
   async startConversation(otherUserId) {
-    return ApiService.request("/chat/conversations", {
+    console.log(
+      "🌐 [ChatApi] startConversation called with otherUserId:",
+      otherUserId
+    );
+    const response = await ApiService.request("/chat/conversations", {
       method: "POST",
       body: JSON.stringify({ otherUserId }),
     });
+    console.log("🌐 [ChatApi] startConversation API response:", response);
+    console.log("🌐 [ChatApi] Response structure:", {
+      hasConversation: !!response.conversation,
+      hasData: !!response.data,
+      dataType: typeof response.data,
+      fullResponse: response,
+    });
+    return response;
   }
 
   // Get user's conversations

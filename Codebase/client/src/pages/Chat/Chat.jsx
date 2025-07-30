@@ -24,10 +24,25 @@ export default function Chat() {
   const [showStartChatModal, setShowStartChatModal] = useState(false);
 
   const handleStartChat = async (otherUserId) => {
+    console.log(
+      "💬 [Chat] handleStartChat called with otherUserId:",
+      otherUserId
+    );
+
+    if (!otherUserId) {
+      console.error("❌ [Chat] No otherUserId provided to handleStartChat");
+      return;
+    }
+
     try {
-      await startConversation(otherUserId);
+      console.log("💬 [Chat] Calling startConversation...");
+      const result = await startConversation(otherUserId);
+      console.log("💬 [Chat] startConversation result:", result);
+      console.log("💬 [Chat] startConversation completed successfully");
       setShowStartChatModal(false);
+      console.log("💬 [Chat] Modal closed");
     } catch (err) {
+      console.error("❌ [Chat] Error in handleStartChat:", err);
       // Error is handled in the hook
     }
   };
