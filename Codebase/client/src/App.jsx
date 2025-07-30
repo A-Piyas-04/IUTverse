@@ -15,6 +15,7 @@ import JobsPage from "./pages/Jobs/JobsPage.jsx";
 import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
+import Chat from "./pages/Chat/Chat.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 
@@ -118,6 +119,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <EventHub />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <Chat />
           </ProtectedRoute>
         }
       />

@@ -201,6 +201,53 @@ class UserService {
     }
   }
 
+  // Search users by name or email
+  async searchUsers(query, excludeUserId, limit = 20) {
+    try {
+      const users = await prisma.user.findMany({
+        where: {
+          AND: [
+            {
+              id: {
+                not: excludeUserId,
+              },
+            },
+            {
+              OR: [
+                {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          department: true,
+          batch: true,
+        },
+        take: limit,
+        orderBy: [{ name: "asc" }, { email: "asc" }],
+      });
+
+      return users;
+    } catch (error) {
+      console.error("Error searching users:", error);
+      throw error;
+    }
+  }
+
   // Close database connection
   async disconnect() {
     await prisma.$disconnect();
