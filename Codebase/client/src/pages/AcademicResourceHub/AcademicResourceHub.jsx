@@ -15,6 +15,7 @@ const AcademicResourceHub = () => {
   // Filter states
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedType, setSelectedType] = useState("");
+  const [courseCodeFilter, setCourseCodeFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Form states
@@ -27,6 +28,7 @@ const AcademicResourceHub = () => {
     title: "",
     type: "QUESTION",
     departmentId: "",
+    courseCode: "",
     file: null,
     externalLink: "",
   });
@@ -37,6 +39,7 @@ const AcademicResourceHub = () => {
     { value: "QUESTION", label: "Question Paper" },
     { value: "NOTE", label: "Class Notes" },
     { value: "BOOK", label: "Textbook/Reference" },
+    { value: "CLASS_LECTURE", label: "Class Lecture" },
     { value: "OTHER", label: "Other" },
   ];
 
@@ -49,7 +52,7 @@ const AcademicResourceHub = () => {
 
   useEffect(() => {
     loadResources();
-  }, [selectedDepartment, selectedType]);
+  }, [selectedDepartment, selectedType, courseCodeFilter]);
 
   const loadInitialData = async () => {
     try {
@@ -73,6 +76,7 @@ const AcademicResourceHub = () => {
       const filters = {};
       if (selectedDepartment) filters.departmentId = selectedDepartment;
       if (selectedType) filters.type = selectedType;
+      if (courseCodeFilter) filters.courseCode = courseCodeFilter;
 
       const response = await academicResourceApi.getResources(filters);
       setResources(response.data || []);
@@ -101,6 +105,7 @@ const AcademicResourceHub = () => {
         title: formData.title,
         type: formData.type,
         departmentId: formData.departmentId,
+        courseCode: formData.courseCode || null,
         file: formData.file,
         externalLink: formData.externalLink || null,
       };
@@ -121,6 +126,7 @@ const AcademicResourceHub = () => {
         title: "",
         type: "QUESTION",
         departmentId: "",
+        courseCode: "",
         file: null,
         externalLink: "",
       });
@@ -138,6 +144,7 @@ const AcademicResourceHub = () => {
       title: resource.title,
       type: resource.type,
       departmentId: resource.departmentId.toString(),
+      courseCode: resource.courseCode || "",
       file: null,
       externalLink: resource.externalLink || "",
     });
@@ -253,6 +260,19 @@ const AcademicResourceHub = () => {
                 />
               </div>
 
+              <div className="form-group">
+                <label className="form-label">📚 Course Code</label>
+                <input
+                  type="text"
+                  value={formData.courseCode}
+                  onChange={(e) =>
+                    setFormData({ ...formData, courseCode: e.target.value })
+                  }
+                  className="form-input"
+                  placeholder="e.g., CSE 101, EEE 201, MAT 120"
+                />
+              </div>
+
               <div className="form-grid form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Type *</label>
@@ -337,6 +357,7 @@ const AcademicResourceHub = () => {
                       title: "",
                       type: "QUESTION",
                       departmentId: "",
+                      courseCode: "",
                       file: null,
                       externalLink: "",
                     });
@@ -431,6 +452,17 @@ const AcademicResourceHub = () => {
                 ))}
               </select>
             </div>
+
+            <div className="form-group">
+              <label className="form-label">📚 Course Code</label>
+              <input
+                type="text"
+                value={courseCodeFilter}
+                onChange={(e) => setCourseCodeFilter(e.target.value)}
+                className="form-input"
+                placeholder="Filter by course code..."
+              />
+            </div>
           </div>
         </div>
 
@@ -481,6 +513,12 @@ const AcademicResourceHub = () => {
                       }
                     </span>
                   </div>
+                  {resource.courseCode && (
+                    <div className="meta-item">
+                      <span className="meta-label">📚 Course:</span>
+                      <span>{resource.courseCode}</span>
+                    </div>
+                  )}
                   <div className="meta-item">
                     <span className="meta-label">📅 Uploaded:</span>
                     <span>
