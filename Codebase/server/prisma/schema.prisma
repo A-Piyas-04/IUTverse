@@ -239,6 +239,7 @@ model AcademicResource {
   id           Int             @id @default(autoincrement())
   title        String
   type         ResourceType
+  courseCode   String?         // Course code (e.g., CSE 101, EEE 201)
   department   Department      @relation(fields: [departmentId], references: [id])
   departmentId Int
   fileUrl      String?         // Path to uploaded PDF (e.g., /files/filename.pdf)
@@ -256,6 +257,7 @@ enum ResourceType {
   QUESTION
   NOTE
   BOOK
+  CLASS_LECTURE
   OTHER
 }
 

@@ -50,6 +50,8 @@ class AcademicResourceApi {
       if (filters.departmentId)
         queryParams.append("departmentId", filters.departmentId);
       if (filters.type) queryParams.append("type", filters.type);
+      if (filters.courseCode)
+        queryParams.append("courseCode", filters.courseCode);
 
       const url = `${API_BASE_URL}/resources${
         queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -90,6 +92,7 @@ class AcademicResourceApi {
       formData.append("title", resourceData.title);
       formData.append("type", resourceData.type);
       formData.append("departmentId", resourceData.departmentId);
+      formData.append("courseCode", resourceData.courseCode || "");
 
       if (resourceData.externalLink) {
         formData.append("externalLink", resourceData.externalLink);
@@ -133,6 +136,8 @@ class AcademicResourceApi {
       if (resourceData.type) formData.append("type", resourceData.type);
       if (resourceData.departmentId)
         formData.append("departmentId", resourceData.departmentId);
+      if (resourceData.courseCode !== undefined)
+        formData.append("courseCode", resourceData.courseCode);
       if (resourceData.externalLink !== undefined)
         formData.append("externalLink", resourceData.externalLink);
 

@@ -5,13 +5,14 @@ const path = require("path");
 // Create a new academic resource
 const createAcademicResource = async (req, res) => {
   try {
-    const { title, type, departmentId, externalLink } = req.body;
+    const { title, type, departmentId, externalLink, courseCode } = req.body;
 
     console.log("[AcademicResourceController] Creating resource:", {
       title,
       type,
       departmentId,
       externalLink,
+      courseCode,
       hasFile: !!req.file,
     });
 
@@ -33,7 +34,7 @@ const createAcademicResource = async (req, res) => {
     }
 
     // Validate ResourceType enum
-    const validTypes = ["QUESTION", "NOTE", "BOOK", "OTHER"];
+    const validTypes = ["QUESTION", "NOTE", "BOOK", "CLASS_LECTURE", "OTHER"];
     if (!validTypes.includes(type)) {
       return res.status(400).json({
         success: false,
@@ -47,6 +48,7 @@ const createAcademicResource = async (req, res) => {
       type,
       departmentId: parseInt(departmentId),
       externalLink: externalLink || null,
+      courseCode: courseCode || null,
       fileUrl: null,
     };
 
@@ -100,16 +102,17 @@ const createAcademicResource = async (req, res) => {
 // Get all academic resources with optional filtering
 const getAllAcademicResources = async (req, res) => {
   try {
-    const { departmentId, type } = req.query;
+    const { departmentId, type, courseCode } = req.query;
 
     console.log(
       "[AcademicResourceController] Fetching resources with filters:",
-      { departmentId, type }
+      { departmentId, type, courseCode }
     );
 
     const filters = {};
     if (departmentId) filters.departmentId = departmentId;
     if (type) filters.type = type;
+    if (courseCode) filters.courseCode = courseCode;
 
     const resources = await academicResourceService.getAllAcademicResources(
       filters
@@ -238,7 +241,7 @@ const createDepartment = async (req, res) => {
 const updateAcademicResource = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, type, departmentId, externalLink } = req.body;
+    const { title, type, departmentId, externalLink, courseCode } = req.body;
 
     console.log(
       "[AcademicResourceController] Updating resource:",
@@ -262,6 +265,7 @@ const updateAcademicResource = async (req, res) => {
     if (type) updateData.type = type;
     if (departmentId) updateData.departmentId = parseInt(departmentId);
     if (externalLink !== undefined) updateData.externalLink = externalLink;
+    if (courseCode !== undefined) updateData.courseCode = courseCode;
 
     // If new file was uploaded, update fileUrl and remove old file
     if (req.file) {

@@ -40,6 +40,13 @@ const getAllAcademicResources = async (filters = {}) => {
       where.type = filters.type;
     }
 
+    if (filters.courseCode) {
+      where.courseCode = {
+        contains: filters.courseCode,
+        mode: "insensitive",
+      };
+    }
+
     console.log(
       "[AcademicResourceService] Fetching resources with filters:",
       where
