@@ -11,6 +11,7 @@ export default function Navbar({
     "Jobs",
     "EventHub",
     "Confessions",
+    "Academic",
   ],
 }) {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ export default function Navbar({
         return "/jobs";
       case "EventHub":
         return "/eventhub";
+      case "Academic":
+        return "/academic";
       default:
         return `/${label.toLowerCase()}`;
     }
