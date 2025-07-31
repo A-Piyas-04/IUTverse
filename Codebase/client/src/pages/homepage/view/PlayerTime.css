@@ -13,7 +13,7 @@
 }
 
 .prayer-times-modal {
-  background-image: url('./iutMosque.jpg');
+  background-image: url("./iutMosque.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -26,18 +26,28 @@
   border: 1px solid #e2e8f0;
 }
 
-/* Simple scrollbar */
+/* Hide scrollbar while keeping scroll functionality */
 .prayer-times-modal::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
+  background: transparent;
 }
 
 .prayer-times-modal::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.3);
+  background: transparent;
 }
 
 .prayer-times-modal::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 3px;
+  background: transparent;
+}
+
+/* For Firefox */
+.prayer-times-modal {
+  scrollbar-width: none;
+}
+
+/* For Internet Explorer and Edge */
+.prayer-times-modal {
+  -ms-overflow-style: none;
 }
 
 /* Header Section */
@@ -271,47 +281,47 @@
     width: 95%;
     margin: 1rem;
   }
-  
+
   .prayer-times-header {
     padding: 1rem;
     flex-direction: column;
     gap: 0.75rem;
     text-align: center;
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .prayer-title {
     font-size: 1.25rem;
   }
-  
+
   .current-prayer-section {
     padding: 1rem;
   }
-  
+
   .current-prayer-card {
     flex-direction: column;
     text-align: center;
     gap: 0.75rem;
   }
-  
+
   .current-prayer-icon {
     font-size: 2rem;
   }
-  
+
   .prayer-times-list {
     padding: 1rem;
   }
-  
+
   .prayer-time-card {
     flex-direction: column;
     text-align: center;
     gap: 0.5rem;
   }
-  
+
   .prayer-time-details {
     text-align: center;
   }
@@ -321,31 +331,31 @@
   .prayer-times-header {
     padding: 0.75rem;
   }
-  
+
   .current-prayer-section {
     padding: 0.75rem;
   }
-  
+
   .prayer-times-list {
     padding: 0.75rem;
   }
-  
+
   .prayer-times-footer {
     padding: 0.75rem;
   }
-  
+
   .mosque-icon {
     font-size: 1.5rem;
   }
-  
+
   .prayer-title {
     font-size: 1.125rem;
   }
-  
+
   .current-prayer-name {
     font-size: 1.125rem;
   }
-  
+
   .current-prayer-arabic {
     font-size: 0.875rem;
   }

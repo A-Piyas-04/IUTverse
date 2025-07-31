@@ -235,6 +235,31 @@ model QuestionPaper {
   uploadedAt   DateTime @default(now())
 }
 
+model AcademicResource {
+  id           Int             @id @default(autoincrement())
+  title        String
+  type         ResourceType
+  department   Department      @relation(fields: [departmentId], references: [id])
+  departmentId Int
+  fileUrl      String?         // Path to uploaded PDF (e.g., /files/filename.pdf)
+  externalLink String?         // Optional Google Drive / Docs link
+  createdAt    DateTime        @default(now())
+}
+
+model Department {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  resources AcademicResource[]
+}
+
+enum ResourceType {
+  QUESTION
+  NOTE
+  BOOK
+  OTHER
+}
+
+
 // Confession Models
 model Confession {
   id        Int      @id @default(autoincrement())

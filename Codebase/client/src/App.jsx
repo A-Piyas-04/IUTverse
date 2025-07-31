@@ -16,6 +16,7 @@ import Confessions from "./pages/Confessions/Confessions.jsx";
 import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
+import AcademicResourceHub from "./pages/AcademicResourceHub/AcademicResourceHub.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 
@@ -127,6 +128,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Chat />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/academic"
+        element={
+          <ProtectedRoute>
+            <AcademicResourceHub />
           </ProtectedRoute>
         }
       />
