@@ -1,0 +1,352 @@
+/* Prayer Times Modal Styles */
+.prayer-times-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.prayer-times-modal {
+  background-image: url('./iutMosque.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+}
+
+/* Simple scrollbar */
+.prayer-times-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prayer-times-modal::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.prayer-times-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 3px;
+}
+
+/* Header Section */
+.prayer-times-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px 12px 0 0;
+  color: white;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mosque-icon {
+  font-size: 2rem;
+}
+
+.prayer-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.prayer-subtitle {
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.close-btn {
+  background: rgba(239, 68, 68, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 1rem;
+}
+
+.close-btn:hover {
+  background: #ef4444;
+}
+
+/* Current Prayer Section */
+.current-prayer-section {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.current-prayer-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 2px solid #10b981;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.current-prayer-icon {
+  font-size: 2.5rem;
+}
+
+.current-prayer-info {
+  flex: 1;
+}
+
+.current-prayer-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #065f46;
+  margin: 0 0 0.25rem 0;
+}
+
+.current-prayer-arabic {
+  font-size: 1rem;
+  color: #047857;
+  margin: 0 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.current-prayer-time {
+  font-size: 1rem;
+  color: #10b981;
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+}
+
+.current-prayer-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Prayer Times List */
+.prayer-times-list {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.times-list-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 1rem 0;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.prayer-times-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.prayer-time-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.prayer-time-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.prayer-time-card.current {
+  background: rgba(240, 253, 244, 0.95);
+  border-color: #10b981;
+  border-width: 2px;
+}
+
+.prayer-time-icon {
+  font-size: 1.25rem;
+}
+
+.prayer-time-details {
+  flex: 1;
+}
+
+.prayer-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.125rem 0;
+}
+
+.prayer-arabic {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 0.125rem 0;
+}
+
+.prayer-time {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0;
+  font-weight: 600;
+}
+
+.prayer-status {
+  display: flex;
+  align-items: center;
+}
+
+.current-indicator {
+  background: #10b981;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Footer */
+.prayer-times-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 0 0 12px 12px;
+  text-align: center;
+  color: white;
+}
+
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.footer-note {
+  font-size: 0.75rem;
+  color: #e2e8f0;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .prayer-times-modal {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .prayer-times-header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .prayer-title {
+    font-size: 1.25rem;
+  }
+  
+  .current-prayer-section {
+    padding: 1rem;
+  }
+  
+  .current-prayer-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .current-prayer-icon {
+    font-size: 2rem;
+  }
+  
+  .prayer-times-list {
+    padding: 1rem;
+  }
+  
+  .prayer-time-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .prayer-time-details {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .prayer-times-header {
+    padding: 0.75rem;
+  }
+  
+  .current-prayer-section {
+    padding: 0.75rem;
+  }
+  
+  .prayer-times-list {
+    padding: 0.75rem;
+  }
+  
+  .prayer-times-footer {
+    padding: 0.75rem;
+  }
+  
+  .mosque-icon {
+    font-size: 1.5rem;
+  }
+  
+  .prayer-title {
+    font-size: 1.125rem;
+  }
+  
+  .current-prayer-name {
+    font-size: 1.125rem;
+  }
+  
+  .current-prayer-arabic {
+    font-size: 0.875rem;
+  }
+}

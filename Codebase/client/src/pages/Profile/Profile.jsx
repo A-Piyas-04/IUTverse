@@ -461,7 +461,7 @@ export default function Profile() {
               {/* Action Buttons */}
               {isOwnProfile && (
                 <div className="flex gap-2 mb-4">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-[blue-500] text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
                     <span className="text-lg">+</span>
                     <span>Add to story</span>
                   </button>
