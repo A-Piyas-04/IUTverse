@@ -1,0 +1,250 @@
+import axios from "axios";
+import { authUtils } from "../utils/auth";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+// Create axios instance with auth header
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add auth token to requests
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = authUtils.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Posts Services
+export const postService = {
+  // Get all posts with pagination
+  getPosts: async (page = 1, limit = 10) => {
+    try {
+      const response = await apiClient.get(
+        `/posts?page=${page}&limit=${limit}`
+      );
+      console.log("Raw API response:", response);
+
+      // Ensure we return an array, even if the API response structure is unexpected
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      } else if (
+        response.data &&
+        response.data.posts &&
+        Array.isArray(response.data.posts)
+      ) {
+        return response.data.posts;
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        return response.data.data;
+      } else {
+        console.error("API returned invalid posts data format:", response.data);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      throw error;
+    }
+  },
+
+  // Get single post by id with comments
+  getPost: async (postId) => {
+    try {
+      const response = await apiClient.get(`/posts/${postId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Create a new post
+  createPost: async (postData) => {
+    try {
+      // For form data with image upload
+      const formData = new FormData();
+
+      // Add text fields
+      formData.append("content", postData.content);
+      formData.append("category", postData.category || "general");
+      formData.append("isAnonymous", postData.isAnonymous || false);
+
+      // Add image if present
+      if (postData.image) {
+        formData.append("image", postData.image);
+      }
+
+      console.log(
+        "Sending post request with FormData:",
+        Object.fromEntries(formData.entries())
+      );
+      const response = await axios.post(`${API_URL}/posts`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authUtils.getToken()}`,
+        },
+      });
+
+      console.log("Create post response:", response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Update a post
+  updatePost: async (postId, postData) => {
+    try {
+      // For form data with image upload
+      const formData = new FormData();
+
+      // Add text fields
+      formData.append("content", postData.content);
+      formData.append("category", postData.category || "general");
+      formData.append("isAnonymous", postData.isAnonymous || false);
+
+      // Add image if present
+      if (postData.image) {
+        formData.append("image", postData.image);
+      }
+
+      const response = await axios.put(`${API_URL}/posts/${postId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authUtils.getToken()}`,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Delete a post
+  deletePost: async (postId) => {
+    try {
+      const response = await apiClient.delete(`/posts/${postId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Like/react to a post
+  reactToPost: async (postId, reactionType) => {
+    try {
+      const response = await apiClient.post(`/posts/${postId}/react`, {
+        reactionType,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get user's personalized feed
+  getUserFeed: async (page = 1, limit = 10) => {
+    try {
+      const response = await apiClient.get(`/feed?page=${page}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+// Comment Services
+export const commentService = {
+  // Get comments for a post
+  getPostComments: async (postId, page = 1, limit = 20) => {
+    try {
+      console.log("Fetching comments for post:", postId);
+      const response = await apiClient.get(
+        `/posts/${postId}/comments?page=${page}&limit=${limit}`
+      );
+      console.log("Raw API comments response:", response);
+
+      // Ensure we return an array of comments, even if the API response structure is unexpected
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      } else if (
+        response.data &&
+        response.data.comments &&
+        Array.isArray(response.data.comments)
+      ) {
+        return response.data.comments;
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        return response.data.data;
+      } else {
+        console.error(
+          "API returned invalid comments data format:",
+          response.data
+        );
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      throw error;
+    }
+  },
+
+  // Add a comment to a post
+  addComment: async (postId, content, parentCommentId = null) => {
+    try {
+      const response = await apiClient.post(`/posts/${postId}/comments`, {
+        content,
+        parentCommentId,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get replies for a comment
+  getCommentReplies: async (commentId) => {
+    try {
+      const response = await apiClient.get(`/comments/${commentId}/replies`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Update a comment
+  updateComment: async (commentId, content) => {
+    try {
+      const response = await apiClient.put(`/comments/${commentId}`, {
+        content,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Delete a comment
+  deleteComment: async (commentId) => {
+    try {
+      const response = await apiClient.delete(`/comments/${commentId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+};

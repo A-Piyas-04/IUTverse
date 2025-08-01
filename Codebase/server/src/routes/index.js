@@ -5,6 +5,7 @@ const userRoutes = require("./userRoutes");
 const jobRoutes = require("./jobRoutes");
 const lostAndFoundRoutes = require("./lostAndFoundRoutes");
 const confessionRoutes = require("./confessionRoutes");
+const postRoutes = require("./postRoutes"); // Added post routes
 const catPostRoutes = require("./catPostRoutes");
 const catQARoutes = require("./catQARoutes");
 const chatRoutes = require("./chatRoutes");
@@ -34,6 +35,9 @@ router.use("/api/cat-posts", catPostRoutes);
 
 // Cat Q&A routes
 router.use("/api/cat-qa", catQARoutes);
+
+// Post routes
+router.use("/api", postRoutes);
 
 // Chat routes
 router.use("/api/chat", chatRoutes);
