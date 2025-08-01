@@ -12,7 +12,6 @@ export default function Navbar({
     "Jobs",
     "EventHub",
     "Confessions",
-    "Academic",
   ],
 }) {
   const navigate = useNavigate();

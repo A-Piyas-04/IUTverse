@@ -55,6 +55,9 @@ const SAMPLE_POSTS = [
 ];
 
 export default function LostAndFound() {
+  // Use custom hook to ensure CSS has highest priority
+  useCssPriority('/src/pages/LostAndFound/lostandfound.css');
+  
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);

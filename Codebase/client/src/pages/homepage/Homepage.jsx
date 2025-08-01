@@ -5,6 +5,7 @@ import PostModal from "../../components/PostModal.jsx";
 import PlayerTime from "./view/PlayerTime.jsx";
 import BrainTeaser from "./view/Brainteaser.jsx";
 import IUTFacts from "./view/iutFacts.jsx";
+import Weather from "./view/Weather.jsx";
 import ConversationList from "../Chat/components/ConversationList.jsx";
 import { authUtils } from "../../utils/auth.js";
 import { postService } from "../../services/postService";
@@ -20,6 +21,7 @@ export default function HomePage() {
   const [showPrayerTimes, setShowPrayerTimes] = useState(false);
   const [showBrainTeaser, setShowBrainTeaser] = useState(false);
   const [showIUTFacts, setShowIUTFacts] = useState(false);
+  const [showWeather, setShowWeather] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -225,8 +227,10 @@ export default function HomePage() {
         setShowBrainTeaser(true);
         break;
       case "Today's Weather":
-        // TODO: Implement weather popup
-        console.log("Today's Weather clicked");
+        setShowWeather(true);
+        break;
+      case "Academics":
+        navigate("/academic");
         break;
       default:
         break;
@@ -344,6 +348,7 @@ export default function HomePage() {
               { label: "Random IUT Fact", icon: "🎓", bg: "bg-yellow-100" },
               { label: "Brain Teaser", icon: "🧠", bg: "bg-pink-100" },
               { label: "Today's Weather", icon: "🌤️", bg: "bg-blue-200" },
+              { label: "Academics", icon: "📚", bg: "bg-purple-100" },
             ].map((item, i) => (
               <li
                 key={i}
@@ -603,6 +608,9 @@ export default function HomePage() {
 
       {/* IUT Facts Modal */}
       <IUTFacts isOpen={showIUTFacts} onClose={() => setShowIUTFacts(false)} />
+
+      {/* Weather Modal */}
+      <Weather isOpen={showWeather} onClose={() => setShowWeather(false)} />
 
       {/* Animations */}
       <style>{`
