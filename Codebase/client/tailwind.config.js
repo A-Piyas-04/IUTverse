@@ -9,6 +9,8 @@ export default {
     },
   },
   plugins: [],
-  // Ensure important is not set to true, which can cause issues
+  corePlugins: {
+    preflight: false, // This disables Tailwind's base/reset styles
+  },
   important: false,
 };
