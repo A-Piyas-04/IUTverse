@@ -104,6 +104,47 @@
   background: #ef4444;
 }
 
+/* Current Time Section */
+.current-time-section {
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.current-time-display {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.time-icon {
+  font-size: 2rem;
+}
+
+.time-info {
+  flex: 1;
+}
+
+.current-time-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 0.25rem 0;
+  font-family: 'Courier New', monospace;
+}
+
+.current-date-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
 /* Current Prayer Section */
 .current-prayer-section {
   padding: 1.5rem;
@@ -154,7 +195,32 @@
 .current-prayer-desc {
   font-size: 0.875rem;
   color: #6b7280;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
+}
+
+.time-until-next {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.time-until-label {
+  font-size: 0.75rem;
+  color: #065f46;
+  font-weight: 500;
+}
+
+.time-until-value {
+  font-size: 0.875rem;
+  color: #10b981;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
 }
 
 /* Prayer Times List */
@@ -186,6 +252,7 @@
   align-items: center;
   gap: 0.75rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
 }
 
 .prayer-time-card:hover {
@@ -195,10 +262,23 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.prayer-time-card.current {
+.prayer-time-card.next {
   background: rgba(240, 253, 244, 0.95);
   border-color: #10b981;
   border-width: 2px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.prayer-time-card.past {
+  background: rgba(249, 250, 251, 0.8);
+  border-color: #d1d5db;
+  opacity: 0.7;
+}
+
+.prayer-time-card.past .prayer-name,
+.prayer-time-card.past .prayer-arabic,
+.prayer-time-card.past .prayer-time {
+  color: #9ca3af;
 }
 
 .prayer-time-icon {
@@ -234,8 +314,19 @@
   align-items: center;
 }
 
-.current-indicator {
+.next-indicator {
   background: #10b981;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.past-indicator {
+  background: #9ca3af;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
@@ -298,6 +389,20 @@
     font-size: 1.25rem;
   }
 
+  .current-time-section {
+    padding: 1rem;
+  }
+
+  .current-time-display {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .current-time-text {
+    font-size: 1.25rem;
+  }
+
   .current-prayer-section {
     padding: 1rem;
   }
@@ -310,6 +415,11 @@
 
   .current-prayer-icon {
     font-size: 2rem;
+  }
+
+  .time-until-next {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
   .prayer-times-list {
@@ -329,6 +439,10 @@
 
 @media (max-width: 480px) {
   .prayer-times-header {
+    padding: 0.75rem;
+  }
+
+  .current-time-section {
     padding: 0.75rem;
   }
 
@@ -358,5 +472,9 @@
 
   .current-prayer-arabic {
     font-size: 0.875rem;
+  }
+
+  .current-time-text {
+    font-size: 1.125rem;
   }
 }
