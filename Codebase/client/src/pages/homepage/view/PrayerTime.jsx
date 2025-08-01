@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './PlayerTime.css';
+import './PrayerTime.css';
 import iutMosque from './iutMosque.jpg';
 
-export default function PlayerTime({ isOpen, onClose }) {
+export default function PrayerTime({ isOpen, onClose }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [nextPrayer, setNextPrayer] = useState(null);
 
