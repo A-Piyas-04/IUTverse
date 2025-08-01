@@ -27,6 +27,7 @@ model User {
   profile   Profile?
   posts     Post[]
   reactions PostReaction[]
+  comments  PostComment[] // Added relation to comments
   events    Event[]        @relation("CreatedEvents")
   rsvps     EventRsvp[]
   catVotes  CatVote[]
@@ -52,6 +53,8 @@ model User {
   sentMessages     ChatMessage[] @relation("SentMessages")
   receivedMessages ChatMessage[] @relation("ReceivedMessages")
   conversations    ConversationParticipant[]
+  
+  // Chat relations only - removed friends system
 }
 
 model Profile {
@@ -136,9 +139,13 @@ model Post {
   content     String
   category    String
   isAnonymous Boolean  @default(false)
+  image       String?  // Added image field
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  likesCount  Int      @default(0)  // Added counter for likes
 
   reactions PostReaction[]
+  comments  PostComment[]  // Added relation to comments
   tags      PostTag[]
 }
 
@@ -151,6 +158,27 @@ model PostReaction {
   reactionType String
 
   @@unique([postId, userId])
+}
+
+// Model for post comments
+model PostComment {
+  id        Int      @id @default(autoincrement())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Self-referencing relationship for comment replies
+  parentComment   PostComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  parentCommentId Int?
+  replies         PostComment[] @relation("CommentReplies")
+  
+  @@index([postId])
+  @@index([userId])
+  @@index([parentCommentId])
 }
 
 model ConfessionTag {
@@ -429,3 +457,5 @@ model ChatMessage {
   @@index([senderId])
   @@index([receiverId])
 }
+
+// End of schema

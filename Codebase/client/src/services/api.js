@@ -6,13 +6,23 @@ const API_BASE_URL = "/api";
 class ApiService {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+
+    // Prepare headers based on request content
+    const headers = {
+      ...authUtils.getAuthHeader(),
+      ...options.headers,
+    };
+
+    // Only set Content-Type to application/json if not sending FormData
+    // The browser will automatically set the correct Content-Type with boundary for FormData
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    // Create a new options object to avoid modifying the original
     const config = {
-      headers: {
-        "Content-Type": "application/json",
-        ...authUtils.getAuthHeader(),
-        ...options.headers,
-      },
       ...options,
+      headers: headers,
     };
 
     // Debug logging for search requests
@@ -262,6 +272,53 @@ class ApiService {
   async getUserApplicationStatus(jobId) {
     return this.request(`/jobs/${jobId}/application-status`, {
       method: "GET",
+    });
+  }
+
+  // Profile picture endpoints
+  async uploadProfilePicture(file) {
+    const formData = new FormData();
+    formData.append("profilePicture", file);
+
+    // Get the authorization token directly to ensure it's included
+    const authHeaders = authUtils.getAuthHeader();
+
+    // Create a URL directly instead of using the request helper
+    const url = `${API_BASE_URL}/profile/upload-picture`;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          // Include only the auth header, let the browser set Content-Type
+          ...authHeaders,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get profile picture URL for a user
+  getProfilePictureUrl(userId) {
+    return `${API_BASE_URL}/profile/picture/${userId}`;
+  }
+
+  // Delete profile picture
+  async deleteProfilePicture() {
+    return this.request("/profile/picture", {
+      method: "DELETE",
     });
   }
 }

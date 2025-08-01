@@ -1,13 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ConversationList from "./components/ConversationList.jsx";
 import ChatWindow from "./components/ChatWindow.jsx";
 import StartChatModal from "./components/StartChatModal.jsx";
 import LoadingSpinner from "../../components/LoadingSpinner/LoadingSpinner.jsx";
 import { useChat } from "../../hooks/useChat.js";
+import { useLocation } from "react-router-dom";
 import "./Chat.css";
 
 export default function Chat() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const conversationId = searchParams.get("conversationId");
+  const userId = searchParams.get("userId");
+
   const {
     conversations,
     activeConversation,
@@ -22,6 +28,45 @@ export default function Chat() {
   } = useChat();
 
   const [showStartChatModal, setShowStartChatModal] = useState(false);
+
+  // Handle conversation selection from URL parameters
+  useEffect(() => {
+    if (!loading && conversations.length > 0) {
+      if (conversationId) {
+        console.log(
+          "📱 Selecting conversation from URL param conversationId:",
+          conversationId
+        );
+        const conversation = conversations.find((c) => c.id === conversationId);
+        if (conversation) {
+          selectConversation(conversation);
+        }
+      } else if (userId) {
+        console.log(
+          "👤 Starting conversation with userId from URL param:",
+          userId
+        );
+        // Either select existing conversation with this user or start a new one
+        const conversation = conversations.find(
+          (c) => c.otherUser && c.otherUser.id === userId
+        );
+
+        if (conversation) {
+          selectConversation(conversation);
+        } else {
+          // Start new conversation with this user
+          startConversation(userId);
+        }
+      }
+    }
+  }, [
+    conversations,
+    loading,
+    conversationId,
+    userId,
+    selectConversation,
+    startConversation,
+  ]);
 
   const handleStartChat = async (otherUserId) => {
     console.log(
