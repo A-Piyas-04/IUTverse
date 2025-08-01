@@ -1,0 +1,91 @@
+/* Page Transition Container */
+.page-transition {
+  min-height: 100vh;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-transition.transitioning {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Global page transition styles */
+* {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth scroll behavior for the entire app */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Page enter animation */
+.page-enter {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Additional smooth transitions for common elements */
+a, button, input, textarea, select {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects for interactive elements */
+a:hover, button:hover {
+  transform: translateY(-1px);
+}
+
+/* Focus states for accessibility */
+a:focus, button:focus, input:focus, textarea:focus, select:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  transition: outline 0.2s ease;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Disabled states */
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Responsive transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+} 

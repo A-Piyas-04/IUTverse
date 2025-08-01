@@ -17,7 +17,9 @@ import Moderation from "./pages/Admin/Moderation.jsx";
 import EventHub from "./pages/EventHub/EventHub.jsx";
 import Chat from "./pages/Chat/Chat.jsx";
 import AcademicResourceHub from "./pages/AcademicResourceHub/AcademicResourceHub.jsx";
+import AboutUs from "./pages/AboutUs/AboutUs.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import PageTransition from "./components/PageTransition/PageTransition.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 
 // Loading component
@@ -139,6 +141,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/about"
+        element={
+          <ProtectedRoute>
+            <AboutUs />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch‑all: redirect based on authentication */}
       <Route
@@ -153,7 +163,9 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppRoutes />
+        <PageTransition>
+          <AppRoutes />
+        </PageTransition>
       </Router>
     </AuthProvider>
   );

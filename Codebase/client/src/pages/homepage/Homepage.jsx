@@ -24,6 +24,7 @@ export default function HomePage() {
   const [showIUTFacts, setShowIUTFacts] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
   const [showAcademicCalendar, setShowAcademicCalendar] = useState(false);
+
   const [newPostContent, setNewPostContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -233,6 +234,9 @@ export default function HomePage() {
       case "Academics":
         navigate("/academic");
         break;
+      case "About Us":
+        navigate("/about");
+        break;
       default:
         break;
     }
@@ -350,6 +354,7 @@ export default function HomePage() {
               { label: "Brain Teaser", icon: "🧠", bg: "bg-pink-100" },
               { label: "Today's Weather", icon: "🌤️", bg: "bg-blue-200" },
               { label: "Academics", icon: "📚", bg: "bg-purple-100" },
+              { label: "About Us", icon: "👥", bg: "bg-indigo-100" },
             ].map((item, i) => (
               <li
                 key={i}
