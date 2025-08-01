@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
 const profileController = require("../controllers/profileController");
 const userController = require("../controllers/userController");
+const profilePictureUpload = require("../middleware/profilePictureUpload");
 
 // Get user profile (protected route)
 router.get("/profile", authenticateToken, (req, res) => {
@@ -40,5 +41,24 @@ router.get("/user/:userId", userController.getUserById);
 
 // Search users (protected - for chat functionality)
 router.get("/users/search", authenticateToken, userController.searchUsers);
+
+// Profile picture routes
+// Upload profile picture (protected)
+router.post(
+  "/profile/upload-picture",
+  authenticateToken,
+  profilePictureUpload.single("profilePicture"),
+  profileController.uploadProfilePicture
+);
+
+// Get profile picture (public)
+router.get("/profile/picture/:userId", profileController.getProfilePicture);
+
+// Delete profile picture (protected)
+router.delete(
+  "/profile/picture",
+  authenticateToken,
+  profileController.deleteProfilePicture
+);
 
 module.exports = router;
