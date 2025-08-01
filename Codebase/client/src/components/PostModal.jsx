@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { postService, commentService } from "../services/postService";
 import { formatDistanceToNow } from "date-fns";
 

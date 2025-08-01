@@ -15,6 +15,9 @@ export default function Profile() {
   const [showIntroForm, setShowIntroForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+  const fileInputRef = React.useRef(null);
 
   // Check if this is the current user's profile or someone else's
   const isOwnProfile = !userId || userId === user?.id?.toString();
@@ -49,8 +52,24 @@ export default function Profile() {
         const profileRes = await ApiService.getProfileByUserId(targetUserId);
         if (profileRes.success && profileRes.data) {
           setProfile(profileRes.data);
+
+          // Set profile picture URL if available
+          if (profileRes.data.profilePicture) {
+            const pictureUrl = ApiService.getProfilePictureUrl(targetUserId);
+            console.log(
+              "Setting profile picture URL:",
+              pictureUrl,
+              "for user ID:",
+              targetUserId
+            );
+            setProfilePictureUrl(pictureUrl);
+          } else {
+            console.log("No profile picture found for user ID:", targetUserId);
+            setProfilePictureUrl(null);
+          }
         } else {
           setProfile(null);
+          setProfilePictureUrl(null);
         }
 
         // If viewing someone else's profile, we need to get their user info
@@ -285,6 +304,125 @@ export default function Profile() {
     }
   };
 
+  // Handle profile picture upload
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingPicture(true);
+      console.log("Uploading profile picture...");
+
+      // Check if file size is too large (limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size should be less than 2MB");
+        setUploadingPicture(false);
+        return;
+      }
+
+      // Upload the profile picture
+      const result = await ApiService.uploadProfilePicture(file);
+      console.log("Upload result:", result);
+
+      if (result.success) {
+        console.log("Upload successful:", result.data);
+
+        // Log the returned profile picture path
+        console.log(
+          "Received profile picture path:",
+          result.data.profilePicture
+        );
+
+        // Update profile state with the new profilePicture
+        if (profile) {
+          const updatedProfile = {
+            ...profile,
+            profilePicture: result.data.profilePicture,
+          };
+          console.log("Updated profile state:", updatedProfile);
+          setProfile(updatedProfile);
+        }
+
+        // Update the profile picture URL with a timestamp to bust cache
+        const newUrl = `${ApiService.getProfilePictureUrl(
+          user.id
+        )}?t=${Date.now()}`;
+        console.log("Setting new profile picture URL:", newUrl);
+        setProfilePictureUrl(newUrl);
+
+        // Show success message
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = "Profile picture updated successfully!";
+        document.body.appendChild(successDiv);
+
+        // Remove the message after 3 seconds
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => document.body.removeChild(successDiv), 300);
+        }, 3000);
+      } else {
+        alert(`Failed to upload profile picture: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      alert(
+        "An error occurred while uploading profile picture. Please try again."
+      );
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
+  // Handle profile picture deletion
+  const handleDeleteProfilePicture = async () => {
+    if (!confirm("Are you sure you want to delete your profile picture?")) {
+      return;
+    }
+
+    try {
+      setUploadingPicture(true);
+
+      const result = await ApiService.deleteProfilePicture();
+
+      if (result.success) {
+        // Update profile state
+        if (profile) {
+          setProfile({
+            ...profile,
+            profilePicture: null,
+          });
+        }
+
+        // Reset the profile picture URL
+        setProfilePictureUrl(null);
+
+        // Show success message
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = "Profile picture deleted successfully!";
+        document.body.appendChild(successDiv);
+
+        // Remove the message after 3 seconds
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => document.body.removeChild(successDiv), 300);
+        }, 3000);
+      } else {
+        alert(`Failed to delete profile picture: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting profile picture:", error);
+      alert(
+        "An error occurred while deleting profile picture. Please try again."
+      );
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
   const handleIntroSubmit = async (e) => {
     e.preventDefault();
 
@@ -390,13 +528,16 @@ export default function Profile() {
     },
   ];
 
+  // Function to render the profile picture
   const profilePicture = (
     <img
-      src="../../../public/profile_picture.jpg"
+      src={profilePictureUrl || "/default_avatar.png"}
       alt="Profile"
       className="w-full h-full object-cover"
       onError={(e) => {
-        e.target.style.display = "none";
+        console.error("Error loading profile picture:", e);
+        // Fall back to default avatar instead of hiding the element
+        e.target.src = "/default_avatar.png";
       }}
     />
   );
@@ -453,9 +594,62 @@ export default function Profile() {
                 <div className="w-[168px] h-[168px] rounded-full border-4 border-white shadow-lg bg-gray-300 overflow-hidden">
                   {profilePicture}
                 </div>
-                {/* <button className="absolute bottom-2 right-2 w-9 h-9 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-sm transition-colors">
-                  <span className="text-base">📷</span>
-                </button> */}
+
+                {/* Profile Picture Upload Button (only visible on own profile) */}
+                {isOwnProfile && (
+                  <div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleProfilePictureUpload}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current.click()}
+                      className="absolute bottom-2 right-2 w-9 h-9 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center shadow-sm transition-colors"
+                      title="Change profile picture"
+                      disabled={uploadingPicture}
+                    >
+                      {uploadingPicture ? (
+                        <svg
+                          className="animate-spin h-5 w-5 text-gray-600"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      ) : (
+                        <span className="text-base">📷</span>
+                      )}
+                    </button>
+
+                    {/* Delete Profile Picture Button (only shows if user has a profile picture) */}
+                    {profilePictureUrl && (
+                      <button
+                        onClick={handleDeleteProfilePicture}
+                        className="absolute bottom-2 left-2 w-9 h-9 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center shadow-sm transition-colors"
+                        title="Remove profile picture"
+                        disabled={uploadingPicture}
+                      >
+                        <span className="text-base">🗑️</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -478,23 +672,6 @@ export default function Profile() {
               <h1 className="text-[32px] font-bold text-gray-900 leading-tight mb-1">
                 {userName}
               </h1>
-              <p className="text-gray-600 text-[15px] mb-2">127 friends</p>
-
-              {/* Friend Avatars */}
-              <div className="flex items-center gap-1">
-                <div className="flex -space-x-1">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div
-                      key={i}
-                      className="w-7 h-7 rounded-full border-2 border-white bg-gray-300"
-                    ></div>
-                  ))}
-                </div>
-                <span className="text-[13px] text-gray-600 ml-2">
-                  Friends with Maria Khan, Alex Rahman, Tania Sultana and 5
-                  others
-                </span>
-              </div>
             </div>
           </div>
 
@@ -1227,34 +1404,6 @@ export default function Profile() {
                     key={i}
                     className="aspect-square bg-gray-200 rounded"
                   ></div>
-                ))}
-              </div>
-            </div>
-
-            {/* Friends Card */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Friends</h3>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  See all friends
-                </button>
-              </div>
-              <p className="text-gray-600 mb-4 text-sm">127 friends</p>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  "Maria Khan",
-                  "Alex Rahman",
-                  "Tania Sultana",
-                  "Rafiq Hassan",
-                  "Priya Sharma",
-                  "Omar Ali",
-                ].map((name, i) => (
-                  <div key={i} className="text-center">
-                    <div className="w-full aspect-square bg-gray-300 rounded-lg mb-1"></div>
-                    <p className="text-xs text-gray-800 font-medium leading-tight">
-                      {name.length > 12 ? name.substring(0, 12) + "..." : name}
-                    </p>
-                  </div>
                 ))}
               </div>
             </div>

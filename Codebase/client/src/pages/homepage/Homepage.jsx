@@ -402,10 +402,18 @@ export default function HomePage() {
                   <img
                     src={getProfilePic(post.user)}
                     alt="Profile"
-                    className="profile-img"
+                    className="profile-img mt-[30px]"
                   />
                   <div className="post-user-info">
-                    <h4 className="post-username">
+                    <h4
+                      className="post-username cursor-pointer hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (post.user?.id) {
+                          navigate(`/profile/${post.user.id}`);
+                        }
+                      }}
+                    >
                       {post.user?.name || "Anonymous"}
                     </h4>
                     <p className="post-meta">
