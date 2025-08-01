@@ -306,16 +306,13 @@ class ApiService {
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
-      console.error("Profile picture upload failed:", error);
       return { success: false, error: error.message };
     }
   }
 
   // Get profile picture URL for a user
   getProfilePictureUrl(userId) {
-    const url = `${API_BASE_URL}/profile/picture/${userId}`;
-    console.log("Profile picture URL:", url);
-    return url;
+    return `${API_BASE_URL}/profile/picture/${userId}`;
   }
 
   // Delete profile picture

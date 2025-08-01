@@ -162,6 +162,50 @@ export const postService = {
       throw error;
     }
   },
+
+  // Get posts by user ID (filter from all posts)
+  getUserPosts: async (userId, page = 1, limit = 50) => {
+    try {
+      // First get all posts with a high limit to ensure we get enough user posts
+      const response = await apiClient.get(
+        `/posts?page=${page}&limit=${limit}`
+      );
+
+      // Get the posts array
+      let allPosts;
+      if (response.data && Array.isArray(response.data)) {
+        allPosts = response.data;
+      } else if (
+        response.data &&
+        response.data.posts &&
+        Array.isArray(response.data.posts)
+      ) {
+        allPosts = response.data.posts;
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        allPosts = response.data.data;
+      } else {
+        console.error("API returned invalid posts data format:", response.data);
+        return [];
+      }
+
+      // Filter posts for the specific user
+      const userPosts = allPosts.filter(
+        (post) =>
+          post.userId === userId || (post.user && post.user.id === userId)
+      );
+
+      console.log(`Found ${userPosts.length} posts for user ${userId}`);
+
+      return userPosts;
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      throw error;
+    }
+  },
 };
 
 // Comment Services
