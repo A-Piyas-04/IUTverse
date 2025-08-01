@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
+import ApiService from "../../services/api.js";
 import "./Navbar.css";
 
 export default function Navbar({
@@ -16,7 +17,7 @@ export default function Navbar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const isOnChatPage = location.pathname === "/chat";
 
   const getPath = (label) => {
@@ -43,6 +44,14 @@ export default function Navbar({
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  // Get user profile picture URL
+  const getProfilePictureUrl = () => {
+    if (!user || !user.id) {
+      return "/profile_picture.jpg"; // Default image
+    }
+    return ApiService.getProfilePictureUrl(user.id);
   };
 
   return (
@@ -104,10 +113,15 @@ export default function Navbar({
             </svg>
           </div>
           <img
-            src="/profile_picture.jpg"
+            src={getProfilePictureUrl()}
             alt="User"
             className="h-[45px] w-[45px] rounded-full shadow hover:scale-105 transition cursor-pointer"
             onClick={() => navigate("/profile")}
+            onError={(e) => {
+              // Fallback to default image if the profile picture fails to load
+              e.target.onerror = null;
+              e.target.src = "/profile_picture.jpg";
+            }}
           />
           <button className="logout-btn" onClick={handleLogout}>
             Logout

@@ -1,4 +1,5 @@
 import React from "react";
+import ApiService from "../../../services/api.js";
 
 const ConversationList = ({
   conversations,
@@ -39,6 +40,12 @@ const ConversationList = ({
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+  };
+
+  // Function to get user profile picture URL
+  const getProfilePictureUrl = (userId) => {
+    if (!userId) return null;
+    return ApiService.getProfilePictureUrl(userId);
   };
 
   // Ensure conversations is always an array
@@ -91,11 +98,29 @@ const ConversationList = ({
           >
             <div className="flex items-center space-x-4">
               {/* Avatar */}
-              <div className="conversation-avatar relative">
-                <div className="avatar-gradient">
+              <div className="conversation-avatar relative w-12 h-12">
+                {conversation.otherUser?.id ? (
+                  <img
+                    src={getProfilePictureUrl(conversation.otherUser.id)}
+                    alt={conversation.otherUser?.name || "User"}
+                    className="h-12 w-12 rounded-full object-cover border-2 border-green-200"
+                    onError={(e) => {
+                      // Fallback to initials if image fails to load
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="avatar-gradient absolute inset-0 flex items-center justify-center text-white font-medium rounded-full"
+                  style={{
+                    display: conversation.otherUser?.id ? "none" : "flex",
+                    background: "linear-gradient(135deg, #4ade80, #22c55e)",
+                  }}
+                >
                   {getInitials(conversation.otherUser?.name)}
                 </div>
-                <div className="online-indicator"></div>
+                <div className="online-indicator absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
               </div>
 
               <div className="flex-1 min-w-0 conversation-content">
