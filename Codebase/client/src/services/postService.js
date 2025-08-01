@@ -163,47 +163,82 @@ export const postService = {
     }
   },
 
-  // Get posts by user ID (filter from all posts)
-  getUserPosts: async (userId, page = 1, limit = 50) => {
+  // Get posts by user ID - tries direct endpoint first, falls back to filtering
+  getUserPosts: async (userId, page = 1, limit = 100) => {
     try {
-      // First get all posts with a high limit to ensure we get enough user posts
-      const response = await apiClient.get(
-        `/posts?page=${page}&limit=${limit}`
-      );
-
-      // Get the posts array
-      let allPosts;
-      if (response.data && Array.isArray(response.data)) {
-        allPosts = response.data;
-      } else if (
-        response.data &&
-        response.data.posts &&
-        Array.isArray(response.data.posts)
-      ) {
-        allPosts = response.data.posts;
-      } else if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
-        allPosts = response.data.data;
-      } else {
-        console.error("API returned invalid posts data format:", response.data);
-        return [];
+      console.log(`Fetching posts for user ID: ${userId}`);
+      
+      try {
+        // First try to use the direct endpoint for user posts if it exists
+        const response = await apiClient.get(
+          `/users/${userId}/posts?page=${page}&limit=${limit}`
+        );
+        
+        // Process the response from direct endpoint
+        let userPosts;
+        if (response.data && Array.isArray(response.data)) {
+          userPosts = response.data;
+        } else if (
+          response.data &&
+          response.data.posts &&
+          Array.isArray(response.data.posts)
+        ) {
+          userPosts = response.data.posts;
+        } else if (
+          response.data &&
+          response.data.data &&
+          Array.isArray(response.data.data)
+        ) {
+          userPosts = response.data.data;
+        } else {
+          throw new Error("Invalid data format");
+        }
+        
+        console.log(`Found ${userPosts.length} posts for user ${userId} using direct endpoint`);
+        return userPosts;
+        
+      } catch (directEndpointError) {
+        // If direct endpoint fails, fall back to getting all posts and filtering
+        console.log("Direct endpoint failed, falling back to filtering all posts", directEndpointError);
+        
+        // Get all posts with a higher limit to ensure we get enough user posts
+        const response = await apiClient.get(`/posts?page=${page}&limit=${limit}`);
+        
+        // Get the posts array
+        let allPosts;
+        if (response.data && Array.isArray(response.data)) {
+          allPosts = response.data;
+        } else if (
+          response.data &&
+          response.data.posts &&
+          Array.isArray(response.data.posts)
+        ) {
+          allPosts = response.data.posts;
+        } else if (
+          response.data &&
+          response.data.data &&
+          Array.isArray(response.data.data)
+        ) {
+          allPosts = response.data.data;
+        } else {
+          console.error("API returned invalid posts data format:", response.data);
+          return [];
+        }
+        
+        // Filter posts for the specific user
+        const userPosts = allPosts.filter(
+          (post) => 
+            post.userId === userId || 
+            (post.user && post.user.id === userId) ||
+            (post.user && post.user.id && post.user.id.toString() === userId.toString())
+        );
+        
+        console.log(`Found ${userPosts.length} posts for user ${userId} using filtering method`);
+        return userPosts;
       }
-
-      // Filter posts for the specific user
-      const userPosts = allPosts.filter(
-        (post) =>
-          post.userId === userId || (post.user && post.user.id === userId)
-      );
-
-      console.log(`Found ${userPosts.length} posts for user ${userId}`);
-
-      return userPosts;
     } catch (error) {
       console.error("Error fetching user posts:", error);
-      throw error;
+      return [];
     }
   },
 };
