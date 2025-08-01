@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import PostModal from "../../components/PostModal.jsx";
-import PlayerTime from "./view/PlayerTime.jsx";
+import PrayerTime from "./view/PrayerTime.jsx";
 import BrainTeaser from "./view/Brainteaser.jsx";
 import IUTFacts from "./view/iutFacts.jsx";
 import Weather from "./view/Weather.jsx";
@@ -596,7 +596,7 @@ export default function HomePage() {
       </main>
 
       {/* Prayer Times Modal */}
-      <PlayerTime
+      <PrayerTime
         isOpen={showPrayerTimes}
         onClose={() => setShowPrayerTimes(false)}
       />

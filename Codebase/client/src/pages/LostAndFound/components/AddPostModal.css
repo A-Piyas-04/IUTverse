@@ -12,6 +12,7 @@
   z-index: 1000;
   padding: 2rem;
   backdrop-filter: blur(5px);
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modal-content {
@@ -23,6 +24,8 @@
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUpScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
 }
 
 .modal-header {
@@ -31,6 +34,7 @@
   align-items: center;
   padding: 2rem 2rem 1rem 2rem;
   border-bottom: 1px solid #e5e7eb;
+  animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
 }
 
 .modal-title {
@@ -38,6 +42,7 @@
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
 }
 
 .modal-close {
@@ -54,21 +59,32 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
 }
 
 .modal-close:hover {
   background: #f3f4f6;
   color: #374151;
+  transform: scale(1.1) rotate(90deg);
 }
 
 .modal-form {
   padding: 1rem 2rem 2rem 2rem;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
 }
 
 /* Form Groups */
 .form-group {
   margin-bottom: 1.5rem;
+  animation: slideInLeft 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
 }
+
+.form-group:nth-child(1) { animation-delay: 0.5s; }
+.form-group:nth-child(2) { animation-delay: 0.6s; }
+.form-group:nth-child(3) { animation-delay: 0.7s; }
+.form-group:nth-child(4) { animation-delay: 0.8s; }
+.form-group:nth-child(5) { animation-delay: 0.9s; }
+.form-group:nth-child(6) { animation-delay: 1.0s; }
 
 .form-label {
   display: block;
@@ -125,6 +141,7 @@
   display: flex;
   gap: 1rem;
   margin-top: 0.5rem;
+  animation: slideInRight 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both;
 }
 
 .type-option {
@@ -144,6 +161,7 @@
 .type-option:hover {
   border-color: #667eea;
   background: #f0f9ff;
+  transform: translateY(-2px);
 }
 
 .type-option.active {
@@ -176,6 +194,7 @@
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e7eb;
+  animation: slideInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) 1.1s both;
 }
 
 .cancel-btn, .submit-btn {
@@ -243,6 +262,172 @@
   font-size: 1.1rem;
 }
 
+/* Image Upload Styles */
+.image-upload-container {
+  margin-top: 0.5rem;
+  animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1.0s both;
+}
+
+.image-upload-label {
+  display: block;
+  cursor: pointer;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  background-color: #f9fafb;
+}
+
+.image-upload-label:hover {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+}
+
+.upload-icon {
+  width: 2rem;
+  height: 2rem;
+  color: #9ca3af;
+}
+
+.upload-placeholder span:first-of-type {
+  font-weight: 500;
+  color: #374151;
+}
+
+.upload-hint {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.image-preview-container {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+}
+
+.image-preview {
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.remove-image-btn:hover {
+  background-color: rgba(220, 38, 38, 0.9);
+  transform: scale(1.1);
+}
+
+.remove-image-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Enhanced Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpScale {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .modal-content {
@@ -279,90 +464,4 @@
   .form-input, .form-textarea {
     font-size: 0.9rem;
   }
-}
-
-/* Image Upload Styles */
-.image-upload-container {
-  margin-top: 0.5rem;
-}
-
-.image-upload-label {
-  display: block;
-  cursor: pointer;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  transition: all 0.2s ease;
-  background-color: #f9fafb;
-}
-
-.image-upload-label:hover {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
-}
-
-.upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  color: #6b7280;
-}
-
-.upload-icon {
-  width: 2rem;
-  height: 2rem;
-  color: #9ca3af;
-}
-
-.upload-placeholder span:first-of-type {
-  font-weight: 500;
-  color: #374151;
-}
-
-.upload-hint {
-  font-size: 0.875rem;
-  color: #9ca3af;
-}
-
-.image-preview-container {
-  position: relative;
-  display: inline-block;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid #e5e7eb;
-}
-
-.image-preview {
-  width: 200px;
-  height: 150px;
-  object-fit: cover;
-  display: block;
-}
-
-.remove-image-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background-color: rgba(239, 68, 68, 0.9);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.remove-image-btn:hover {
-  background-color: rgba(220, 38, 38, 0.9);
-}
-
-.remove-image-btn svg {
-  width: 1rem;
-  height: 1rem;
 }
