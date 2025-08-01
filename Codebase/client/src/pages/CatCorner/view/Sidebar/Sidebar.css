@@ -15,7 +15,7 @@
 }
 
 .sidebar-header {
-  background: radial-gradient(circle at center, #25dd81, #98fcf2) !important;
+  background: radial-gradient(circle at center, #e6fff3, #a1fff6) !important;
   width: 100%;
   border: #2e7d32 1px solid;
   border-radius:1.4em;
@@ -23,7 +23,7 @@
 
 .sidebar-title {
 
-  font-size: 20px;
+  font-size: 32px;
   font-weight: 800;
   color: #1b5e20;
   margin-bottom: 12px;
