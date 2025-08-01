@@ -6,6 +6,7 @@ import PlayerTime from "./view/PlayerTime.jsx";
 import BrainTeaser from "./view/Brainteaser.jsx";
 import IUTFacts from "./view/iutFacts.jsx";
 import Weather from "./view/Weather.jsx";
+import AcademicCalendar from "./view/AcademicCalendar.jsx";
 import ConversationList from "../Chat/components/ConversationList.jsx";
 import { authUtils } from "../../utils/auth.js";
 import { postService } from "../../services/postService";
@@ -22,6 +23,7 @@ export default function HomePage() {
   const [showBrainTeaser, setShowBrainTeaser] = useState(false);
   const [showIUTFacts, setShowIUTFacts] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
+  const [showAcademicCalendar, setShowAcademicCalendar] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -217,8 +219,7 @@ export default function HomePage() {
         setShowPrayerTimes(true);
         break;
       case "IUT Academic Calendar":
-        // TODO: Implement academic calendar popup
-        console.log("Academic Calendar clicked");
+        setShowAcademicCalendar(true);
         break;
       case "Random IUT Fact":
         setShowIUTFacts(true);
@@ -611,6 +612,9 @@ export default function HomePage() {
 
       {/* Weather Modal */}
       <Weather isOpen={showWeather} onClose={() => setShowWeather(false)} />
+
+      {/* Academic Calendar Modal */}
+      <AcademicCalendar isOpen={showAcademicCalendar} onClose={() => setShowAcademicCalendar(false)} />
 
       {/* Animations */}
       <style>{`
