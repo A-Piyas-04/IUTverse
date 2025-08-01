@@ -36,7 +36,8 @@
   backdrop-filter: blur(8px);
   background-color: rgba(186, 231, 200, 0.633);
   border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   margin-top: 1.5rem;
   border: 1px solid #1f2937;
 }
@@ -160,9 +161,12 @@
 
 .post-input:focus {
   outline: none;
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0
+    var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0
+    calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+    var(--tw-shadow, 0 0 #0000);
   --tw-ring-color: #86efac;
 }
 
@@ -362,6 +366,37 @@
   margin-bottom: 0.938rem;
 }
 
+.recent-chats-container {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+/* Customize ConversationList component inside homepage */
+.right-sidebar .conversation-list .conversation-item {
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  transition: all 0.2s ease;
+}
+
+.right-sidebar .conversation-list .conversation-item:hover {
+  background-color: rgba(236, 253, 245, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.right-sidebar .conversation-list .conversation-avatar {
+  border: 2px solid #34d399;
+}
+
+.right-sidebar .conversation-list .conversation-name {
+  font-weight: 600;
+  color: #047857;
+}
+
+/* Keep original contact styles for compatibility */
 .contact-item {
   display: flex;
   align-items: center;
@@ -450,7 +485,7 @@
   .main-content {
     padding: 0 0.5rem;
   }
-  
+
   .left-sidebar,
   .right-sidebar {
     width: 280px;
