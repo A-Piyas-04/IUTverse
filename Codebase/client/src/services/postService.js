@@ -167,13 +167,13 @@ export const postService = {
   getUserPosts: async (userId, page = 1, limit = 100) => {
     try {
       console.log(`Fetching posts for user ID: ${userId}`);
-      
+
       try {
         // First try to use the direct endpoint for user posts if it exists
         const response = await apiClient.get(
           `/users/${userId}/posts?page=${page}&limit=${limit}`
         );
-        
+
         // Process the response from direct endpoint
         let userPosts;
         if (response.data && Array.isArray(response.data)) {
@@ -193,17 +193,23 @@ export const postService = {
         } else {
           throw new Error("Invalid data format");
         }
-        
-        console.log(`Found ${userPosts.length} posts for user ${userId} using direct endpoint`);
+
+        console.log(
+          `Found ${userPosts.length} posts for user ${userId} using direct endpoint`
+        );
         return userPosts;
-        
       } catch (directEndpointError) {
         // If direct endpoint fails, fall back to getting all posts and filtering
-        console.log("Direct endpoint failed, falling back to filtering all posts", directEndpointError);
-        
+        console.log(
+          "Direct endpoint failed, falling back to filtering all posts",
+          directEndpointError
+        );
+
         // Get all posts with a higher limit to ensure we get enough user posts
-        const response = await apiClient.get(`/posts?page=${page}&limit=${limit}`);
-        
+        const response = await apiClient.get(
+          `/posts?page=${page}&limit=${limit}`
+        );
+
         // Get the posts array
         let allPosts;
         if (response.data && Array.isArray(response.data)) {
@@ -221,19 +227,26 @@ export const postService = {
         ) {
           allPosts = response.data.data;
         } else {
-          console.error("API returned invalid posts data format:", response.data);
+          console.error(
+            "API returned invalid posts data format:",
+            response.data
+          );
           return [];
         }
-        
+
         // Filter posts for the specific user
         const userPosts = allPosts.filter(
-          (post) => 
-            post.userId === userId || 
+          (post) =>
+            post.userId === userId ||
             (post.user && post.user.id === userId) ||
-            (post.user && post.user.id && post.user.id.toString() === userId.toString())
+            (post.user &&
+              post.user.id &&
+              post.user.id.toString() === userId.toString())
         );
-        
-        console.log(`Found ${userPosts.length} posts for user ${userId} using filtering method`);
+
+        console.log(
+          `Found ${userPosts.length} posts for user ${userId} using filtering method`
+        );
         return userPosts;
       }
     } catch (error) {
