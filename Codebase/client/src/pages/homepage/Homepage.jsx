@@ -5,8 +5,11 @@ import PostModal from "../../components/PostModal.jsx";
 import PlayerTime from "./view/PlayerTime.jsx";
 import BrainTeaser from "./view/Brainteaser.jsx";
 import IUTFacts from "./view/iutFacts.jsx";
+import ConversationList from "../Chat/components/ConversationList.jsx";
 import { authUtils } from "../../utils/auth.js";
 import { postService } from "../../services/postService";
+import ApiService from "../../services/api.js";
+import { useChat } from "../../hooks/useChat.js";
 import "./Homepage.css";
 
 export default function HomePage() {
@@ -22,6 +25,9 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  // Use the chat hook to get real conversations data
+  const { conversations, loading: chatLoading, selectConversation } = useChat();
 
   // Fetch user data and posts on component mount
   useEffect(() => {
@@ -75,8 +81,11 @@ export default function HomePage() {
       }
     };
 
+    // Note: We no longer need fetchRecentConversations function since we are using useChat hook
+
     fetchUserData();
     fetchPosts();
+    // Note: Conversations are now loaded by the useChat hook automatically
   }, []);
 
   // Handle image selection for new post
@@ -171,7 +180,35 @@ export default function HomePage() {
     navigate("/login");
   };
 
-  // Handle menu item clicks
+  // Navigate to chat with specific user
+  const navigateToChat = (conversation) => {
+    // We no longer need to select the conversation here
+    // as the Chat component will handle it based on URL params
+
+    if (conversation && conversation.id) {
+      // Navigate with conversation ID which is more specific
+      console.log(
+        "🔀 Navigating to chat with conversationId:",
+        conversation.id
+      );
+      navigate(`/chat?conversationId=${conversation.id}`);
+    } else if (
+      conversation &&
+      conversation.otherUser &&
+      conversation.otherUser.id
+    ) {
+      // Fallback to navigate by user ID if no conversation ID
+      console.log(
+        "🔀 Navigating to chat with userId:",
+        conversation.otherUser.id
+      );
+      navigate(`/chat?userId=${conversation.otherUser.id}`);
+    } else {
+      // Last resort fallback
+      console.log("🔀 Navigating to chat without parameters");
+      navigate("/chat");
+    }
+  }; // Handle menu item clicks
   const handleMenuClick = (label) => {
     switch (label) {
       case "Prayer Times":
@@ -225,10 +262,29 @@ export default function HomePage() {
 
   // Get user profile picture
   const getProfilePic = (userData) => {
-    return (
-      userData?.profilePicture ||
-      "https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-    );
+    // If no user data, return default image
+    if (!userData || !userData.id) {
+      return "https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500";
+    }
+
+    // If the user has a direct profile picture URL (sample data), use it
+    if (
+      userData.profilePicture &&
+      (userData.profilePicture.startsWith("http://") ||
+        userData.profilePicture.startsWith("https://"))
+    ) {
+      return userData.profilePicture;
+    }
+
+    // For sample users with IDs starting with "sample", use avatars
+    if (userData.id.toString().startsWith("sample")) {
+      // Generate a consistent avatar based on the ID number
+      const idNumber = userData.id.replace("sample", "") || "1";
+      return `https://i.pravatar.cc/150?img=${parseInt(idNumber) + 30}`;
+    }
+
+    // Otherwise use the API service
+    return ApiService.getProfilePictureUrl(userData.id);
   };
 
   // Process image URLs to ensure they're properly formatted
@@ -503,25 +559,33 @@ export default function HomePage() {
 
         {/* RIGHT SIDEBAR */}
         <aside className="right-sidebar animate-fade-in-right">
-          <h3 className="contacts-title">Contacts</h3>
-          <ul className="contacts-list">
-            {[
-              "Abu Zafar Sheikh Mohammad Golam Musabbereen Chishti",
-              "Irfan Shafee",
-              "Samiur Rahman Nafiz",
-              "Faiyaz Awsaf",
-              "Mashrur Faiyaz",
-            ].map((name, i) => (
-              <li key={i} className="contact-item">
-                <img
-                  src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                  alt="User"
-                  className="contact-img"
-                />
-                <span className="contact-name">{name}</span>
-              </li>
-            ))}
-          </ul>
+          <h3 className="contacts-title">Recent Chats</h3>
+          <div className="recent-chats-container">
+            {chatLoading && conversations.length === 0 ? (
+              <div className="p-4 text-center">
+                <div className="loading-spinner w-8 h-8 border-3 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-3"></div>
+                <p className="text-sm text-gray-600">
+                  Loading conversations...
+                </p>
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                <p className="text-sm">No recent conversations</p>
+                <button
+                  className="mt-2 px-4 py-2 bg-green-100 text-green-700 rounded-md text-sm hover:bg-green-200 transition-colors"
+                  onClick={() => navigate("/chat")}
+                >
+                  Start a new chat
+                </button>
+              </div>
+            ) : (
+              <ConversationList
+                conversations={conversations.slice(0, 5)}
+                onSelectConversation={navigateToChat}
+                loading={chatLoading}
+              />
+            )}
+          </div>
         </aside>
       </main>
 
@@ -558,10 +622,28 @@ export default function HomePage() {
           0% { opacity: 0; transform: translateX(30px); }
           100% { opacity: 1; transform: translateX(0); }
         }
+        @keyframes slideInLeft {
+          0% { opacity: 0; transform: translateX(20px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
         .animate-fade-in-down { animation: fade-in-down 0.7s cubic-bezier(.4,0,.2,1) both; }
         .animate-fade-in-up { animation: fade-in-up 0.7s cubic-bezier(.4,0,.2,1) both; }
         .animate-fade-in-left { animation: fade-in-left 0.7s cubic-bezier(.4,0,.2,1) both; }
         .animate-fade-in-right { animation: fade-in-right 0.7s cubic-bezier(.4,0,.2,1) both; }
+        
+        /* Recent chat contacts styling */
+        .contacts-list .contact-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 12px;
+          border-radius: 8px;
+          margin-bottom: 4px;
+          animation: slideInLeft 0.5s ease-out forwards;
+        }
+        .contacts-list .contact-item:hover {
+          background-color: #f0fdf4;
+        }
       `}</style>
     </div>
   );

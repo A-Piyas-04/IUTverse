@@ -475,16 +475,6 @@ export default function Profile() {
   const displayUser = isOwnProfile ? user : profileUser;
   const userName = displayUser?.name || "Unknown User";
 
-  const tabs = [
-    "Posts",
-    "About",
-    "Friends",
-    "Photos",
-    "Videos",
-    "Reels",
-    "More",
-  ];
-
   // Function to fetch user posts
   const fetchUserPosts = async () => {
     setLoadingPosts(true);
@@ -664,11 +654,10 @@ export default function Profile() {
               {/* Action Buttons */}
               {isOwnProfile && (
                 <div className="flex gap-2 mb-4">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-[blue-500] text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
-                    <span className="text-lg">+</span>
-                    <span>Add to story</span>
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium">
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium"
+                    onClick={handleEditProfile}
+                  >
                     <span>✏️</span>
                     <span>Edit profile</span>
                   </button>
@@ -682,23 +671,6 @@ export default function Profile() {
                 {userName}
               </h1>
             </div>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex border-t border-gray-200 px-4 mt-[12px]">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`mt-[10px] px-4 py-4 text-[15px] font-medium transition-colors relative ${
-                  activeTab === tab
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
           </div>
         </div>
       </div>
@@ -1454,23 +1426,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Filter and View Options */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Posts</h3>
-                <div className="flex gap-2">
-                  <button className="flex items-center gap-2 px-3 py-2 mr-[12px] bg-gray-100 hover:bg-gray-200 rounded-md transition-colors text-sm">
-                    <span>⚙️</span>
-                    <span className="font-medium">Filters</span>
-                  </button>
-                  <button className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors text-sm">
-                    <span>⚙️</span>
-                    <span className="font-medium">Manage posts</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Loading state */}
             {loadingPosts && (
               <div className="flex justify-center items-center p-8">
@@ -1569,7 +1524,6 @@ export default function Profile() {
                       <span className="mr-[5px]">
                         {post._count?.comments || 0} comments
                       </span>
-                      <span>{post.sharesCount || 0} shares</span>
                     </div>
                   </div>
 
@@ -1594,24 +1548,6 @@ export default function Profile() {
                       <span>💬</span>
                       <span>Comment</span>
                     </button>
-                    <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                      <span>↗️</span>
-                      <span>Share</span>
-                    </button>
-                  </div>
-
-                  {/* Comment Input */}
-                  <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
-                    <img
-                      src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                      alt="Me"
-                      className="w-[30px] h-[30px] rounded-full"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Write a comment..."
-                      className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
-                    />
                   </div>
                 </div>
               ))}

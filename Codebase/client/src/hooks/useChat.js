@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import chatApi from "../services/chatApi.js";
+import { authUtils } from "../utils/auth.js";
+
+// Helper function to get current user ID from auth
+const getCurrentUserId = () => {
+  const userData = authUtils.getUserData();
+  return userData?.id;
+};
 
 export const useChat = () => {
   const [conversations, setConversations] = useState([]);
