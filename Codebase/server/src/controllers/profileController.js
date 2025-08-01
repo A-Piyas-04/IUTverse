@@ -108,11 +108,6 @@ const getProfilePicture = async (req, res) => {
     const filename = path.basename(profile.profilePicture);
     const imagePath = path.join(__dirname, "../../uploads/profiles", filename);
 
-    console.log("Profile picture path in controller:", profile.profilePicture);
-    console.log("Extracted filename:", filename);
-    console.log("Full image path:", imagePath);
-    console.log("File exists:", fs.existsSync(imagePath));
-
     // Check if file exists
     if (!fs.existsSync(imagePath)) {
       return res

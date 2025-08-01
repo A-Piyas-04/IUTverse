@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ApiService from "../../services/api.js";
+import { postService } from "../../services/postService.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 
 export default function Profile() {
@@ -18,6 +19,8 @@ export default function Profile() {
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(null);
   const fileInputRef = React.useRef(null);
+  const [userPosts, setUserPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
 
   // Check if this is the current user's profile or someone else's
   const isOwnProfile = !userId || userId === user?.id?.toString();
@@ -55,22 +58,17 @@ export default function Profile() {
 
           // Set profile picture URL if available
           if (profileRes.data.profilePicture) {
-            const pictureUrl = ApiService.getProfilePictureUrl(targetUserId);
-            console.log(
-              "Setting profile picture URL:",
-              pictureUrl,
-              "for user ID:",
-              targetUserId
-            );
-            setProfilePictureUrl(pictureUrl);
+            setProfilePictureUrl(ApiService.getProfilePictureUrl(targetUserId));
           } else {
-            console.log("No profile picture found for user ID:", targetUserId);
             setProfilePictureUrl(null);
           }
         } else {
           setProfile(null);
           setProfilePictureUrl(null);
         }
+
+        // Fetch user posts
+        await fetchUserPosts();
 
         // If viewing someone else's profile, we need to get their user info
         if (!isOwnProfile) {
@@ -120,7 +118,7 @@ export default function Profile() {
     if (isOwnProfile && user.name) {
       setIntroForm((prev) => ({ ...prev, name: user.name }));
     }
-  }, [user, userId, isOwnProfile]);
+  }, [user, userId, isOwnProfile]); // fetchUserPosts is defined inside the component
 
   const handleIntroChange = (e) => {
     const { name, value } = e.target;
@@ -311,7 +309,6 @@ export default function Profile() {
 
     try {
       setUploadingPicture(true);
-      console.log("Uploading profile picture...");
 
       // Check if file size is too large (limit to 2MB)
       if (file.size > 2 * 1024 * 1024) {
@@ -322,24 +319,14 @@ export default function Profile() {
 
       // Upload the profile picture
       const result = await ApiService.uploadProfilePicture(file);
-      console.log("Upload result:", result);
 
       if (result.success) {
-        console.log("Upload successful:", result.data);
-
-        // Log the returned profile picture path
-        console.log(
-          "Received profile picture path:",
-          result.data.profilePicture
-        );
-
         // Update profile state with the new profilePicture
         if (profile) {
           const updatedProfile = {
             ...profile,
             profilePicture: result.data.profilePicture,
           };
-          console.log("Updated profile state:", updatedProfile);
           setProfile(updatedProfile);
         }
 
@@ -347,7 +334,6 @@ export default function Profile() {
         const newUrl = `${ApiService.getProfilePictureUrl(
           user.id
         )}?t=${Date.now()}`;
-        console.log("Setting new profile picture URL:", newUrl);
         setProfilePictureUrl(newUrl);
 
         // Show success message
@@ -366,7 +352,6 @@ export default function Profile() {
         alert(`Failed to upload profile picture: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
       alert(
         "An error occurred while uploading profile picture. Please try again."
       );
@@ -414,7 +399,6 @@ export default function Profile() {
         alert(`Failed to delete profile picture: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error deleting profile picture:", error);
       alert(
         "An error occurred while deleting profile picture. Please try again."
       );
@@ -501,32 +485,31 @@ export default function Profile() {
     "More",
   ];
 
-  const userPosts = [
-    {
-      date: "November 28, 2024",
-      content:
-        "Just finished my Data Structures assignment! The feeling of getting all test cases to pass is unmatched 🎉",
-      likes: 23,
-      comments: 7,
-      shares: 2,
-    },
-    {
-      date: "November 25, 2024",
-      content:
-        "Campus cats are the real MVPs of IUT. Spotted three new kittens near the lake today 🐱❤️",
-      likes: 42,
-      comments: 12,
-      shares: 8,
-    },
-    {
-      date: "November 20, 2024",
-      content:
-        "Group study session for Calculus 2 finals. Mathematics building, Room 301. Everyone welcome!",
-      likes: 18,
-      comments: 5,
-      shares: 15,
-    },
-  ];
+  // Function to fetch user posts
+  const fetchUserPosts = async () => {
+    setLoadingPosts(true);
+    try {
+      const targetUserId = userId || user?.id;
+      if (!targetUserId) {
+        console.error("No user ID available to fetch posts");
+        setLoadingPosts(false);
+        return;
+      }
+
+      console.log(`Fetching posts for user ID: ${targetUserId}`);
+      const posts = await postService.getUserPosts(targetUserId);
+      console.log(
+        `Retrieved ${posts.length} posts for user ${targetUserId}`,
+        posts
+      );
+      setUserPosts(posts);
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      setUserPosts([]);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
 
   // Function to render the profile picture
   const profilePicture = (
@@ -535,12 +518,38 @@ export default function Profile() {
       alt="Profile"
       className="w-full h-full object-cover"
       onError={(e) => {
-        console.error("Error loading profile picture:", e);
-        // Fall back to default avatar instead of hiding the element
-        e.target.src = "/default_avatar.png";
+        // Silently fall back to default avatar without logging errors
+        // Only log actual errors if the fallback also fails
+        if (e.target.src !== "/default_avatar.png") {
+          e.target.src = "/default_avatar.png";
+        }
       }}
     />
   );
+
+  // Function to format image URLs
+  const formatImageUrl = (imageUrl) => {
+    if (!imageUrl) return "";
+
+    // Check if it's already a full URL
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+      return imageUrl;
+    }
+
+    // Check if it's a relative URL starting with a slash
+    if (imageUrl.startsWith("/")) {
+      // Get the base part of the API URL (without /api)
+      const baseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const baseServerUrl = baseUrl.replace(/\/api$/, ""); // Remove /api if present
+      return `${baseServerUrl}${imageUrl}`;
+    }
+
+    // If it's just a filename, prepend the full API URL path to uploads
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const baseServerUrl = baseUrl.replace(/\/api$/, ""); // Remove /api if present
+    return `${baseServerUrl}/uploads/${imageUrl}`;
+  };
 
   return (
     <div className="h-screen bg-gray-100 overflow-y-auto">
@@ -1462,83 +1471,150 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Posts */}
-            {userPosts.map((post, index) => (
-              <div
-                key={index}
-                className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px]"
-              >
-                {/* Post Header */}
-                <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
-                  <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0 mt-[30px]">
-                    {profilePicture}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
-                      {userName}
-                    </h4>
-                    <p className="text-[13px] text-gray-500 flex items-center gap-1 ">
-                      {post.date} • <span className="text-blue-500">🌐</span>
-                    </p>
-                  </div>
-                  <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
-                    <span className="text-xl">⋯</span>
-                  </button>
-                </div>
-
-                {/* Post Content */}
-                <div className="px-4 pb-3 ml-[10px]">
-                  <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
-                    {post.content}
-                  </div>
-                </div>
-
-                {/* Reactions and Comments Count */}
-                <div className="flex justify-between items-center px-4 py-2 text-[18px] ml-[10px] text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <div className="flex">
-                      <span className="text-blue-500">👍</span>
-                      <span className="text-red-500">❤️</span>
-                    </div>
-                    <span>{post.likes}</span>
-                  </div>
-                  <div className="flex gap-4">
-                    <span className="mr-[5px]">{post.comments} comments</span>
-                    <span>{post.shares} shares</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-around border-t border-gray-200 py-1">
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                    <span>👍</span>
-                    <span>Like</span>
-                  </button>
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                    <span>💬</span>
-                    <span>Comment</span>
-                  </button>
-                  <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
-                    <span>↗️</span>
-                    <span>Share</span>
-                  </button>
-                </div>
-
-                {/* Comment Input */}
-                <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
-                  <img
-                    src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
-                    alt="Me"
-                    className="w-[30px] h-[30px] rounded-full"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
-                  />
-                </div>
+            {/* Loading state */}
+            {loadingPosts && (
+              <div className="flex justify-center items-center p-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
               </div>
-            ))}
+            )}
+
+            {/* No posts message */}
+            {!loadingPosts && (!userPosts || userPosts.length === 0) && (
+              <div className="bg-white p-6 text-center rounded-lg shadow-sm mt-4">
+                <p className="text-gray-500">No posts to show.</p>
+              </div>
+            )}
+
+            {/* Posts */}
+            {!loadingPosts &&
+              userPosts &&
+              userPosts.length > 0 &&
+              userPosts.map((post, index) => (
+                <div
+                  key={post.id || index}
+                  className="bg-[#f9fafb] rounded-[25px] mt-4 shadow-sm mb-[20px]"
+                >
+                  {/* Post Header */}
+                  <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
+                    <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0 mt-[30px]">
+                      <img
+                        src={
+                          post.user?.profile?.profilePicture
+                            ? ApiService.getProfilePictureUrl(post.user.id)
+                            : "/default_avatar.png"
+                        }
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          if (e.target.src !== "/default_avatar.png") {
+                            e.target.src = "/default_avatar.png";
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-[15px] text-gray-900 mt-[30px]">
+                        {post.isAnonymous
+                          ? "Anonymous"
+                          : post.user?.name || userName}
+                      </h4>
+                      <p className="text-[13px] text-gray-500 flex items-center gap-1 ">
+                        {new Date(post.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}{" "}
+                        • <span className="text-blue-500">🌐</span>
+                      </p>
+                    </div>
+                    <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
+                      <span className="text-xl">⋯</span>
+                    </button>
+                  </div>
+
+                  {/* Post Content */}
+                  <div className="px-4 pb-3 ml-[10px]">
+                    <div className="text-[15px] text-gray-900 leading-relaxed whitespace-pre-line">
+                      {post.content}
+                    </div>
+                    {post.image && (
+                      <div className="mt-3">
+                        <img
+                          src={formatImageUrl(post.image)}
+                          alt="Post"
+                          className="w-full h-auto rounded-lg"
+                          onError={(e) => {
+                            console.error("Image failed to load:", post.image);
+                            e.target.src =
+                              "https://via.placeholder.com/400x300?text=Image+Not+Available";
+                            e.target.onerror = null;
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reactions and Comments Count */}
+                  <div className="flex justify-between items-center px-4 py-2 text-[18px] ml-[10px] text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <div className="flex">
+                        <span className="text-blue-500">👍</span>
+                        <span className="text-red-500">❤️</span>
+                      </div>
+                      <span>
+                        {post._count?.reactions || post.likesCount || 0}
+                      </span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="mr-[5px]">
+                        {post._count?.comments || 0} comments
+                      </span>
+                      <span>{post.sharesCount || 0} shares</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-around border-t border-gray-200 py-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        postService
+                          .reactToPost(post.id, "LIKE")
+                          .then(() => fetchUserPosts())
+                          .catch((err) =>
+                            console.error("Failed to like post:", err)
+                          );
+                      }}
+                      className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1"
+                    >
+                      <span>👍</span>
+                      <span>Like</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                      <span>💬</span>
+                      <span>Comment</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-2 px-4 hover:bg-gray-100 rounded transition-colors text-gray-600 text-[15px] font-medium flex-1">
+                      <span>↗️</span>
+                      <span>Share</span>
+                    </button>
+                  </div>
+
+                  {/* Comment Input */}
+                  <div className="flex items-center gap-2 p-4 pt-2 border-t border-gray-100">
+                    <img
+                      src="https://www.wondercide.com/cdn/shop/articles/Upside_down_gray_cat.png?v=1685551065&width=1500"
+                      alt="Me"
+                      className="w-[30px] h-[30px] rounded-full"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Write a comment..."
+                      className="flex-1 px-3 py-2 rounded-full bg-gray-100 text-[13px] outline-none"
+                    />
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       </div>
