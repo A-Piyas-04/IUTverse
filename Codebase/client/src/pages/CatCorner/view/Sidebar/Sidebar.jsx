@@ -10,7 +10,13 @@ const navigationOptions = [
   { label: "Cat Help Desk", emoji: "🆘" },
 ];
 
-export default function Sidebar({ selectedView, setSelectedView }) {
+export default function Sidebar({ selectedView, setSelectedView, onMenuClick }) {
+  const handleMenuClick = (label) => {
+    setSelectedView(label);
+    if (onMenuClick) {
+      onMenuClick(); // Close mobile menu
+    }
+  };
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -24,7 +30,7 @@ export default function Sidebar({ selectedView, setSelectedView }) {
         {navigationOptions.map(({ label, emoji }) => (
           <li key={label}>
             <button
-              onClick={() => setSelectedView(label)}
+              onClick={() => handleMenuClick(label)}
               className={`sidebar-button ${selectedView === label ? "active" : ""}`}
             >
               <span className="sidebar-emoji">{emoji}</span>

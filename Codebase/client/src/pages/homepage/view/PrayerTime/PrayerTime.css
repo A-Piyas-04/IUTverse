@@ -159,7 +159,7 @@
 
 .current-date-text {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #374151;
   margin: 0;
   font-weight: 500;
 }
@@ -222,7 +222,7 @@
 
 .current-prayer-desc {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #374151;
   margin: 0 0 0.5rem 0;
 }
 
@@ -277,6 +277,7 @@
 }
 
 .prayer-time-card {
+  color: #000 !important;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
@@ -337,48 +338,24 @@
 .prayer-name {
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #000000 !important;
   margin: 0 0 0.125rem 0;
 }
 
 .prayer-arabic {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #000000 !important;
   margin: 0 0 0.125rem 0;
 }
 
 .prayer-time {
   font-size: 0.875rem;
-  color: #374151;
+  color: #000000 !important;
   margin: 0;
   font-weight: 600;
 }
 
-.prayer-status {
-  display: flex;
-  align-items: center;
-}
 
-.next-indicator {
-  background: #10b981;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.past-indicator {
-  background: #9ca3af;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
 
 /* Footer */
 .prayer-times-footer {
