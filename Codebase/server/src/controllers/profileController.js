@@ -159,6 +159,117 @@ const deleteProfilePicture = async (req, res) => {
   }
 };
 
+// POST /api/profile/upload-cover
+const uploadCoverPicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const userId = req.user.userId;
+    // We save the path relative to the uploads directory to make it accessible via the static middleware
+    const filePath = `/uploads/covers/${path.basename(req.file.path)}`;
+
+    // If user already has a cover picture, delete the old one
+    const currentProfile = await userService.getProfile(userId);
+    if (currentProfile && currentProfile.coverPicture) {
+      // Extract the filename from the stored path
+      const oldFilename = path.basename(currentProfile.coverPicture);
+      const oldImagePath = path.join(
+        __dirname,
+        "../../uploads/covers",
+        oldFilename
+      );
+
+      // Check if file exists and delete it
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // Update the profile with the new cover picture path
+    const updatedProfile = await userService.updateProfile(userId, {
+      coverPicture: filePath,
+    });
+
+    res.status(200).json({
+      message: "Cover picture uploaded successfully",
+      coverPicture: filePath,
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error uploading cover picture",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/profile/cover/:userId
+const getCoverPicture = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId))
+      return res.status(400).json({ message: "Invalid userId" });
+
+    const profile = await userService.getProfile(userId);
+    if (!profile || !profile.coverPicture) {
+      return res.status(404).json({ message: "Cover picture not found" });
+    }
+
+    // Extract the filename from the stored path
+    const filename = path.basename(profile.coverPicture);
+    const imagePath = path.join(__dirname, "../../uploads/covers", filename);
+
+    // Check if file exists
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ message: "Cover picture file not found" });
+    }
+
+    // Send the file with proper content type
+    res.set("Content-Type", "image/jpeg"); // Adjust based on file type if needed
+    res.sendFile(imagePath);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving cover picture",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE /api/profile/cover
+const deleteCoverPicture = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const profile = await userService.getProfile(userId);
+    if (!profile || !profile.coverPicture) {
+      return res.status(404).json({ message: "Cover picture not found" });
+    }
+
+    // Extract the filename from the stored path
+    const filename = path.basename(profile.coverPicture);
+    const imagePath = path.join(__dirname, "../../uploads/covers", filename);
+
+    // Check if file exists and delete it
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+
+    // Update the profile to remove the cover picture reference
+    await userService.updateProfile(userId, {
+      coverPicture: null,
+    });
+
+    res.status(200).json({ message: "Cover picture deleted successfully" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error deleting cover picture",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   createProfile,
@@ -166,4 +277,7 @@ module.exports = {
   uploadProfilePicture,
   getProfilePicture,
   deleteProfilePicture,
+  uploadCoverPicture,
+  getCoverPicture,
+  deleteCoverPicture,
 };
