@@ -32,11 +32,14 @@ export default function JobCategories({
   ];
 
   return (
-    <aside className={`flex flex-col w-[320px] max-w-xs p-4 text-gray-800 space-y-4 backdrop-blur-md bg-green-50/60 rounded-2xl shadow-xl mt-6 animate-fade-in-left md:relative md:translate-x-0 md:left-auto ${
-      isMobileMenuOpen 
-        ? 'fixed top-[80px] left-0 z-45 h-[calc(100vh-80px)] overflow-y-auto transform translate-x-0' 
-        : 'fixed top-[80px] left-[-100%] z-45 h-[calc(100vh-80px)] overflow-y-auto transform -translate-x-full md:translate-x-0'
-    } transition-all duration-300 ease-in-out`}>
+    <aside 
+      className={`flex flex-col w-[320px] max-w-xs p-4 text-gray-800 space-y-4 backdrop-blur-md ${isMobileMenuOpen ? 'bg-white' : 'bg-green-50/60'} rounded-2xl shadow-xl mt-6 animate-fade-in-left md:relative md:translate-x-0 md:left-auto ${      
+        isMobileMenuOpen 
+          ? 'fixed top-[80px] left-0 z-50 h-[calc(100vh-80px)] overflow-y-auto transform translate-x-0 border-r border-green-200' 
+          : 'fixed top-[80px] left-[-100%] z-45 h-[calc(100vh-80px)] overflow-y-auto transform -translate-x-full md:translate-x-0'
+      } transition-all duration-300 ease-in-out`}
+      style={isMobileMenuOpen ? { backgroundColor: '#ffffff', pointerEvents: 'auto', zIndex: 50 } : {}}
+    >
       <h3 className="font-semibold text-xl border-b border-green-200 pb-2 ml-[10px] mb-2 tracking-wide">
         Job Categories
       </h3>

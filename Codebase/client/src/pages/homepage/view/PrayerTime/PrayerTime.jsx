@@ -208,14 +208,7 @@ export default function PrayerTime({ isOpen, onClose }) {
                     <p className="prayer-arabic">{prayer.arabic}</p>
                     <p className="prayer-time">{prayer.time}</p>
                   </div>
-                  <div className="prayer-status">
-                    {isNext && (
-                      <span className="next-indicator">Next</span>
-                    )}
-                    {isPast && (
-                      <span className="past-indicator">Done</span>
-                    )}
-                  </div>
+
                 </div>
               );
             })}

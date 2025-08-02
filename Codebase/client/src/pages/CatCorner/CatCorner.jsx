@@ -31,6 +31,7 @@ export default function CatCorner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 
 
@@ -205,11 +206,26 @@ export default function CatCorner() {
     <div className="homepage">
       <Navbar />
 
+      {/* Mobile Menu Button */}
+      <button 
+        className="mobile-menu-btn"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        {isMobileMenuOpen ? '✕' : '🐾'}
+      </button>
+
+
+
       {/* MAIN CONTENT AREA */}
       <main className="main-content animate-fade-in-up">
         {/* LEFT SIDEBAR */}
-        <aside className="left-sidebar animate-fade-in-left">
-          <Sidebar selectedView={view} setSelectedView={setView} />
+        <aside className={`left-sidebar animate-fade-in-left ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+          <Sidebar 
+            selectedView={view} 
+            setSelectedView={setView} 
+            onMenuClick={() => setIsMobileMenuOpen(false)}
+          />
         </aside>
 
         {/* CENTER FEED */}
@@ -342,8 +358,8 @@ export default function CatCorner() {
           {view === 'Cat Help Desk' && <CatQA />}
         </section>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="cat-gui-sidebar animate-fade-in-right">
+        {/* RIGHT SIDEBAR - Hidden on mobile */}
+        <aside className="cat-gui-sidebar animate-fade-in-right desktop-only">
           <div className="gui-paw-container">
             <div className="paw-print"></div>
             <div className="paw-print small"></div>

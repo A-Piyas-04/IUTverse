@@ -71,6 +71,22 @@
     padding: 1rem 0.5rem !important;
   }
   
+  /* Mobile sidebar fixes */
+  aside {
+    background: #ffffff !important;
+    border-radius: 0 16px 16px 0;
+    z-index: 50 !important;
+    pointer-events: auto !important;
+  }
+  
+  aside * {
+    color: #1f2937 !important;
+  }
+  
+  aside h3 {
+    color: #374151 !important;
+  }
+  
   /* Job cards responsive */
   .job-card {
     margin: 0.5rem 0;

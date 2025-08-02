@@ -216,6 +216,7 @@ export default function HomePage() {
     }
   }; // Handle menu item clicks
   const handleMenuClick = (label) => {
+    console.log('Menu item clicked:', label); // Debug log
     setIsMobileMenuOpen(false); // Close mobile menu when item is selected
     switch (label) {
       case "Prayer Times":
@@ -328,7 +329,7 @@ export default function HomePage() {
 
       {/* Mobile Menu Button */}
       <button 
-        className="md:hidden fixed top-20 left-4 z-50 bg-blue-100 hover:bg-blue-200 p-2 rounded-lg shadow-lg transition-colors"
+        className="md:hidden fixed top-20 left-4 z-51 bg-blue-100 hover:bg-blue-200 p-2 rounded-lg shadow-lg transition-colors"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         <svg className="w-6 h-6 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,18 +341,33 @@ export default function HomePage() {
         </svg>
       </button>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Backdrop - Click to close */}
       {isMobileMenuOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
+        <>
+          {/* Left backdrop - covers area to the right of sidebar */}
+          <div 
+            className="md:hidden fixed top-[80px] left-[320px] right-0 bottom-0 z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          {/* Top backdrop - covers header area */}
+          <div 
+            className="md:hidden fixed top-0 left-0 right-0 h-[80px] z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          {/* Bottom backdrop - covers area below sidebar */}
+          <div 
+            className="md:hidden fixed top-[calc(100vh)] left-0 w-[320px] bottom-0 z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        </>
       )}
 
       {/* MAIN CONTENT AREA */}
       <main className="main-content animate-fade-in-up">
         {/* LEFT SIDEBAR */}
-        <aside className={`left-sidebar animate-fade-in-left ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+        <aside 
+          className={`left-sidebar animate-fade-in-left ${isMobileMenuOpen ? 'mobile-open' : ''}`}
+        >
           <h3 className="menu-title">Menu</h3>
           <ul className="menu-list">
             {/* Profile Button */}
@@ -383,7 +399,11 @@ export default function HomePage() {
               <li
                 key={i}
                 className="menu-item cursor-pointer"
-                onClick={() => handleMenuClick(item.label)}
+                onClick={(e) => {
+                  console.log('Li clicked:', item.label, e); // Debug log
+                  e.stopPropagation();
+                  handleMenuClick(item.label);
+                }}
               >
                 <div className={`menu-icon ${item.bg}`}>
                   <span className="menu-icon-text">{item.icon}</span>
