@@ -4,6 +4,7 @@ const { authenticateToken } = require("../middleware/auth");
 const profileController = require("../controllers/profileController");
 const userController = require("../controllers/userController");
 const profilePictureUpload = require("../middleware/profilePictureUpload");
+const coverPictureUpload = require("../middleware/coverPictureUpload");
 
 // Get user profile (protected route)
 router.get("/profile", authenticateToken, (req, res) => {
@@ -59,6 +60,25 @@ router.delete(
   "/profile/picture",
   authenticateToken,
   profileController.deleteProfilePicture
+);
+
+// Cover picture routes
+// Upload cover picture (protected)
+router.post(
+  "/profile/upload-cover",
+  authenticateToken,
+  coverPictureUpload.single("coverPicture"),
+  profileController.uploadCoverPicture
+);
+
+// Get cover picture (public)
+router.get("/profile/cover/:userId", profileController.getCoverPicture);
+
+// Delete cover picture (protected)
+router.delete(
+  "/profile/cover",
+  authenticateToken,
+  profileController.deleteCoverPicture
 );
 
 module.exports = router;
