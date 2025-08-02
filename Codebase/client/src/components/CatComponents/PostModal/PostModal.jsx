@@ -1,17 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './PostModal.css';
 import { toggleLike, addComment } from '../../../services/catPostApi';
+import { authUtils } from '../../../utils/auth';
 
 export default function PostModal({ post, isOpen, onClose, onCommentSubmit, onPostUpdate }) {
+  // Get current user ID to check if user has liked the post
+  const getCurrentUserId = () => {
+    const userData = authUtils.getUserData();
+    return userData?.id;
+  };
+
+  const currentUserId = getCurrentUserId();
+  
+  // Check if current user has liked this post
+  const userHasLiked = post?.likes?.some(like => like.userId === currentUserId) || false;
+  
   const [comment, setComment] = useState('');
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post?.likes || 0);
+  const [isLiked, setIsLiked] = useState(userHasLiked);
+  const [likeCount, setLikeCount] = useState(post?.likes?.length || 0);
   const [comments, setComments] = useState(post?.comments || []);
   
-  // Update comments when post prop changes
+  // Update comments and like state when post prop changes
   useEffect(() => {
     setComments(post?.comments || []);
-  }, [post]);
+    const userHasLiked = post?.likes?.some(like => like.userId === currentUserId) || false;
+    setIsLiked(userHasLiked);
+    setLikeCount(post?.likes?.length || 0);
+  }, [post, currentUserId]);
   const modalRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -33,9 +48,40 @@ export default function PostModal({ post, isOpen, onClose, onCommentSubmit, onPo
     if (isOpen && inputRef.current) inputRef.current.focus();
   }, [isOpen]);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  const handleLike = async () => {
+    // Skip auth check if testing flag is enabled
+    if (!DISABLE_AUTH_FOR_TESTING && !currentUserId) {
+      alert('Please log in to like posts');
+      return;
+    }
+
+    try {
+      if (DISABLE_AUTH_FOR_TESTING) {
+        // Simulate successful like toggle for testing
+        setIsLiked(!isLiked);
+        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+      } else {
+        // Call API to toggle like
+        const response = await toggleLike(post.id);
+        
+        if (response.success) {
+          setIsLiked(!isLiked);
+          setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+          
+          // Notify parent component of the update
+          if (onPostUpdate) {
+            onPostUpdate(post.id, { 
+              likes: isLiked ? likeCount - 1 : likeCount + 1 
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      if (!DISABLE_AUTH_FOR_TESTING) {
+        alert(error.message || 'Failed to toggle like');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -103,7 +149,14 @@ export default function PostModal({ post, isOpen, onClose, onCommentSubmit, onPo
               {post.type === "video" ? (
                 <video src={post.image} controls />
               ) : (
-                <img src={post.image} alt="cat" />
+                <img 
+                  src={post.image} 
+                  alt="cat" 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmM2YzIi8+Cjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiPkltYWdlIG5vdCBhdmFpbGFibGU8L3RleHQ+Cjwvc3ZnPg==';
+                  }}
+                />
               )}
             </div>
           )}

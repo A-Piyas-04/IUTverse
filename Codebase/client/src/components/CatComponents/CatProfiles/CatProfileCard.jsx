@@ -57,7 +57,15 @@ export default function CatProfileCard({ name, desc, img }) {
     <>
       <div className="cat-card" onClick={handleCardClick}>
         <div className="cat-img-wrap">
-          <img src={img} alt={name} className="cat-img" />
+          <img 
+        src={img} 
+        alt={name} 
+        className="cat-img" 
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZjNmM2YzIi8+Cjx0ZXh0IHg9IjUwIiB5PSI1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIj7wn5CRIC48L3RleHQ+Cjwvc3ZnPg==';
+        }}
+      />
         </div>
         <div className="cat-info">
           <h3 className="cat-name">{name}</h3>
@@ -88,7 +96,15 @@ export default function CatProfileCard({ name, desc, img }) {
               {/* Cat Image Section */}
               <div className="cat-modal-image-section">
                 <div className="cat-modal-image-wrap">
-                  <img src={img} alt={name} className="cat-modal-image" />
+                  <img 
+          src={img} 
+          alt={name} 
+          className="cat-modal-image" 
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmM2YzIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMTU1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiPvCfkKEgQ2F0PC90ZXh0Pgo8L3N2Zz4=';
+          }}
+        />
                 </div>
                 <div className="cat-modal-info">
                   <h3 className="cat-modal-name">{name}</h3>
