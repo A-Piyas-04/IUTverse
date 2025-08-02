@@ -89,11 +89,21 @@ export default function CatCorner() {
   // Handle post updates (likes, comments)
   const handlePostUpdate = (postId, updates) => {
     setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId
-          ? { ...post, ...updates }
-          : post
-      )
+      prevPosts.map(post => {
+        if (post.id === postId) {
+          const updatedPost = { ...post, ...updates };
+          
+          // Handle like count updates - if 'likes' is a number, update likesCount
+          if (typeof updates.likes === 'number') {
+            updatedPost.likesCount = updates.likes;
+            // Keep the likes array unchanged if it exists
+            updatedPost.likes = post.likes || [];
+          }
+          
+          return updatedPost;
+        }
+        return post;
+      })
     );
   };
 
@@ -141,8 +151,10 @@ export default function CatCorner() {
           user: response.data.user?.name || 'You',
           time: 'Just now',
           type: 'image',
-          likes: 0,
-          comments: 0,
+          likes: [],
+          likesCount: 0,
+          comments: [],
+          commentsCount: 0,
         };
 
         // Add new post to the beginning of the list

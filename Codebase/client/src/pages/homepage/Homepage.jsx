@@ -509,7 +509,6 @@ export default function HomePage() {
                         alt="Post"
                         className="post-image"
                         onError={(e) => {
-                          console.error("Image failed to load:", post.image);
                           // Set a placeholder image on error
                           e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='200' y='150' text-anchor='middle' dy='0.3em' font-family='Arial, sans-serif' font-size='16' fill='%23666'%3EImage Not Available%3C/text%3E%3C/svg%3E";
                           e.target.onerror = null; // Prevent infinite error loop
