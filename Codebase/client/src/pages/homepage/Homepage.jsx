@@ -399,11 +399,7 @@ export default function HomePage() {
               <li
                 key={i}
                 className="menu-item cursor-pointer"
-                onClick={(e) => {
-                  console.log('Li clicked:', item.label, e); // Debug log
-                  e.stopPropagation();
-                  handleMenuClick(item.label);
-                }}
+                onClick={() => handleMenuClick(item.label)}
               >
                 <div className={`menu-icon ${item.bg}`}>
                   <span className="menu-icon-text">{item.icon}</span>

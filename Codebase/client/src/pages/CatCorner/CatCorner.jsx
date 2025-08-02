@@ -8,6 +8,7 @@ import CatFacts from './view/CatFacts/CatFacts.jsx';
 import CatQA from './view/CatQA/CatQA.jsx';
 
 import { createCatPost, getCatPosts } from '../../services/catPostApi.js';
+import { authUtils } from '../../utils/auth.js';
 import './CatCorner.css';
 
 const INITIAL_POSTS = [
@@ -26,6 +27,7 @@ const INITIAL_POSTS = [
 export default function CatCorner() {
   const [view, setView] = useState('Posts');
   const [posts, setPosts] = useState([]);
+  const [user, setUser] = useState(null);
   const [showAddPost, setShowAddPost] = useState(false);
   const [newPost, setNewPost] = useState({ caption: '', image: null, imagePreview: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,8 +37,18 @@ export default function CatCorner() {
 
 
 
-  // Fetch posts on component mount
+  // Fetch user data and posts on component mount
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = authUtils.getUserData();
+        setUser(userData);
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    fetchUserData();
     fetchPosts();
   }, []);
 
@@ -53,7 +65,8 @@ export default function CatCorner() {
           image: post.image ? `http://localhost:3000${post.image}` : '/assets/default-cat.jpg',
           caption: post.caption,
           user: post.user?.name || 'Anonymous',
-          time: formatTimeAgo(post.createdAt),
+          time: formatDate(post.createdAt),
+          createdAt: post.createdAt, // Keep original timestamp
           type: 'image',
           likes: post.likes || [], // Keep as array for FeedCard component
           likesCount: post.likes?.length || 0, // Add separate count field
@@ -75,16 +88,31 @@ export default function CatCorner() {
     }
   };
 
-  // Helper function to format time ago
-  const formatTimeAgo = (dateString) => {
-    const now = new Date();
-    const postDate = new Date(dateString);
-    const diffInMinutes = Math.floor((now - postDate) / (1000 * 60));
+  // Format date function (same as homepage)
+  const formatDate = (dateString) => {
+    if (!dateString) return "Just now";
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffMins < 60) {
+        return diffMins <= 1 ? "just now" : `${diffMins} minutes ago`;
+      } else if (diffHours < 24) {
+        return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
+      } else if (diffDays < 7) {
+        return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Invalid date";
+    }
   };
 
   // Handle post updates (likes, comments)
@@ -108,6 +136,31 @@ export default function CatCorner() {
     );
   };
 
+  // Refresh posts after interactions (similar to homepage)
+  const refreshPosts = async () => {
+    try {
+      const response = await getCatPosts(1, 20);
+      if (response.success) {
+        const transformedPosts = response.data.posts.map(post => ({
+          id: post.id,
+          image: post.image ? `http://localhost:3000${post.image}` : '/assets/default-cat.jpg',
+          caption: post.caption,
+          user: post.user?.name || 'Anonymous',
+          time: formatDate(post.createdAt),
+          createdAt: post.createdAt,
+          type: 'image',
+          likes: post.likes || [],
+          likesCount: post.likes?.length || 0,
+          comments: post.comments || [],
+          commentsCount: post.comments?.length || 0,
+        }));
+        setPosts(transformedPosts);
+      }
+    } catch (error) {
+      console.error('Failed to refresh posts:', error);
+    }
+  };
+
   // Handle comment submission
   const handleCommentSubmit = (postId, newComment) => {
     setPosts(prevPosts =>
@@ -122,6 +175,8 @@ export default function CatCorner() {
       )
     );
   };
+
+
 
 
 
@@ -149,8 +204,9 @@ export default function CatCorner() {
           id: response.data.id,
           image: response.data.image ? `http://localhost:3000${response.data.image}` : '/assets/default-cat.jpg',
           caption: response.data.caption,
-          user: response.data.user?.name || 'You',
+          user: response.data.user?.name || user?.name || 'Anonymous',
           time: 'Just now',
+          createdAt: response.data.createdAt || new Date().toISOString(),
           type: 'image',
           likes: [],
           likesCount: 0,
@@ -347,6 +403,7 @@ export default function CatCorner() {
                   key={post.id}
                   post={post}
                   onPostUpdate={handlePostUpdate}
+                  refreshPosts={refreshPosts}
                 />
               ))}
             </>
