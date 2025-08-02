@@ -18,7 +18,13 @@ export default function Profile() {
   const [formLoading, setFormLoading] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [profilePictureUrl, setProfilePictureUrl] = useState(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverPictureUrl, setCoverPictureUrl] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [modalImageUrl, setModalImageUrl] = useState(null);
+  const [modalImageType, setModalImageType] = useState(null); // 'profile' or 'cover'
   const fileInputRef = React.useRef(null);
+  const coverInputRef = React.useRef(null);
   const [userPosts, setUserPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
 
@@ -62,9 +68,17 @@ export default function Profile() {
           } else {
             setProfilePictureUrl(null);
           }
+
+          // Set cover picture URL if available
+          if (profileRes.data.coverPicture) {
+            setCoverPictureUrl(ApiService.getCoverPictureUrl(targetUserId));
+          } else {
+            setCoverPictureUrl(null);
+          }
         } else {
           setProfile(null);
           setProfilePictureUrl(null);
+          setCoverPictureUrl(null);
         }
 
         // Fetch user posts
@@ -407,6 +421,151 @@ export default function Profile() {
     }
   };
 
+  // Handle cover picture upload
+  const handleCoverPictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (5MB limit for cover pictures)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Cover picture must be less than 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    try {
+      setUploadingCover(true);
+
+      const result = await ApiService.uploadCoverPicture(file);
+
+      if (result.success) {
+        // Update profile state with the new coverPicture
+        if (profile) {
+          setProfile({
+            ...profile,
+            coverPicture: result.data.coverPicture,
+          });
+        }
+
+        // Generate new URL with timestamp to force refresh
+        const newUrl = `${ApiService.getCoverPictureUrl(
+          user.id
+        )}?t=${Date.now()}`;
+        setCoverPictureUrl(newUrl);
+
+        // Show success message
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = "Cover picture updated successfully!";
+        document.body.appendChild(successDiv);
+
+        // Remove the message after 3 seconds
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => document.body.removeChild(successDiv), 300);
+        }, 3000);
+      } else {
+        alert(`Failed to upload cover picture: ${result.error}`);
+      }
+    } catch (error) {
+      alert(
+        "An error occurred while uploading cover picture. Please try again."
+      );
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  // Handle cover picture deletion
+  const handleDeleteCoverPicture = async () => {
+    if (!confirm("Are you sure you want to delete your cover picture?")) {
+      return;
+    }
+
+    try {
+      setUploadingCover(true);
+
+      const result = await ApiService.deleteCoverPicture();
+
+      if (result.success) {
+        // Update profile state
+        if (profile) {
+          setProfile({
+            ...profile,
+            coverPicture: null,
+          });
+        }
+
+        // Reset the cover picture URL
+        setCoverPictureUrl(null);
+
+        // Show success message
+        const successDiv = document.createElement("div");
+        successDiv.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300";
+        successDiv.textContent = "Cover picture deleted successfully!";
+        document.body.appendChild(successDiv);
+
+        // Remove the message after 3 seconds
+        setTimeout(() => {
+          successDiv.style.transform = "translateX(100%)";
+          setTimeout(() => document.body.removeChild(successDiv), 300);
+        }, 3000);
+      } else {
+        alert(`Failed to delete cover picture: ${result.error}`);
+      }
+    } catch (error) {
+      alert(
+        "An error occurred while deleting cover picture. Please try again."
+      );
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  // Handle opening image modal
+  const openImageModal = (imageUrl, imageType) => {
+    if (imageUrl) {
+      setModalImageUrl(imageUrl);
+      setModalImageType(imageType);
+      setShowImageModal(true);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden";
+    }
+  };
+
+  // Handle closing image modal
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setModalImageUrl(null);
+    setModalImageType(null);
+    // Restore body scroll
+    document.body.style.overflow = "unset";
+  };
+
+  // Handle ESC key to close modal
+  React.useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === "Escape" && showImageModal) {
+        closeImageModal();
+      }
+    };
+
+    if (showImageModal) {
+      document.addEventListener("keydown", handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [showImageModal]);
+
   const handleIntroSubmit = async (e) => {
     e.preventDefault();
 
@@ -506,7 +665,10 @@ export default function Profile() {
     <img
       src={profilePictureUrl || "/default_avatar.png"}
       alt="Profile"
-      className="w-full h-full object-cover"
+      className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+      onClick={() =>
+        openImageModal(profilePictureUrl || "/default_avatar.png", "profile")
+      }
       onError={(e) => {
         // Silently fall back to default avatar without logging errors
         // Only log actual errors if the fallback also fails
@@ -566,20 +728,90 @@ export default function Profile() {
         {/* Cover Photo Section */}
         <div className="relative">
           <div className="w-full h-[348px] bg-gradient-to-br from-green-400 via-green-500 to-green-600 overflow-hidden relative">
-            <img
-              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-              alt="Cover"
-              className="w-full h-full object-cover rounded-b-[12px]"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
-            />
+            {/* Cover Image */}
+            {coverPictureUrl ? (
+              <img
+                src={coverPictureUrl}
+                alt="Cover"
+                className="w-full h-full object-cover rounded-b-[12px] cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => openImageModal(coverPictureUrl, "cover")}
+                onError={(e) => {
+                  // If custom cover fails, show default gradient background
+                  e.target.style.display = "none";
+                }}
+              />
+            ) : (
+              // Default gradient background when no cover picture
+              <div className="w-full h-full bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-b-[12px]" />
+            )}
+
             {/* Edit Cover Photo Button - Positioned over the cover photo */}
             {isOwnProfile && (
-              <button className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200 text-sm font-medium">
-                <span className="text-base">📷</span>
-                <span className="text-gray-700">Edit cover photo</span>
-              </button>
+              <div className="absolute bottom-4 right-4 flex gap-2">
+                {/* Hidden file input for cover upload */}
+                <input
+                  type="file"
+                  ref={coverInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleCoverPictureUpload}
+                />
+
+                {/* Upload/Edit Cover Button */}
+                <button
+                  onClick={() => coverInputRef.current.click()}
+                  disabled={uploadingCover}
+                  className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-all duration-200 text-sm font-medium"
+                >
+                  {uploadingCover ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-gray-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span className="text-gray-700">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base">📷</span>
+                      <span className="text-gray-700">
+                        {coverPictureUrl
+                          ? "Edit cover photo"
+                          : "Add cover photo"}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {/* Delete Cover Button (only shows if user has a cover picture) */}
+                {coverPictureUrl && (
+                  <button
+                    onClick={handleDeleteCoverPicture}
+                    disabled={uploadingCover}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-100 hover:bg-red-200 rounded-lg shadow-sm transition-all duration-200 text-sm font-medium"
+                    title="Remove cover picture"
+                  >
+                    <span className="text-base">🗑️</span>
+                    <span className="text-red-700">Remove</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -1393,37 +1625,13 @@ export default function Profile() {
           {/* Main Content - Takes remaining space */}
           <div className="flex-1 min-w-0">
             {/* Create Post */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-[42px] h-[42px] mr-[12px] rounded-full overflow-hidden flex-shrink-0">
-                  {profilePicture}
-                </div>
-                <input
-                  type="text"
-                  placeholder="What's on your mind?"
-                  className="flex-1 py-3 px-4 bg-gray-100 rounded-[25px] text-gray-700 placeholder-gray-500 focus:outline-none text-sm"
-                />
-              </div>
-              <div className="flex justify-around pt-3 mt-[12px] border-gray-200">
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-red-500">🎥</span>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Live video
-                  </span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-green-500">📷</span>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Photo/video
-                  </span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-yellow-500">😊</span>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Life event
-                  </span>
-                </button>
-              </div>
+
+            {/* Posts Section Heading */}
+            <div className="bg-white rounded-lg shadow-sm p-4 mt-4">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <span className="text-blue-600">📝</span>
+                Posts
+              </h2>
             </div>
 
             {/* Loading state */}
@@ -1554,6 +1762,85 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Image Modal */}
+      {showImageModal && (
+        <div
+          className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+          style={{
+            background: "rgba(55, 65, 81, 0.5)", // gray-700 with opacity
+            backdropFilter: "blur(12px) saturate(180%)",
+            WebkitBackdropFilter: "blur(12px) saturate(180%)",
+          }}
+          onClick={closeImageModal}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
+            {/* Close button */}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 z-10 w-10 h-10 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+              title="Close (ESC)"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Image */}
+            <img
+              src={modalImageUrl}
+              alt={
+                modalImageType === "profile"
+                  ? "Profile Picture"
+                  : "Cover Picture"
+              }
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
+              onError={(e) => {
+                if (
+                  modalImageType === "profile" &&
+                  e.target.src !== "/default_avatar.png"
+                ) {
+                  e.target.src = "/default_avatar.png";
+                }
+              }}
+            />
+
+            {/* Image info */}
+            <div
+              className="absolute bottom-4 left-4 text-white px-3 py-2 rounded-lg"
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              <span className="text-sm font-medium">
+                {modalImageType === "profile"
+                  ? "Profile Picture"
+                  : "Cover Picture"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -61,6 +61,7 @@ model Profile {
   userId           Int      @id
   bio              String?
   profilePicture   String?
+  coverPicture     String?
   interests        String[]
   badges           String[]
   schoolName       String?   // SSC institution
