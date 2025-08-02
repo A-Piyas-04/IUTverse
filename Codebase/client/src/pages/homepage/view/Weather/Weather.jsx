@@ -7,10 +7,10 @@ const Weather = ({ isOpen, onClose }) => {
   const [error, setError] = useState(null);
 
   // OpenWeatherMap API configuration
-  const API_KEY = '2c999e981b16c2c6b2b5c7b5c6b5c7b5'; // You'll need to get your own API key
-  const CITY = 'Board Bazar,Gazipur,BD';
-  const API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${API_KEY}&units=metric`;
-  const FORECAST_URL = `https://api.openweathermap.org/data/2.5/forecast?q=${CITY}&appid=${API_KEY}&units=metric`;
+  const API_KEY = '56aac83b6672317bef7f2a9a92d6e8c7'; // Updated API key
+  const CITY = 'London,uk'; // Using London as example from the provided endpoint
+  const API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&APPID=${API_KEY}&units=metric`;
+  const FORECAST_URL = `https://api.openweathermap.org/data/2.5/forecast?q=${CITY}&APPID=${API_KEY}&units=metric`;
 
   const [forecastData, setForecastData] = useState(null);
 
@@ -25,61 +25,47 @@ const Weather = ({ isOpen, onClose }) => {
     setError(null);
     
     try {
+      console.log('Fetching weather data from:', API_URL);
+      
       // Fetch current weather
       const weatherResponse = await fetch(API_URL);
+      console.log('Weather response status:', weatherResponse.status);
+      
       if (!weatherResponse.ok) {
-        throw new Error('Weather data not available');
+        const errorText = await weatherResponse.text();
+        console.error('Weather API error:', errorText);
+        throw new Error(`Weather API error: ${weatherResponse.status} - ${errorText}`);
       }
+      
       const weather = await weatherResponse.json();
+      console.log('Weather data received:', weather);
       setWeatherData(weather);
 
       // Fetch 5-day forecast
+      console.log('Fetching forecast data from:', FORECAST_URL);
       const forecastResponse = await fetch(FORECAST_URL);
-      if (!forecastResponse.ok) {
-        throw new Error('Forecast data not available');
-      }
-      const forecast = await forecastResponse.json();
-      setForecastData(forecast);
-    } catch (err) {
-      setError(err.message);
-      // Fallback to mock data for demo purposes
-      setWeatherData({
-        name: 'Board Bazar',
-        sys: { country: 'BD' },
-        main: {
-          temp: 28,
-          feels_like: 32,
-          humidity: 75,
-          pressure: 1013
-        },
-        weather: [{
-          main: 'Clouds',
-          description: 'scattered clouds',
-          icon: '03d'
-        }],
-        wind: { speed: 3.5 },
-        visibility: 10000
-      });
+      console.log('Forecast response status:', forecastResponse.status);
       
-      setForecastData({
-        list: [
-          {
-            dt: Date.now() / 1000 + 86400,
-            main: { temp: 29, humidity: 70 },
-            weather: [{ main: 'Rain', description: 'light rain', icon: '10d' }]
-          },
-          {
-            dt: Date.now() / 1000 + 172800,
-            main: { temp: 27, humidity: 80 },
-            weather: [{ main: 'Clouds', description: 'overcast clouds', icon: '04d' }]
-          },
-          {
-            dt: Date.now() / 1000 + 259200,
-            main: { temp: 30, humidity: 65 },
-            weather: [{ main: 'Clear', description: 'clear sky', icon: '01d' }]
-          }
-        ]
-      });
+      if (!forecastResponse.ok) {
+        const errorText = await forecastResponse.text();
+        console.error('Forecast API error:', errorText);
+        throw new Error(`Forecast API error: ${forecastResponse.status} - ${errorText}`);
+      }
+      
+      const forecast = await forecastResponse.json();
+      console.log('Forecast data received:', forecast);
+      setForecastData(forecast);
+      
+      // Clear any previous errors on successful fetch
+      setError(null);
+      
+    } catch (err) {
+      console.error('Error fetching weather data:', err);
+      setError(`Failed to fetch real-time weather data: ${err.message}`);
+      
+      // Don't set mock data - let the error state show
+      setWeatherData(null);
+      setForecastData(null);
     } finally {
       setLoading(false);
     }
@@ -132,7 +118,20 @@ const Weather = ({ isOpen, onClose }) => {
 
         {error && !weatherData && (
           <div className="weather-error">
-            <p>Unable to fetch live weather data. Please try again later.</p>
+            <div className="error-icon">⚠️</div>
+            <h3>Weather Data Unavailable</h3>
+            <p>{error}</p>
+            <button className="retry-btn" onClick={fetchWeatherData}>
+              🔄 Retry
+            </button>
+            <div className="error-details">
+              <p><strong>Troubleshooting:</strong></p>
+              <ul>
+                <li>Check your internet connection</li>
+                <li>API key may be invalid or expired</li>
+                <li>Weather service may be temporarily unavailable</li>
+              </ul>
+            </div>
           </div>
         )}
 

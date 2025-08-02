@@ -12,6 +12,7 @@ import "./JobsPage.css";
 export default function JobsPage() {
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All Jobs");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newJob, setNewJob] = useState({
     title: "",
     type: "Freelance",
@@ -115,8 +116,27 @@ export default function JobsPage() {
     >
       {/* TOP NAVBAR */}
       <Navbar />
+      
+      {/* Mobile Menu Button for Jobs */}
+      <button 
+        className="md:hidden fixed top-20 left-4 z-50 bg-green-100 hover:bg-green-200 p-2 rounded-lg shadow-lg transition-colors"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        <svg className="w-6 h-6 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white mt-[80px]">
+      <main className="flex-1 flex w-full h-full min-h-0 overflow-hidden justify-between px-4 animate-fade-in-up bg-white mt-[80px] md:flex-row flex-col">
         {/* Error Display */}
         {error && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg">
@@ -153,9 +173,11 @@ export default function JobsPage() {
           jobs={jobs}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
         {/* CENTER FEED */}
-        <section className="flex-1 flex flex-col items-center px-2 py-6 overflow-y-auto min-h-0 max-w-[700px] mx-auto space-y-8">
+        <section className="flex-1 flex flex-col items-center px-2 py-6 overflow-y-auto min-h-0 max-w-[700px] mx-auto space-y-8 md:max-w-[700px] w-full">
           {/* Page Header */}
           <div className="w-full bg-[#141866] backdrop-blur-md rounded-[12px] mb-[12px] mt-[8px] shadow-2xl p-6">
             <div className="flex items-center justify-between mb-4">
@@ -219,8 +241,10 @@ export default function JobsPage() {
             </div>
           )}
         </section>
-        {/* RIGHT SIDEBAR */}
-        <RecentPosters jobs={jobs} />
+        {/* RIGHT SIDEBAR - Hidden on mobile */}
+        <div className="hidden md:block">
+          <RecentPosters jobs={jobs} />
+        </div>
       </main>
       {/* Animations */}
       <style>{`

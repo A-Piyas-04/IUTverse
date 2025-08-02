@@ -57,4 +57,35 @@
   .job-form-grid {
     grid-template-columns: 1fr;
   }
-} 
+  
+  /* Mobile layout fixes */
+  main {
+    flex-direction: column !important;
+    padding: 0.5rem !important;
+  }
+  
+  /* Center feed takes full width on mobile */
+  section {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 1rem 0.5rem !important;
+  }
+  
+  /* Job cards responsive */
+  .job-card {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+  
+  /* Form adjustments */
+  .job-form {
+    padding: 1rem;
+    margin: 0.5rem 0;
+  }
+  
+  /* Header adjustments */
+  .w-full.bg-\[\#141866\] {
+    padding: 1rem !important;
+    margin: 0.5rem 0 !important;
+  }
+}
