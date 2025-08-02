@@ -321,6 +321,53 @@ class ApiService {
       method: "DELETE",
     });
   }
+
+  // Cover picture endpoints
+  async uploadCoverPicture(file) {
+    const formData = new FormData();
+    formData.append("coverPicture", file);
+
+    // Get the authorization token directly to ensure it's included
+    const authHeaders = authUtils.getAuthHeader();
+
+    // Create a URL directly instead of using the request helper
+    const url = `${API_BASE_URL}/profile/upload-cover`;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          // Include only the auth header, let the browser set Content-Type
+          ...authHeaders,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get cover picture URL for a user
+  getCoverPictureUrl(userId) {
+    return `${API_BASE_URL}/profile/cover/${userId}`;
+  }
+
+  // Delete cover picture
+  async deleteCoverPicture() {
+    return this.request("/profile/cover", {
+      method: "DELETE",
+    });
+  }
 }
 
 export default new ApiService();

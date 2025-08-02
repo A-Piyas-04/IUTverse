@@ -1,0 +1,43 @@
+/* Modal Blur Enhancement CSS */
+/* Add this to your global CSS file or component styles */
+
+.modal-backdrop-blur {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(107, 114, 128, 0.6); /* Tailwind gray-500 with opacity */
+}
+
+/* Fallback for browsers that don't support backdrop-filter */
+@supports not (backdrop-filter: blur(12px)) {
+  .modal-backdrop-blur {
+    background: rgba(31, 41, 55, 0.8); /* Darker fallback */
+  }
+}
+
+/* Enhanced modal container */
+.modal-container {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Glass effect for modal elements */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/*
+USAGE INSTRUCTIONS:
+
+1. Apply 'modal-backdrop-blur' class to the main modal backdrop
+2. Apply 'glass-effect' class to buttons and info panels for a glass-like appearance
+3. The CSS includes fallbacks for older browsers
+
+Example:
+<div className="modal-backdrop-blur fixed inset-0 flex items-center justify-center z-50">
+  <button className="glass-effect text-white rounded-full">Close</button>
+  <div className="glass-effect text-white rounded-lg">Info Panel</div>
+</div>
+*/
