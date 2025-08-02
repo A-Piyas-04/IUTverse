@@ -26,6 +26,9 @@ export default function Navbar({
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const searchResultsRef = useRef(null);
+  
+  // Mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getPath = (label) => {
     switch (label) {
@@ -149,7 +152,26 @@ export default function Navbar({
 
   return (
     <header className="navbar glass-bg shadow-lg border-b border-green-300 animate-fade-in-down">
-      <div className="navbar-inner grid grid-cols-3 items-center w-full   px-6">
+      <div className="navbar-inner flex items-center justify-between w-full px-6">
+        {/* Mobile Menu Toggle Button */}
+        <button
+          className="md:hidden p-2 rounded-lg hover:bg-green-100 transition-colors duration-200"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <svg 
+            className={`w-6 h-6 text-green-700 transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-90' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            {isMobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+        
         {/* Left: Logo + Search */}
         <div className="flex items-center gap-4 justify-start relative">
           <img
@@ -158,7 +180,8 @@ export default function Navbar({
             className="h-[50px] w-[40px] shadow-lg hover:scale-105 transition-transform cursor-pointer"
             onClick={() => navigate("/")}
           />
-          <div className="relative">
+          {/* Search - Hidden on mobile */}
+          <div className="relative hidden md:block">
             <input
               type="text"
               placeholder="Search users..."
@@ -238,8 +261,8 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Middle: Navigation */}
-        <nav className="flex gap-8 justify-center items-center">
+        {/* Middle: Navigation - Hidden on mobile */}
+        <nav className="hidden md:flex gap-8 justify-center items-center">
           {navItems.map((label, i) => (
             <NavLink
               key={i}
@@ -252,6 +275,143 @@ export default function Navbar({
             </NavLink>
           ))}
         </nav>
+        
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <>
+            <div 
+              className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <div className="md:hidden fixed top-20 left-0 right-0 bg-white bg-opacity-98 backdrop-blur-lg z-50 border-b border-green-300 animate-fade-in-down">
+              <div className="h-full overflow-y-auto">
+                <nav className="flex flex-col p-8 space-y-2">
+                  {/* Navigation Header */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Navigation</h3>
+                    <div className="w-12 h-1 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
+                  </div>
+
+                  {navItems.map((label, i) => (
+                    <NavLink
+                      key={i}
+                      to={getPath(label)}
+                      className={({ isActive }) =>
+                        `mobile-nav-btn-enhanced ${isActive ? "active" : ""}`
+                      }
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                          {label === 'Home' ? '🏠' : label === 'EventHub' ? '📅' : label === 'LostAndFound' ? '🔍' : label === 'CatCorner' ? '🐱' : label === 'Jobs' ? '💼' : label === 'Confessions' ? '💭' : '📄'}
+                        </div>
+                        <span>{label}</span>
+                      </div>
+                    </NavLink>
+                  ))}
+                  
+                  {/* Mobile Search Section */}
+                  <div className="mt-8 pt-6 border-t border-gray-200 relative">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">Search</h3>
+                      <div className="w-12 h-1 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
+                    </div>
+                    
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search users..."
+                        className="mobile-search-input w-full"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => {
+                          if (searchQuery.trim().length >= 2) {
+                            setShowSearchResults(true);
+                          }
+                        }}
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Mobile Search Results */}
+                    {showSearchResults && (
+                      <div
+                        ref={searchResultsRef}
+                        className="absolute top-full left-0 right-0 mt-2 max-h-60 overflow-y-auto bg-white rounded-2xl shadow-xl border border-gray-200 z-50"
+                        style={{ 
+                          animation: "slideInDown 0.3s ease-out forwards",
+                          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+                        }}
+                      >
+                        {searchError && (
+                          <div className="p-4 text-center text-red-500 border-b border-gray-100">
+                            {searchError}
+                          </div>
+                        )}
+
+                        {searchResults.length > 0 ? (
+                          <div className="py-2">
+                            {searchResults.map((user) => (
+                              <div
+                                key={user.id}
+                                onClick={() => {
+                                  handleUserClick(user.id);
+                                  setIsMobileMenuOpen(false);
+                                }}
+                                className="flex items-center space-x-4 p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 border-b border-gray-50 last:border-b-0"
+                              >
+                                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold overflow-hidden">
+                                  {user.profilePicture ? (
+                                    <img
+                                      src={getProfilePictureUrl(user.id)}
+                                      alt={user.name}
+                                      className="h-full w-full object-cover"
+                                      onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.innerHTML = getInitials(user.name);
+                                      }}
+                                    />
+                                  ) : (
+                                    getInitials(user.name)
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800">
+                                    {user.name}
+                                  </p>
+                                  <p className="text-sm text-gray-500">{user.email}</p>
+                                </div>
+                                <div className="text-gray-400">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : searchQuery.trim().length >= 2 ? (
+                          <div className="p-6 text-center text-gray-500">
+                            <div className="mb-2">🔍</div>
+                            <p>No users found</p>
+                          </div>
+                        ) : (
+                          <div className="p-6 text-center text-gray-500">
+                            <div className="mb-2">💭</div>
+                            <p>Type at least 2 characters to search</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </nav>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Right: Chat + Profile + Logout */}
         <div className="flex items-center gap-4 justify-end">
