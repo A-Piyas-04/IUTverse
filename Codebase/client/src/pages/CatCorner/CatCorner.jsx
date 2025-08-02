@@ -11,16 +11,16 @@ import { createCatPost, getCatPosts } from '../../services/catPostApi.js';
 import './CatCorner.css';
 
 const INITIAL_POSTS = [
-  { id: 1, image: '/assets/cat1.jpg', caption: 'Lazy afternoon with my fluffy friend 😴', user: 'Alice', time: '2h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 2, image: '/assets/cat2.jpg', caption: 'Playful kitten discovered the yarn ball!', user: 'Bob', time: '4h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 3, image: '/assets/cat3.jpg', caption: 'Morning stretches are essential 🐱', user: 'Charlie', time: '6h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 4, image: '/assets/cat4.jpg', caption: 'Found the perfect sunny spot by the window', user: 'Diana', time: '8h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 5, image: '/assets/cat5.jpg', caption: 'Midnight zoomies session complete! 🏃‍♂️', user: 'Emma', time: '12h ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 6, image: '/assets/cat6.jpg', caption: 'Professional box inspector at work', user: 'Frank', time: '1d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 7, image: '/assets/cat7.jpg', caption: 'Caught red-pawed stealing treats again', user: 'Grace', time: '1d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 8, image: '/assets/cat8.jpg', caption: 'Meditation master showing us how it\'s done', user: 'Henry', time: '2d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 9, image: '/assets/cat9.jpg', caption: 'When you realize it\'s Monday morning', user: 'Ivy', time: '2d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
-  { id: 10, image: '/assets/cat10.jpg', caption: 'Helping with homework as usual 📚', user: 'Jack', time: '3d ago', type: 'image', comments: [], commentsCount: 0, likes: 0 },
+  { id: 1, image: '/assets/cat1.jpg', caption: 'Lazy afternoon with my fluffy friend 😴', user: 'Alice', time: '2h ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 2, image: '/assets/cat2.jpg', caption: 'Playful kitten discovered the yarn ball!', user: 'Bob', time: '4h ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 3, image: '/assets/cat3.jpg', caption: 'Morning stretches are essential 🐱', user: 'Charlie', time: '6h ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 4, image: '/assets/cat4.jpg', caption: 'Found the perfect sunny spot by the window', user: 'Diana', time: '8h ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 5, image: '/assets/cat5.jpg', caption: 'Midnight zoomies session complete! 🏃‍♂️', user: 'Emma', time: '12h ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 6, image: '/assets/cat6.jpg', caption: 'Professional box inspector at work', user: 'Frank', time: '1d ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 7, image: '/assets/cat7.jpg', caption: 'Caught red-pawed stealing treats again', user: 'Grace', time: '1d ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 8, image: '/assets/cat8.jpg', caption: 'Meditation master showing us how it\'s done', user: 'Henry', time: '2d ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 9, image: '/assets/cat9.jpg', caption: 'When you realize it\'s Monday morning', user: 'Ivy', time: '2d ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
+  { id: 10, image: '/assets/cat10.jpg', caption: 'Helping with homework as usual 📚', user: 'Jack', time: '3d ago', type: 'image', comments: [], commentsCount: 0, likes: [], likesCount: 0 },
 ];
 
 export default function CatCorner() {
@@ -54,7 +54,8 @@ export default function CatCorner() {
           user: post.user?.name || 'Anonymous',
           time: formatTimeAgo(post.createdAt),
           type: 'image',
-          likes: post.likes?.length || 0,
+          likes: post.likes || [], // Keep as array for FeedCard component
+          likesCount: post.likes?.length || 0, // Add separate count field
           comments: post.comments || [],
           commentsCount: post.comments?.length || 0,
         }));
@@ -253,7 +254,14 @@ export default function CatCorner() {
                       <div className="upload-section">
                         {newPost.imagePreview ? (
                           <div className="image-preview-modal">
-                            <img src={newPost.imagePreview} alt="Preview" />
+                            <img 
+                  src={newPost.imagePreview} 
+                  alt="Preview" 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjZjNmM2YzIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCI+UHJldmlldyBub3QgYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4=';
+                  }}
+                />
                             <button
                               className="remove-image-btn"
                               onClick={() => setNewPost(prev => ({ ...prev, image: null, imagePreview: '' }))}

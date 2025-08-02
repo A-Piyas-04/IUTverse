@@ -1,10 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toggleLike, addComment, isAuthenticated } from '../../../services/catPostApi';
+import { authUtils } from '../../../utils/auth';
 import PostModal from '../PostModal/PostModal';
 
 export default function FeedCard({ post, onPostUpdate }) {
+  // Get current user ID to check if user has liked the post
+  const getCurrentUserId = () => {
+    const userData = authUtils.getUserData();
+    return userData?.id;
+  };
+
+  const currentUserId = getCurrentUserId();
+  
+  // Check if current user has liked this post
+  const userHasLiked = post.likes?.some(like => like.userId === currentUserId) || false;
+  
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes || 0);
+  const [likeCount, setLikeCount] = useState(post.likesCount || post.likes?.length || 0);
   const [commentCount, setCommentCount] = useState(post.commentsCount || post.comments?.length || 0);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -14,6 +26,15 @@ export default function FeedCard({ post, onPostUpdate }) {
 
   // Temporary flag to disable auth checks - can be easily toggled later
   const DISABLE_AUTH_FOR_TESTING = true;
+
+  // Update like state when post changes
+  useEffect(() => {
+    const currentUserId = getCurrentUserId();
+    const userHasLiked = post.likes?.some(like => like.userId === currentUserId) || false;
+    setIsLiked(userHasLiked);
+    setLikeCount(post.likesCount || post.likes?.length || 0);
+    setCommentCount(post.commentsCount || post.comments?.length || 0);
+  }, [post]);
 
   // Format date function similar to homepage
   const formatDate = (dateString) => {
@@ -167,6 +188,10 @@ export default function FeedCard({ post, onPostUpdate }) {
             src={getProfilePic(post.user)}
             alt="Profile"
             className="profile-img mt-[30px]"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNmM2YzZjMiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0QzE0IDUuMSAxMy4xIDYgMTIgNkMxMC45IDYgMTAgNS4xIDEwIDRDMTAgMi45IDEwLjkgMiAxMiAyWk0yMSAxOVYyMEgzVjE5TDUgMTdWMTFIMTlWMTdMMjEgMTlaIiBmaWxsPSIjOTk5Ii8+Cjwvc3ZnPgo8L3N2Zz4KPC9zdmc+';
+            }}
           />
           <div className="post-user-info">
             <h4 className="post-username">
@@ -199,6 +224,10 @@ export default function FeedCard({ post, onPostUpdate }) {
                 alt="Cat post"
                 className="post-image"
                 loading="lazy"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmM2YzIi8+Cjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiPkltYWdlIG5vdCBhdmFpbGFibGU8L3RleHQ+Cjwvc3ZnPg==';
+                }}
               />
             )
           )}
