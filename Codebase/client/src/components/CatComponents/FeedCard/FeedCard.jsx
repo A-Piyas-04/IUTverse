@@ -3,7 +3,7 @@ import { toggleLike, addComment, isAuthenticated } from '../../../services/catPo
 import { authUtils } from '../../../utils/auth';
 import PostModal from '../PostModal/PostModal';
 
-export default function FeedCard({ post, onPostUpdate }) {
+export default function FeedCard({ post, onPostUpdate, refreshPosts }) {
   // Get current user ID to check if user has liked the post
   const getCurrentUserId = () => {
     const userData = authUtils.getUserData();
