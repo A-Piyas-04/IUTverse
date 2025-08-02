@@ -106,3 +106,97 @@
 .logout-btn:active {
   transform: scale(0.95);
 }
+
+/* Mobile Navigation */
+.mobile-nav-btn {
+  position: relative;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #065f46;
+  transition: all 0.25s ease-in-out;
+  display: block;
+  margin-bottom: 8px;
+  text-decoration: none;
+}
+.mobile-nav-btn:hover {
+  background-color: #d1fae5;
+  color: #065f46;
+  font-weight: 600;
+}
+.mobile-nav-btn.active {
+  background: linear-gradient(135deg, #307c49 0%, #32d4b7 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+  font-weight: 600;
+}
+
+/* Enhanced Mobile Navigation */
+.mobile-nav-btn-enhanced {
+  position: relative;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #374151;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+  margin-bottom: 12px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.7);
+}
+.mobile-nav-btn-enhanced:hover {
+  background: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.2);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1);
+}
+.mobile-nav-btn-enhanced.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+  transform: translateX(4px);
+}
+
+/* Mobile Search Input */
+.mobile-search-input {
+  padding: 16px 20px;
+  padding-right: 50px;
+  border-radius: 16px;
+  background: rgba(249, 250, 251, 0.8);
+  border: 2px solid rgba(229, 231, 235, 0.8);
+  font-size: 16px;
+  color: #374151;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.mobile-search-input:focus {
+  outline: none;
+  border-color: #10b981;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+.mobile-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-inner {
+    padding: 0 1rem;
+  }
+  
+  .search-input {
+    width: 100% !important;
+  }
+  
+  /* Hide desktop elements on mobile */
+  .navbar-inner > nav {
+    display: none;
+  }
+}
