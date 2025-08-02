@@ -328,37 +328,19 @@ export default function HomePage() {
 
       {/* Mobile Menu Button */}
       <button 
-        className="md:hidden fixed top-[90px] left-4 z-50 bg-white hover:bg-green-50 p-3 rounded-full shadow-lg border border-green-200 transition-all duration-300 hover:scale-105 active:scale-95"
+        className="md:hidden fixed top-20 left-4 z-50 bg-green-100 hover:bg-green-200 p-2 rounded-lg shadow-lg transition-colors"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)'
-        }}
       >
-        <svg 
-          className={`w-6 h-6 text-green-700 transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-90' : ''}`} 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          {isMobileMenuOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
+        <svg className="w-6 h-6 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black bg-opacity-40 z-40 transition-opacity duration-300"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMobileMenuOpen(false)}
-          style={{
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)'
-          }}
         />
       )}
 
