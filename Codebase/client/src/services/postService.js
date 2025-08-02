@@ -26,11 +26,14 @@ apiClient.interceptors.request.use(
 // Posts Services
 export const postService = {
   // Get all posts with pagination
-  getPosts: async (page = 1, limit = 10) => {
+  getPosts: async (page = 1, limit = 10, category = null) => {
     try {
-      const response = await apiClient.get(
-        `/posts?page=${page}&limit=${limit}`
-      );
+      let url = `/posts?page=${page}&limit=${limit}`;
+      if (category) {
+        url += `&category=${category}`;
+      }
+      
+      const response = await apiClient.get(url);
       console.log("Raw API response:", response);
 
       // Ensure we return an array, even if the API response structure is unexpected
@@ -55,6 +58,40 @@ export const postService = {
     } catch (error) {
       console.error("Error fetching posts:", error);
       throw error;
+    }
+  },
+
+  // Get posts by category
+  getPostsByCategory: async (category, page = 1, limit = 10) => {
+    try {
+      const response = await apiClient.get(
+        `/posts?category=${category}&page=${page}&limit=${limit}`
+      );
+      console.log(`Posts for category ${category}:`, response);
+
+      // Handle different response formats
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      } else if (
+        response.data &&
+        response.data.posts &&
+        Array.isArray(response.data.posts)
+      ) {
+        return response.data.posts;
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        return response.data.data;
+      } else {
+        console.error("API returned invalid posts data format:", response.data);
+        return [];
+      }
+    } catch (error) {
+      console.error(`Error fetching posts for category ${category}:`, error);
+      // If category filtering fails, return empty array to avoid showing wrong posts
+      return [];
     }
   },
 
