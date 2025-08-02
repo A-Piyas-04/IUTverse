@@ -25,6 +25,24 @@ exports.createPost = async (req, res) => {
       },
     });
 
+    // If category is provided, create or find the tag and associate it with the post
+    if (category) {
+      // Find or create the confession tag
+      const confessionTag = await prisma.confessionTag.upsert({
+        where: { name: category },
+        update: {},
+        create: { name: category },
+      });
+
+      // Create the post-tag relationship
+      await prisma.postTag.create({
+        data: {
+          postId: post.id,
+          tagId: confessionTag.id,
+        },
+      });
+    }
+
     return res.status(201).json({
       success: true,
       data: post,
@@ -45,8 +63,36 @@ exports.getPosts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const category = req.query.category;
+
+    console.log('getPosts called with category:', category);
+
+    // Build where clause for filtering
+    let where = {};
+    
+    // Filter by category using tags if category is provided
+    if (category) {
+      where = {
+        OR: [
+          // Check if post has the category in the category field
+          { category: category },
+          // Check if post has a tag with the category name
+          {
+            tags: {
+              some: {
+                tag: {
+                  name: category
+                }
+              }
+            }
+          }
+        ]
+      };
+      console.log('Filter where clause:', JSON.stringify(where, null, 2));
+    }
 
     const posts = await prisma.post.findMany({
+      where,
       skip,
       take: limit,
       orderBy: {
@@ -61,6 +107,16 @@ exports.getPosts = async (req, res) => {
             profile: {
               select: {
                 profilePicture: true,
+              },
+            },
+          },
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },
@@ -113,8 +169,8 @@ exports.getPosts = async (req, res) => {
       },
     });
 
-    // Get total posts count for pagination info
-    const totalPosts = await prisma.post.count();
+    // Get total posts count for pagination info with same filter
+    const totalPosts = await prisma.post.count({ where });
 
     return res.status(200).json({
       success: true,

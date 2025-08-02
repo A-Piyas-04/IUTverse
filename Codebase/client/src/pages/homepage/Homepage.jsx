@@ -29,6 +29,7 @@ export default function HomePage() {
   const [isPosting, setIsPosting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isCatPost, setIsCatPost] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -49,33 +50,14 @@ export default function HomePage() {
     const fetchPosts = async () => {
       setIsLoading(true);
       try {
-        const postsData = await postService.getPosts();
-        console.log("API Response:", postsData);
-        console.log("Type of postsData:", typeof postsData);
-        console.log("Is Array:", Array.isArray(postsData));
+        // Fetch general category posts (excluding cat posts)
+        const postsData = await postService.getPostsByCategory('general');
+        console.log("Homepage posts data:", postsData);
 
-        // Ensure postsData is an array or extract the posts array from the response
+        // Handle response - should already be filtered by category
         if (postsData && Array.isArray(postsData)) {
-          console.log("Setting posts from direct array response");
           setPosts(postsData);
-        } else if (
-          postsData &&
-          postsData.posts &&
-          Array.isArray(postsData.posts)
-        ) {
-          // If the API returns an object with a posts property that's an array
-          console.log("Setting posts from postsData.posts");
-          setPosts(postsData.posts);
-        } else if (
-          postsData &&
-          postsData.data &&
-          Array.isArray(postsData.data)
-        ) {
-          // If the API returns an object with a data property that's an array
-          console.log("Setting posts from postsData.data");
-          setPosts(postsData.data);
         } else {
-          // Default to empty array if no valid posts data found
           console.error("Invalid posts data format:", postsData);
           setPosts([]);
         }
@@ -116,7 +98,7 @@ export default function HomePage() {
       const postData = {
         content: newPostContent,
         image: selectedImage,
-        category: "general",
+        category: isCatPost ? "cat" : "general",
         isAnonymous: false,
       };
 
@@ -126,12 +108,13 @@ export default function HomePage() {
       setNewPostContent("");
       setSelectedImage(null);
       setImagePreview(null);
+      setIsCatPost(false);
 
-      // Refresh posts
-      const postsData = await postService.getPosts();
+      // Refresh posts - fetch only general category posts (homepage shows general posts)
+      const postsData = await postService.getPostsByCategory('general');
       console.log("Posts after creation:", postsData);
 
-      // Handle different response formats
+      // Handle response - should already be filtered by category
       if (postsData && Array.isArray(postsData)) {
         setPosts(postsData);
       } else if (
@@ -157,10 +140,11 @@ export default function HomePage() {
   // Refresh posts after interactions
   const refreshPosts = useCallback(async () => {
     try {
-      const postsData = await postService.getPosts();
+      // Fetch general category posts (excluding cat posts)
+      const postsData = await postService.getPostsByCategory('general');
       console.log("Refreshed posts data:", postsData);
 
-      // Use the same logic as in fetchPosts to handle different response formats
+      // Handle response - should already be filtered by category
       if (postsData && Array.isArray(postsData)) {
         setPosts(postsData);
       } else if (
@@ -460,6 +444,16 @@ export default function HomePage() {
                   disabled={isPosting}
                 />
               </label>
+              <button
+                className={`action-btn cat-toggle ${
+                  isCatPost ? "bg-orange-100 border-orange-300" : "hover:bg-orange-50"
+                }`}
+                onClick={() => setIsCatPost(!isCatPost)}
+                disabled={isPosting}
+                title={isCatPost ? "This will be posted as a Cat Post" : "Click to make this a Cat Post"}
+              >
+                {isCatPost ? "🐱 Cat Post ✓" : "🐱 Cat Post"}
+              </button>
               <button
                 className={`action-btn feeling ${
                   !newPostContent.trim() && !selectedImage

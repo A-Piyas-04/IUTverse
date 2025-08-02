@@ -42,11 +42,25 @@ exports.createPost = async (req, res) => {
       data: {
         userId,
         content,
-        category,
         isAnonymous: isAnonymous === "true" || isAnonymous === true,
         image: imagePath,
       },
     });
+
+    if (category) {
+      const tag = await prisma.confessionTag.upsert({
+        where: { name: category },
+        update: {},
+        create: { name: category },
+      });
+
+      await prisma.postTag.create({
+        data: {
+          postId: post.id,
+          tagId: tag.id,
+        },
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -68,7 +82,32 @@ exports.getPosts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const posts = await prisma.post.findMany({
+    console.log('getPosts called with category:', req.query.category);
+
+    let where = {};
+    
+    // Filter by category using both direct category field and tags
+    if (req.query.category) {
+      where = {
+        OR: [
+          // Check if post has the category in the category field
+          { category: req.query.category },
+          // Check if post has a tag with the category name
+          {
+            tags: {
+              some: {
+                tag: {
+                  name: req.query.category
+                }
+              }
+            }
+          }
+        ]
+      };
+      console.log('Filter where clause:', JSON.stringify(where, null, 2));
+    }
+const posts = await prisma.post.findMany({
+      where,
       skip,
       take: limit,
       orderBy: {
@@ -83,6 +122,16 @@ exports.getPosts = async (req, res) => {
             profile: {
               select: {
                 profilePicture: true,
+              },
+            },
+          },
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },

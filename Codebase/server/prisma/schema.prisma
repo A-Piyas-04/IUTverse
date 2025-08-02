@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,169 +8,146 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  department   String?
-  batch        Int?
-  studentId    String?  @unique
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-
-  profile   Profile?
-  posts     Post[]
-  reactions PostReaction[]
-  comments  PostComment[] // Added relation to comments
-  events    Event[]        @relation("CreatedEvents")
-  rsvps     EventRsvp[]
-  catVotes  CatVote[]
-
-  lostAndFounds  LostAndFound[]
-  uploadedCats   Cat[]
-  questionPapers QuestionPaper[]
-
-  jobs      Job[]     @relation("UserJobs") // ✅ Added relation back to Job
-  jobComments JobComment[] // Comments made by this user on jobs
-  jobApplications JobApplication[] @relation("JobApplications") // Applications made by this user
-  
-  // Confession relations (for tracking reactions and poll votes only)
-  confessionReactions ConfessionReaction[] @relation("ConfessionReactions")
-  confessionPollVotes ConfessionPollVote[] @relation("ConfessionPollVotes")
-  catPosts         CatPost[]
-  catPostLikes     CatPostLike[]
-  catPostComments  CatPostComment[]
-  catQuestions     CatQuestion[]
-  catAnswers       CatAnswer[]
-  
-  // Chat relations
-  sentMessages     ChatMessage[] @relation("SentMessages")
-  receivedMessages ChatMessage[] @relation("ReceivedMessages")
-  conversations    ConversationParticipant[]
-  
-  // Chat relations only - removed friends system
+  id                  Int                       @id @default(autoincrement())
+  email               String                    @unique
+  passwordHash        String
+  name                String?
+  department          String?
+  batch               Int?
+  studentId           String?                   @unique
+  isVerified          Boolean                   @default(false)
+  createdAt           DateTime                  @default(now())
+  uploadedCats        Cat[]
+  catAnswers          CatAnswer[]
+  catPosts            CatPost[]
+  catPostComments     CatPostComment[]
+  catPostLikes        CatPostLike[]
+  catQuestions        CatQuestion[]
+  catVotes            CatVote[]
+  receivedMessages    ChatMessage[]             @relation("ReceivedMessages")
+  sentMessages        ChatMessage[]             @relation("SentMessages")
+  confessionPollVotes ConfessionPollVote[]      @relation("ConfessionPollVotes")
+  confessionReactions ConfessionReaction[]      @relation("ConfessionReactions")
+  conversations       ConversationParticipant[]
+  events              Event[]                   @relation("CreatedEvents")
+  rsvps               EventRsvp[]
+  jobs                Job[]                     @relation("UserJobs")
+  jobApplications     JobApplication[]          @relation("JobApplications")
+  jobComments         JobComment[]
+  lostAndFounds       LostAndFound[]
+  posts               Post[]
+  comments            PostComment[]
+  reactions           PostReaction[]
+  profile             Profile?
+  questionPapers      QuestionPaper[]
 }
 
 model Profile {
   userId           Int      @id
   bio              String?
   profilePicture   String?
-  coverPicture     String?
   interests        String[]
   badges           String[]
-  schoolName       String?   // SSC institution
-  collegeName      String?   // HSC institution
-  currentProgram   String?
-  currentYear      String?
-  currentSemester  String?
-  hometown         String?
-  currentResidence String?
-  currentHall      String?
-  currentRoom      String?
+  collegeName      String?
   currentBed       String?
-  user User @relation(fields: [userId], references: [id])
-}
-
-enum JobType {
-  Internship
-  Freelance
-  PartTime
-  Volunteer
+  currentHall      String?
+  currentProgram   String?
+  currentResidence String?
+  currentRoom      String?
+  currentSemester  String?
+  currentYear      String?
+  hometown         String?
+  schoolName       String?
+  coverPicture     String?
+  user             User     @relation(fields: [userId], references: [id])
 }
 
 model Job {
-  id           Int      @id @default(autoincrement())
+  id           Int              @id @default(autoincrement())
   title        String
   type         JobType
   description  String
   requirements String[]
   compensation String?
   deadline     DateTime?
-  postedBy     User     @relation("UserJobs", fields: [postedById], references: [id])
   postedById   Int
-  createdAt    DateTime @default(now())
-  
-  comments     JobComment[] // Comments on this job
-  applications JobApplication[] // Applications for this job
+  createdAt    DateTime         @default(now())
+  postedBy     User             @relation("UserJobs", fields: [postedById], references: [id])
+  applications JobApplication[]
+  comments     JobComment[]
 }
 
 model JobApplication {
   id          Int      @id @default(autoincrement())
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   jobId       Int
-  applicant   User     @relation("JobApplications", fields: [applicantId], references: [id])
   applicantId Int
   appliedAt   DateTime @default(now())
-  
-  @@unique([jobId, applicantId]) // One application per user per job
+  applicant   User     @relation("JobApplications", fields: [applicantId], references: [id])
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, applicantId])
   @@index([jobId])
   @@index([applicantId])
 }
 
 model JobComment {
-  id          Int      @id @default(autoincrement())
-  content     String
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  jobId       Int
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Self-referencing relationship for replies
-  parentComment   JobComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  id              Int          @id @default(autoincrement())
+  content         String
+  jobId           Int
+  authorId        Int
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   parentCommentId Int?
+  author          User         @relation(fields: [authorId], references: [id])
+  job             Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  parentComment   JobComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
   replies         JobComment[] @relation("CommentReplies")
-  
+
   @@index([jobId])
   @@index([authorId])
   @@index([parentCommentId])
 }
 
 model Post {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
+  id          Int            @id @default(autoincrement())
   userId      Int
   content     String
   category    String
-  isAnonymous Boolean  @default(false)
-  image       String?  // Added image field
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  likesCount  Int      @default(0)  // Added counter for likes
-
-  reactions PostReaction[]
-  comments  PostComment[]  // Added relation to comments
-  tags      PostTag[]
+  isAnonymous Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  image       String?
+  likesCount  Int            @default(0)
+  updatedAt   DateTime       @updatedAt
+  user        User           @relation(fields: [userId], references: [id])
+  comments    PostComment[]
+  reactions   PostReaction[]
+  tags        PostTag[]
 }
 
 model PostReaction {
   id           Int    @id @default(autoincrement())
-  post         Post   @relation(fields: [postId], references: [id])
   postId       Int
-  user         User   @relation(fields: [userId], references: [id])
   userId       Int
   reactionType String
+  post         Post   @relation(fields: [postId], references: [id])
+  user         User   @relation(fields: [userId], references: [id])
 
   @@unique([postId, userId])
 }
 
-// Model for post comments
 model PostComment {
-  id        Int      @id @default(autoincrement())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Self-referencing relationship for comment replies
-  parentComment   PostComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  id              Int           @id @default(autoincrement())
+  postId          Int
+  userId          Int
+  content         String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   parentCommentId Int?
+  parentComment   PostComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
   replies         PostComment[] @relation("CommentReplies")
-  
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id])
+
   @@index([postId])
   @@index([userId])
   @@index([parentCommentId])
@@ -198,176 +169,159 @@ model PostTag {
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String
   description String
   location    String
   eventDate   DateTime
-  createdBy   User     @relation("CreatedEvents", fields: [createdById], references: [id])
   createdById Int
-
-  rsvps EventRsvp[]
+  createdBy   User        @relation("CreatedEvents", fields: [createdById], references: [id])
+  rsvps       EventRsvp[]
 }
 
 model EventRsvp {
-  user    User  @relation(fields: [userId], references: [id])
   userId  Int
-  event   Event @relation(fields: [eventId], references: [id])
   eventId Int
+  event   Event @relation(fields: [eventId], references: [id])
+  user    User  @relation(fields: [userId], references: [id])
 
   @@id([userId, eventId])
 }
 
 model LostAndFound {
   id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
   userId      Int
-  type        String   // "lost" or "found"
+  type        String
   title       String
   description String
   image       String?
   location    String
-  contact     String
-  status      String   @default("active") // "active" or "resolved"
   createdAt   DateTime @default(now())
+  contact     String
+  status      String   @default("active")
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Cat {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   name         String
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
   uploadedById Int
   image        String
-  createdAt    DateTime @default(now())
-
-  votes CatVote[]
+  createdAt    DateTime  @default(now())
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
+  votes        CatVote[]
 }
 
 model CatVote {
-  user   User @relation(fields: [userId], references: [id])
   userId Int
-  cat    Cat  @relation(fields: [catId], references: [id])
   catId  Int
+  cat    Cat  @relation(fields: [catId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
 
   @@id([userId, catId])
 }
 
 model QuestionPaper {
   id           Int      @id @default(autoincrement())
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
   uploadedById Int
   department   String
   courseCode   String
   semester     String
   fileUrl      String
   uploadedAt   DateTime @default(now())
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
 }
 
 model AcademicResource {
-  id           Int             @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   title        String
   type         ResourceType
-  courseCode   String?         // Course code (e.g., CSE 101, EEE 201)
-  department   Department      @relation(fields: [departmentId], references: [id])
   departmentId Int
-  fileUrl      String?         // Path to uploaded PDF (e.g., /files/filename.pdf)
-  externalLink String?         // Optional Google Drive / Docs link
-  createdAt    DateTime        @default(now())
+  fileUrl      String?
+  externalLink String?
+  createdAt    DateTime     @default(now())
+  courseCode   String?
+  department   Department   @relation(fields: [departmentId], references: [id])
 }
 
 model Department {
-  id        Int    @id @default(autoincrement())
-  name      String @unique
+  id        Int                @id @default(autoincrement())
+  name      String             @unique
   resources AcademicResource[]
 }
 
-enum ResourceType {
-  QUESTION
-  NOTE
-  BOOK
-  CLASS_LECTURE
-  OTHER
-}
-
-
-// Confession Models
 model Confession {
-  id        Int      @id @default(autoincrement())
+  id        Int                  @id @default(autoincrement())
   content   String
   tag       String
-  createdAt DateTime @default(now())
-
-  reactions ConfessionReaction[]
+  createdAt DateTime             @default(now())
   poll      ConfessionPoll?
+  reactions ConfessionReaction[]
 }
 
 model ConfessionReaction {
   id           Int        @id @default(autoincrement())
-  confession   Confession @relation(fields: [confessionId], references: [id], onDelete: Cascade)
   confessionId Int
-  user         User       @relation("ConfessionReactions", fields: [userId], references: [id])
   userId       Int
-  reactionType String     // "like", "funny", "relatable", "angry", "insightful"
+  reactionType String
   createdAt    DateTime   @default(now())
+  confession   Confession @relation(fields: [confessionId], references: [id], onDelete: Cascade)
+  user         User       @relation("ConfessionReactions", fields: [userId], references: [id])
 
-  @@unique([confessionId, userId]) // One reaction per user per confession
+  @@unique([confessionId, userId])
   @@index([confessionId])
   @@index([userId])
 }
 
 model ConfessionPoll {
   id           Int                    @id @default(autoincrement())
-  confession   Confession             @relation(fields: [confessionId], references: [id], onDelete: Cascade)
   confessionId Int                    @unique
   question     String
   totalVotes   Int                    @default(0)
   createdAt    DateTime               @default(now())
-
-  options ConfessionPollOption[]
-  votes   ConfessionPollVote[]
+  confession   Confession             @relation(fields: [confessionId], references: [id], onDelete: Cascade)
+  options      ConfessionPollOption[]
+  votes        ConfessionPollVote[]
 }
 
 model ConfessionPollOption {
-  id       Int            @id @default(autoincrement())
-  poll     ConfessionPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  pollId   Int
-  text     String
-  votes    Int            @default(0)
-  orderIndex Int          // To maintain option order
-
-  pollVotes ConfessionPollVote[]
+  id         Int                  @id @default(autoincrement())
+  pollId     Int
+  text       String
+  votes      Int                  @default(0)
+  orderIndex Int
+  poll       ConfessionPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollVotes  ConfessionPollVote[]
 
   @@index([pollId])
 }
 
 model ConfessionPollVote {
   id       Int                  @id @default(autoincrement())
-  poll     ConfessionPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
   pollId   Int
-  option   ConfessionPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
   optionId Int
-  user     User                 @relation("ConfessionPollVotes", fields: [userId], references: [id])
   userId   Int
   votedAt  DateTime             @default(now())
+  option   ConfessionPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  poll     ConfessionPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user     User                 @relation("ConfessionPollVotes", fields: [userId], references: [id])
 
-  @@unique([pollId, userId]) // One vote per poll per user
+  @@unique([pollId, userId])
   @@index([pollId])
   @@index([userId])
 }
 
-// Add to schema.prisma
 model CatPost {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   userId    Int?
   caption   String
   image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user     User?           @relation(fields: [userId], references: [id])
-  likes    CatPostLike[]
-  comments CatPostComment[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User?            @relation(fields: [userId], references: [id])
+  comments  CatPostComment[]
+  likes     CatPostLike[]
 }
 
 model CatPostLike {
@@ -375,10 +329,9 @@ model CatPostLike {
   userId    Int
   catPostId Int
   createdAt DateTime @default(now())
-  
-  user    User    @relation(fields: [userId], references: [id])
-  catPost CatPost @relation(fields: [catPostId], references: [id], onDelete: Cascade)
-  
+  catPost   CatPost  @relation(fields: [catPostId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
   @@unique([userId, catPostId])
 }
 
@@ -389,42 +342,37 @@ model CatPostComment {
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  user    User    @relation(fields: [userId], references: [id])
-  catPost CatPost @relation(fields: [catPostId], references: [id], onDelete: Cascade)
+  catPost   CatPost  @relation(fields: [catPostId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model CatQuestion {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   userId    Int?
   question  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user    User?       @relation(fields: [userId], references: [id])
-  answers CatAnswer[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  answers   CatAnswer[]
+  user      User?       @relation(fields: [userId], references: [id])
 }
 
 model CatAnswer {
-  id           Int      @id @default(autoincrement())
-  userId       Int?
-  questionId   Int
-  answer       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  user     User?       @relation(fields: [userId], references: [id])
-  question CatQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id         Int         @id @default(autoincrement())
+  userId     Int?
+  questionId Int
+  answer     String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  question   CatQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User?       @relation(fields: [userId], references: [id])
 }
 
-// Chat Models
 model Conversation {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  participants ConversationParticipant[]
+  id           Int                       @id @default(autoincrement())
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
   messages     ChatMessage[]
+  participants ConversationParticipant[]
 }
 
 model ConversationParticipant {
@@ -432,31 +380,42 @@ model ConversationParticipant {
   conversationId Int
   userId         Int
   joinedAt       DateTime     @default(now())
-  
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id])
-  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id])
+
   @@unique([conversationId, userId])
   @@index([conversationId])
   @@index([userId])
 }
 
 model ChatMessage {
-  id             Int      @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   conversationId Int
   senderId       Int
   receiverId     Int
   content        String
-  sentAt         DateTime @default(now())
-  isRead         Boolean  @default(false)
-  
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
-  receiver     User         @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  
+  sentAt         DateTime     @default(now())
+  isRead         Boolean      @default(false)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  receiver       User         @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+
   @@index([conversationId])
   @@index([senderId])
   @@index([receiverId])
 }
 
-// End of schema
+enum JobType {
+  Internship
+  Freelance
+  PartTime
+  Volunteer
+}
+
+enum ResourceType {
+  QUESTION
+  NOTE
+  BOOK
+  OTHER
+  CLASS_LECTURE
+}
