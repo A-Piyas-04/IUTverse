@@ -3,46 +3,26 @@
 IUTverse is a comprehensive campus-centric platform designed to streamline communication, collaboration, and resource sharing for students, faculty, and staff at the Islamic University of Technology (IUT). The platform integrates social, academic, and utility features to enhance the university experience.
 
 ## Features
-- **CatCorner**:
-  - Community-driven cat posts and interactions
-  - Cat Adventure Game (multi-level, collectibles, power-ups, responsive UI)
-- **Lost & Found**:
-  - Report lost items
-  - Browse and recover found items
-  - Item details and contact system
-- **Jobs Board**:
-  - Post campus-related jobs and internships
-  - Apply for jobs
-  - Job application tracking
-  - Comments and requirements per job
-- **Confessions**:
-  - Anonymous confession posting
-  - Polling and voting
-  - Tag-based filtering (Academic Stress, Hall Life, Wholesome, etc.)
-  - Analytics and random confession feature
-- **Academics**:
-  - Share and access academic resources
-  - Question paper sharing
-  - Academic resource hub
-- **CatQA**:
-  - Q&A format for campus-related questions
-  - Upvote/downvote answers
-- **Profile Management**:
-  - Customizable user profiles
-  - Cover and profile pictures
-  - Bio, interests, badges, academic info
-- **Event Hub**:
-  - Campus event listings and details
-- **Chat**:
-  - Real-time messaging
+- **IUT Mail-Based Authentication** – Access restricted to verified IUT email users for a trusted environment.
+- **User Profiles** – Customizable profiles showcasing academic background, skills, and interests.
+- **Post Sharing** – A space for students to share updates, announcements, or discussions.
+- **Real-Time Messaging** – Direct chat system for quick communication among users.
+- **Job Board** – Discover, apply for, or post jobs and internships relevant to IUT students.
+- **Lost & Found** – Report or search for lost campus items easily.
+- **Academic Resource Sharing** – Upload and access notes, books, and study materials.
+- **Anonymous Confessions** – A safe space for sharing thoughts without identity.
+- **Daily Campus Info** – Live weather, prayer times, and IUT facts in one place.
+- **Cat Corner** – A unique section featuring IUT’s beloved cats with posts, facts, and care tips.
 
 
 ## Tech Stack
-- **Frontend**: React, Tailwind CSS, Vite
-- **Backend**: Node.js, Express, Prisma ORM
-- **Database**: PostgreSQL
-- **Authentication**: JWT-based
-- **APIs**: OpenWeatherMap, custom REST endpoints
+- **Languages:** JavaScript, SQL (PostgreSQL)
+- **Frontend:** React, Vite, Tailwind CSS, Axios, React Router, date-fns
+- **Backend:** Node.js, Express.js, Prisma ORM, PostgreSQL
+- **Auth & Security:** JWT, bcrypt, cors, dotenv
+- **File & Email:** multer, nodemailer
+- **Tools:** ESLint, PostCSS, Autoprefixer, Firebase/Vercel/Railway
+- **Offline & APIs:** Service Workers, LocalStorage, IndexedDB, OpenWeatherMap API
 
 ## Detailed Dependencies
 ### Client
