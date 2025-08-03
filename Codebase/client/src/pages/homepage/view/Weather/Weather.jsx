@@ -7,10 +7,12 @@ const Weather = ({ isOpen, onClose }) => {
   const [error, setError] = useState(null);
 
   // OpenWeatherMap API configuration
-  const API_KEY = '56aac83b6672317bef7f2a9a92d6e8c7'; // Updated API key
-  const CITY = 'London,uk'; // Using London as example from the provided endpoint
-  const API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&APPID=${API_KEY}&units=metric`;
-  const FORECAST_URL = `https://api.openweathermap.org/data/2.5/forecast?q=${CITY}&APPID=${API_KEY}&units=metric`;
+  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY; // Use env variable for security
+  const CITY = 'Gazipur,BD'; // Updated to Gazipur, Bangladesh
+  const LAT = 23.9981;
+  const LON = 90.423;
+  const API_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&APPID=${API_KEY}&units=metric`;
+  const FORECAST_URL = `https://api.openweathermap.org/data/2.5/forecast?lat=${LAT}&lon=${LON}&APPID=${API_KEY}&units=metric`;
 
   const [forecastData, setForecastData] = useState(null);
 
@@ -203,25 +205,34 @@ const Weather = ({ isOpen, onClose }) => {
               <div className="forecast-section">
                 <h4 className="forecast-title">3-Day Forecast</h4>
                 <div className="forecast-grid">
-                  {forecastData.list.slice(0, 3).map((day, index) => (
-                    <div key={index} className="forecast-card">
-                      <div className="forecast-day">
-                        {formatTime(day.dt)}
+                  {(() => {
+                    // Group forecast entries by date (ignoring time)
+                    const days = {};
+                    forecastData.list.forEach(item => {
+                      const dateStr = new Date(item.dt * 1000).toLocaleDateString('en-US');
+                      if (!days[dateStr]) days[dateStr] = item;
+                    });
+                    // Take the first 3 unique days
+                    return Object.values(days).slice(0, 3).map((day, index) => (
+                      <div key={index} className="forecast-card">
+                        <div className="forecast-day">
+                          {formatTime(day.dt)}
+                        </div>
+                        <div className="forecast-icon">
+                          {getWeatherIcon(day.weather[0]?.icon)}
+                        </div>
+                        <div className="forecast-temp">
+                          {Math.round(day.main.temp)}°C
+                        </div>
+                        <div className="forecast-desc">
+                          {day.weather[0]?.main}
+                        </div>
+                        <div className="forecast-humidity">
+                          💧 {day.main.humidity}%
+                        </div>
                       </div>
-                      <div className="forecast-icon">
-                        {getWeatherIcon(day.weather[0]?.icon)}
-                      </div>
-                      <div className="forecast-temp">
-                        {Math.round(day.main.temp)}°C
-                      </div>
-                      <div className="forecast-desc">
-                        {day.weather[0]?.main}
-                      </div>
-                      <div className="forecast-humidity">
-                        💧 {day.main.humidity}%
-                      </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
             )}
