@@ -1114,7 +1114,7 @@ export default function Profile() {
                               name="studentId"
                               value={introForm.studentId}
                               onChange={handleIntroChange}
-                              placeholder="Enter your student ID (e.g., CSE-2024-001)"
+                              placeholder="Enter your student ID (e.g., 220042118)"
                               className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                 studentIdError
                                   ? "border-red-300 bg-red-50"
@@ -1493,7 +1493,7 @@ export default function Profile() {
                               name="studentId"
                               value={introForm.studentId}
                               onChange={handleIntroChange}
-                              placeholder="Enter your student ID (e.g., CSE-2024-001)"
+                              placeholder="Enter your student ID (e.g. 220042118)"
                               className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                 studentIdError
                                   ? "border-red-300 bg-red-50"
