@@ -1,72 +1,37 @@
 import React from "react";
 import CatProfileCard from "../../../../components/CatComponents/CatProfiles/CatProfileCard";
 import "./CatProfiles.css";
+import BatmanImg from "./Batman.jpg";
+import JahangirImg from "./Jahangir.jpg";
+import SylvieImg from "./Sylvie.jpg";
+import JerryImg from "./jerry.jpg";
+import RobinImg from "./robin.jpg";
 
 const profiles = [
   {
-    name: "Tommy",
-    desc: "Loves sleeping under sun near CDS.",
-    img: "https://placekitten.com/220/220",
+    name: "Batman",
+    desc: "Mysterious and vigilant, often seen patrolling the corridors at night.",
+    img: BatmanImg,
   },
   {
-    name: "Luna",
-    desc: "Seen near female dorm, very friendly.",
-    img: "https://placekitten.com/221/221",
+    name: "Jahangir",
+    desc: "Majestic , loves to bask in the sun near the admin building.",
+    img: JahangirImg,
   },
   {
-    name: "Oreo",
-    desc: "Frequently hangs around cafeteria.",
-    img: "https://placekitten.com/222/222",
+    name: "Sylvie",
+    desc: "Playful and friendly, always chasing butterflies in the garden.",
+    img: SylvieImg,
   },
   {
-    name: "Mimi",
-    desc: "Softest fur, always near admin block.",
-    img: "https://placekitten.com/223/223",
+    name: "Jerry",
+    desc: "Quick and clever, often spotted near the cafeteria looking for snacks.",
+    img: JerryImg,
   },
   {
-    name: "Simba",
-    desc: "King of the parking lot, loves head scratches.",
-    img: "https://placekitten.com/224/224",
-  },
-  {
-    name: "Shadow",
-    desc: "Mysterious and only comes out at dusk.",
-    img: "https://placekitten.com/225/225",
-  },
-  {
-    name: "Pumpkin",
-    desc: "Orange tabby, loves to chase leaves.",
-    img: "https://placekitten.com/226/226",
-  },
-  {
-    name: "Snowball",
-    desc: "White fur, often seen near the library steps.",
-    img: "https://placekitten.com/227/227",
-  },
-  {
-    name: "Cleo",
-    desc: "Elegant and calm, favorite spot is the garden bench.",
-    img: "https://placekitten.com/228/228",
-  },
-  {
-    name: "Tiger",
-    desc: "Striped and energetic, always playing with students.",
-    img: "https://placekitten.com/229/229",
-  },
-  {
-    name: "Mocha",
-    desc: "Brown and white, loves to nap on warm cars.",
-    img: "https://placekitten.com/230/230",
-  },
-  {
-    name: "Socks",
-    desc: "Black cat with white paws, very curious.",
-    img: "https://placekitten.com/231/231",
-  },
-  {
-    name: "Whiskers",
-    desc: "Oldest campus cat, wise and gentle.",
-    img: "https://placekitten.com/232/232",
+    name: "Robin",
+    desc: "Adventurous spirit, enjoys exploring every corner of the campus.",
+    img: RobinImg,
   },
 ];
 
