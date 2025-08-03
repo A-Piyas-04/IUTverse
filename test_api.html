@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Cat Posts API</title>
+</head>
+<body>
+    <h1>Test Cat Posts API</h1>
+    <button onclick="testAPI()">Test Cat Posts Endpoint</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            try {
+                console.log('Testing API...');
+                const response = await fetch('http://localhost:3000/api/posts?category=cat&page=1&limit=20');
+                const data = await response.json();
+                
+                document.getElementById('result').innerHTML = 
+                    `<h2>Status: ${response.status}</h2>
+                     <h3>Response:</h3>
+                     <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                console.log('API Response:', data);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<h2>Error:</h2>
+                     <pre>${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>
