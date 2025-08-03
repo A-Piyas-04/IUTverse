@@ -27,12 +27,16 @@ export default function Profile() {
   const coverInputRef = React.useRef(null);
   const [userPosts, setUserPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [studentIdError, setStudentIdError] = useState("");
+  const [studentIdAvailable, setStudentIdAvailable] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   // Check if this is the current user's profile or someone else's
   const isOwnProfile = !userId || userId === user?.id?.toString();
 
   const [introForm, setIntroForm] = useState({
     name: "",
+    studentId: "",
     bio: "",
     schoolName: "",
     collegeName: "",
@@ -130,7 +134,11 @@ export default function Profile() {
 
     // Initialize form with user name if available and it's own profile
     if (isOwnProfile && user.name) {
-      setIntroForm((prev) => ({ ...prev, name: user.name }));
+      setIntroForm((prev) => ({
+        ...prev,
+        name: user.name,
+        studentId: user.studentId || "",
+      }));
     }
   }, [user, userId, isOwnProfile]); // fetchUserPosts is defined inside the component
 
@@ -152,6 +160,21 @@ export default function Profile() {
         [name]: value,
         currentDepartment: "", // Reset currentDepartment when bio changes
       });
+    }
+    // Handle student ID changes with validation
+    else if (name === "studentId") {
+      setIntroForm({ ...introForm, [name]: value });
+
+      // Validate student ID
+      const error = validateStudentId(value);
+      setStudentIdError(error);
+
+      // Check availability if valid
+      if (!error) {
+        debounceAvailabilityCheck(value);
+      } else {
+        setStudentIdAvailable(null);
+      }
     } else {
       setIntroForm({ ...introForm, [name]: value });
     }
@@ -192,6 +215,72 @@ export default function Profile() {
     );
   };
 
+  // Validate student ID
+  const validateStudentId = (studentId) => {
+    if (!studentId || studentId.trim().length === 0) {
+      return "";
+    }
+
+    const trimmed = studentId.trim();
+
+    if (trimmed.length < 3 || trimmed.length > 20) {
+      return "Student ID must be between 3 and 20 characters long";
+    }
+
+    if (!/^[A-Za-z0-9-]+$/.test(trimmed)) {
+      return "Student ID can only contain letters, numbers, and hyphens";
+    }
+
+    return "";
+  };
+
+  // Check student ID availability with debouncing
+  const checkStudentIdAvailability = async (studentId) => {
+    if (!studentId || studentId.trim().length === 0) {
+      setStudentIdAvailable(null);
+      return;
+    }
+
+    const validationError = validateStudentId(studentId);
+    if (validationError) {
+      setStudentIdAvailable(null);
+      return;
+    }
+
+    // Don't check if it's the same as current user's student ID
+    if (studentId.trim() === user?.studentId) {
+      setStudentIdAvailable(null);
+      return;
+    }
+
+    setCheckingAvailability(true);
+    try {
+      const result = await ApiService.checkStudentIdAvailability(
+        studentId.trim()
+      );
+      setStudentIdAvailable(result.available);
+    } catch (error) {
+      console.error("Error checking student ID availability:", error);
+      setStudentIdAvailable(null);
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
+  // Debounced availability check
+  const debounceAvailabilityCheck = React.useCallback(
+    (() => {
+      let timeout;
+      return (studentId) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          checkStudentIdAvailability(studentId);
+        }, 500);
+      };
+    })(),
+    [user?.studentId]
+  );
+
   // Function to format the final program value for backend
   const getFormattedProgram = () => {
     if (!introForm.currentProgram || !introForm.currentDepartment) return "";
@@ -217,6 +306,7 @@ export default function Profile() {
     // Populate form with existing data
     setIntroForm({
       name: user?.name || "",
+      studentId: user?.studentId || "",
       bio: profile?.bio || "",
       schoolName: profile?.schoolName || "",
       collegeName: profile?.collegeName || "",
@@ -237,9 +327,15 @@ export default function Profile() {
     setFormLoading(true);
 
     try {
-      // Extract name from form data and format program
-      const { name, currentProgram, currentDepartment, bio, ...otherData } =
-        introForm;
+      // Extract name and studentId from form data and format program
+      const {
+        name,
+        studentId,
+        currentProgram,
+        currentDepartment,
+        bio,
+        ...otherData
+      } = introForm;
 
       // Determine the final department value
       let finalDepartment = currentDepartment;
@@ -275,6 +371,41 @@ export default function Profile() {
         updateUser({ name: name.trim() });
       }
 
+      // Update student ID if provided and different from current
+      if (studentId !== undefined && studentId.trim() !== user?.studentId) {
+        if (studentId.trim() === "") {
+          // Delete student ID if empty
+          const studentIdResult = await ApiService.deleteStudentId();
+          if (!studentIdResult.success) {
+            alert(
+              `Failed to remove student ID: ${
+                studentIdResult.message || "Unknown error"
+              }`
+            );
+            setFormLoading(false);
+            return;
+          }
+          // Update user context
+          updateUser({ studentId: null });
+        } else {
+          // Update student ID
+          const studentIdResult = await ApiService.updateStudentId(
+            studentId.trim()
+          );
+          if (!studentIdResult.success) {
+            alert(
+              `Failed to update student ID: ${
+                studentIdResult.message || "Unknown error"
+              }`
+            );
+            setFormLoading(false);
+            return;
+          }
+          // Update user context
+          updateUser({ studentId: studentId.trim() });
+        }
+      }
+
       // Update profile with remaining data
       const res = await ApiService.updateProfile(profileData);
       if (res.success) {
@@ -288,10 +419,18 @@ export default function Profile() {
         }
 
         // Show success message
-        const message =
-          name && name.trim() && name.trim() !== user?.name
-            ? "Name and profile updated successfully!"
-            : "Profile updated successfully!";
+        let message = "Profile updated successfully!";
+        const nameChanged = name && name.trim() && name.trim() !== user?.name;
+        const studentIdChanged =
+          studentId !== undefined && studentId.trim() !== user?.studentId;
+
+        if (nameChanged && studentIdChanged) {
+          message = "Name, Student ID, and profile updated successfully!";
+        } else if (nameChanged) {
+          message = "Name and profile updated successfully!";
+        } else if (studentIdChanged) {
+          message = "Student ID and profile updated successfully!";
+        }
 
         // Create a temporary success message element
         const successDiv = document.createElement("div");
@@ -570,9 +709,15 @@ export default function Profile() {
     e.preventDefault();
 
     try {
-      // Extract name from form data and format program
-      const { name, currentProgram, currentDepartment, bio, ...otherData } =
-        introForm;
+      // Extract name and studentId from form data and format program
+      const {
+        name,
+        studentId,
+        currentProgram,
+        currentDepartment,
+        bio,
+        ...otherData
+      } = introForm;
 
       // Determine the final department value
       let finalDepartment = currentDepartment;
@@ -607,6 +752,23 @@ export default function Profile() {
         updateUser({ name: name.trim() });
       }
 
+      // Update student ID if provided
+      if (studentId && studentId.trim()) {
+        const studentIdResult = await ApiService.updateStudentId(
+          studentId.trim()
+        );
+        if (!studentIdResult.success) {
+          alert(
+            `Failed to update student ID: ${
+              studentIdResult.message || "Unknown error"
+            }`
+          );
+          return;
+        }
+        // Update user context
+        updateUser({ studentId: studentId.trim() });
+      }
+
       // Create or update profile with remaining data
       const res = await ApiService.createProfile(profileData);
       if (res.success) {
@@ -614,11 +776,19 @@ export default function Profile() {
         setProfile(res.data);
 
         // Show appropriate success message
-        if (name && name.trim()) {
-          alert("Name and profile created successfully!");
-        } else {
-          alert("Profile created successfully!");
+        let message = "Profile created successfully!";
+        const nameUpdated = name && name.trim();
+        const studentIdUpdated = studentId && studentId.trim();
+
+        if (nameUpdated && studentIdUpdated) {
+          message = "Name, Student ID, and profile created successfully!";
+        } else if (nameUpdated) {
+          message = "Name and profile created successfully!";
+        } else if (studentIdUpdated) {
+          message = "Student ID and profile created successfully!";
         }
+
+        alert(message);
       } else {
         alert(`Failed to create profile: ${res.error}`);
       }
@@ -935,6 +1105,104 @@ export default function Profile() {
                           />
                         </div>
 
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Student ID
+                          </label>
+                          <div className="relative">
+                            <input
+                              name="studentId"
+                              value={introForm.studentId}
+                              onChange={handleIntroChange}
+                              placeholder="Enter your student ID (e.g., CSE-2024-001)"
+                              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                studentIdError
+                                  ? "border-red-300 bg-red-50"
+                                  : studentIdAvailable === false
+                                  ? "border-red-300 bg-red-50"
+                                  : studentIdAvailable === true
+                                  ? "border-green-300 bg-green-50"
+                                  : "border-gray-300"
+                              }`}
+                            />
+                            {checkingAvailability && (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <svg
+                                  className="animate-spin h-5 w-5 text-gray-400"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                              </div>
+                            )}
+                            {studentIdAvailable === true &&
+                              !checkingAvailability && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <svg
+                                    className="h-5 w-5 text-green-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    ></path>
+                                  </svg>
+                                </div>
+                              )}
+                            {studentIdAvailable === false &&
+                              !checkingAvailability && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <svg
+                                    className="h-5 w-5 text-red-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M6 18L18 6M6 6l12 12"
+                                    ></path>
+                                  </svg>
+                                </div>
+                              )}
+                          </div>
+                          {studentIdError && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {studentIdError}
+                            </p>
+                          )}
+                          {studentIdAvailable === false && !studentIdError && (
+                            <p className="mt-1 text-sm text-red-600">
+                              This student ID is already taken
+                            </p>
+                          )}
+                          {studentIdAvailable === true && !studentIdError && (
+                            <p className="mt-1 text-sm text-green-600">
+                              Student ID is available
+                            </p>
+                          )}
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1214,6 +1482,104 @@ export default function Profile() {
                             placeholder="Enter your full name"
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Student ID
+                          </label>
+                          <div className="relative">
+                            <input
+                              name="studentId"
+                              value={introForm.studentId}
+                              onChange={handleIntroChange}
+                              placeholder="Enter your student ID (e.g., CSE-2024-001)"
+                              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                studentIdError
+                                  ? "border-red-300 bg-red-50"
+                                  : studentIdAvailable === false
+                                  ? "border-red-300 bg-red-50"
+                                  : studentIdAvailable === true
+                                  ? "border-green-300 bg-green-50"
+                                  : "border-gray-300"
+                              }`}
+                            />
+                            {checkingAvailability && (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <svg
+                                  className="animate-spin h-5 w-5 text-gray-400"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                              </div>
+                            )}
+                            {studentIdAvailable === true &&
+                              !checkingAvailability && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <svg
+                                    className="h-5 w-5 text-green-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    ></path>
+                                  </svg>
+                                </div>
+                              )}
+                            {studentIdAvailable === false &&
+                              !checkingAvailability && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                  <svg
+                                    className="h-5 w-5 text-red-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M6 18L18 6M6 6l12 12"
+                                    ></path>
+                                  </svg>
+                                </div>
+                              )}
+                          </div>
+                          {studentIdError && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {studentIdError}
+                            </p>
+                          )}
+                          {studentIdAvailable === false && !studentIdError && (
+                            <p className="mt-1 text-sm text-red-600">
+                              This student ID is already taken
+                            </p>
+                          )}
+                          {studentIdAvailable === true && !studentIdError && (
+                            <p className="mt-1 text-sm text-green-600">
+                              Student ID is available
+                            </p>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1517,7 +1883,7 @@ export default function Profile() {
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                         আমার স্টুডেন্ট আইডি  {" "}
-                        <strong>{profile.studentId}</strong>
+                        <strong>{displayUser?.studentId || "Not set"}</strong>
                       </div>
                       <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                         আমার হোমটাউন   <strong>{profile.hometown}</strong>
@@ -1577,7 +1943,8 @@ export default function Profile() {
                     অধ্যয়নরত আছি।
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
-                    আমার স্টুডেন্ট আইডি   <strong>{profile.studentId}</strong>
+                    আমার স্টুডেন্ট আইডি  {" "}
+                    <strong>{displayUser?.studentId || "Not set"}</strong>
                   </div>
                   <div className="flex items-center gap-3 text-[15px] text-gray-700 mt-[5px] mb-[5px]">
                     আমার হোমটাউন   <strong>{profile.hometown}</strong>
@@ -1601,24 +1968,6 @@ export default function Profile() {
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Photos Card */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Photos</h3>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  See all photos
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-                  <div
-                    key={i}
-                    className="aspect-square bg-gray-200 rounded"
-                  ></div>
-                ))}
-              </div>
             </div>
           </div>
 
