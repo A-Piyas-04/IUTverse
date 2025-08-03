@@ -2071,7 +2071,6 @@ export default function Profile() {
                     <div className="flex items-center gap-1">
                       <div className="flex">
                         <span className="text-blue-500">👍</span>
-                        <span className="text-red-500">❤️</span>
                       </div>
                       <span>
                         {post._count?.reactions || post.likesCount || 0}

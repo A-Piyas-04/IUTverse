@@ -8,106 +8,88 @@ import "./EventHub.css";
 const SAMPLE_EVENTS = [
   {
     id: 1,
-    title: "IUT Hackathon 2024",
+    title: "IUT CS Code Sprint",
     type: "Club",
     clubName: "IUT Computer Society",
-    date: "2024-12-15",
+    date: "2025-08-03",
     time: "10:00 AM",
     location: "Computer Lab, 3rd Floor",
-    description: "Join a 24-hour coding marathon to build innovative solutions and compete for top prizes!",
+    description:
+      "Join a 24-hour coding marathon to build innovative solutions and compete for top prizes!",
     image: "https://placehold.co/400x250/3b82f6/ffffff?text=Hackathon",
     isWishlisted: false,
-    category: "Competition"
+    category: "Competition",
   },
   {
     id: 2,
-    title: "Freshman Orientation 2024",
-    type: "General",
-    date: "2024-12-10",
-    time: "9:00 AM",
-    location: "Main Auditorium",
-    description: "Welcome ceremony for new students. Get to know your university, faculty, and fellow students.",
-    image: "https://placehold.co/400x250/10b981/ffffff?text=Orientation",
-    isWishlisted: true,
-    category: "Orientation"
+    title: "Cricket Tournament Finals",
+    type: "Sports",
+    date: "2025-08-13",
+    time: "2:00 PM",
+    location: "IUT Cricket Ground",
+    description:
+      "Final match of the inter-department cricket tournament. Don't miss the exciting finale!",
+    image: "https://placehold.co/400x250/f59e0b/ffffff?text=Cricket+Tournament",
+    isWishlisted: false,
+    category: "Sports",
   },
   {
     id: 3,
-    title: "Cricket Tournament Finals",
-    type: "Sports",
-    date: "2024-12-20",
-    time: "2:00 PM",
-    location: "IUT Cricket Ground",
-    description: "Final match of the inter-department cricket tournament. Don't miss the exciting finale!",
-    image: "https://placehold.co/400x250/f59e0b/ffffff?text=Cricket+Tournament",
-    isWishlisted: false,
-    category: "Sports"
+    title: "IUT DS Cultural Night",
+    type: "Club",
+    clubName: "IUT Debating Society",
+    date: "2025-08-02",
+    time: "7:00 PM",
+    location: "IUT Auditorium",
+    description:
+      "A vibrant evening of music, dance, and cultural showcases from all over the country.",
+    image: "https://placehold.co/400x250/8b5cf6/ffffff?text=Cultural+Fest",
+    isWishlisted: true,
+    category: "Celebration",
   },
   {
     id: 4,
-    title: "IUT Cultural Fest 2024",
+    title: "Inter-College Debate Showdown",
     type: "Club",
-    clubName: "IUT SIKS",
-    date: "2024-12-25",
-    time: "7:00 PM",
-    location: "Open Air Theater",
-    description: "A vibrant evening of music, dance, and cultural showcases from all over the country.",
-    image: "https://placehold.co/400x250/8b5cf6/ffffff?text=Cultural+Fest",
-    isWishlisted: true,
-    category: "Celebration"
+    clubName: "IUT Debating Society",
+    date: "2025-08-01",
+    time: "3:00 PM",
+    location: "Seminar Room 1",
+    description:
+      "Engage in powerful debates on hot topics with students from across universities.",
+    image: "https://placehold.co/400x250/ef4444/ffffff?text=Debate+Showdown",
+    isWishlisted: false,
+    category: "Competition",
   },
   {
     id: 5,
-    title: "Inter-University Debate Showdown",
-    type: "Club",
-    clubName: "IUT Debating Society",
-    date: "2024-12-18",
-    time: "3:00 PM",
-    location: "Seminar Room 1",
-    description: "Engage in powerful debates on hot topics with students from across universities.",
-    image: "https://placehold.co/400x250/ef4444/ffffff?text=Debate+Showdown",
+    title: "Basketball Championship",
+    type: "Sports",
+    date: "2025-08-22",
+    time: "4:00 PM",
+    location: "IUT Basketball Court",
+    description:
+      "Annual basketball championship featuring the best teams from all departments.",
+    image:
+      "https://placehold.co/400x250/06b6d4/ffffff?text=Basketball+Championship",
     isWishlisted: false,
-    category: "Competition"
+    category: "Sports",
   },
   {
     id: 6,
-    title: "Basketball Championship",
-    type: "Sports",
-    date: "2024-12-22",
-    time: "4:00 PM",
-    location: "IUT Basketball Court",
-    description: "Annual basketball championship featuring the best teams from all departments.",
-    image: "https://placehold.co/400x250/06b6d4/ffffff?text=Basketball+Championship",
-    isWishlisted: false,
-    category: "Sports"
-  },
-  {
-    id: 7,
-    title: "Eid Celebration",
-    type: "General",
-    date: "2024-12-30",
-    time: "6:00 PM",
-    location: "Campus Ground",
-    description: "Community celebration of Eid with traditional food, games, and cultural activities.",
-    image: "https://placehold.co/400x250/84cc16/ffffff?text=Eid+Celebration",
-    isWishlisted: true,
-    category: "Celebration"
-  },
-  {
-    id: 8,
-    title: "Robotics & AI Workshop",
+    title: "IUT Auto Mech",
     type: "Club",
     clubName: "IUT Robotics Society",
-    date: "2024-12-12",
+    date: "2024-08-08",
     time: "11:00 AM",
     location: "Engineering Lab",
-    description: "Learn the fundamentals of robotics and AI through practical sessions with hands-on kits.",
+    description:
+      "Learn the fundamentals of robotics and AI through practical sessions with hands-on kits.",
     image: "https://placehold.co/400x250/6366f1/ffffff?text=Robotics+Workshop",
     isWishlisted: false,
-    category: "Workshop"
-  }
+    category: "Workshop",
+  },
 ];
-
 
 // Available clubs for filtering
 const AVAILABLE_CLUBS = [
@@ -116,10 +98,10 @@ const AVAILABLE_CLUBS = [
   "IUT SIKS",
   "IUT Debating Society",
   "IUT Al-Fazari Interstellar Society",
-  "IUT Automobile Society", 
+  "IUT Automobile Society",
   "IUT Career and Business Society",
   "IUT Photographic Society",
-  "Al Biruni Society of Scientific Studies"
+  "Al Biruni Society of Scientific Studies",
 ];
 
 export default function EventHub() {
@@ -127,39 +109,41 @@ export default function EventHub() {
   const [filters, setFilters] = useState({
     type: "All",
     club: "All",
-    wishlisted: false
+    wishlisted: false,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter events based on selected filters
   const filteredEvents = useMemo(() => {
-    return events.filter(event => {
+    return events.filter((event) => {
       // Type filter
       if (filters.type !== "All" && event.type !== filters.type) {
         return false;
       }
-      
+
       // Club filter
       if (filters.club !== "All" && event.clubName !== filters.club) {
         return false;
       }
-      
+
       // Wishlisted filter
       if (filters.wishlisted && !event.isWishlisted) {
         return false;
       }
-      
+
       return true;
     });
   }, [events, filters]);
 
   // Toggle wishlist status
   const toggleWishlist = (eventId) => {
-    setEvents(events.map(event => 
-      event.id === eventId 
-        ? { ...event, isWishlisted: !event.isWishlisted }
-        : event
-    ));
+    setEvents(
+      events.map((event) =>
+        event.id === eventId
+          ? { ...event, isWishlisted: !event.isWishlisted }
+          : event
+      )
+    );
   };
 
   // Get unique event types for filter
@@ -168,7 +152,7 @@ export default function EventHub() {
   return (
     <div className="event-hub-page">
       <Navbar />
-      
+
       <main className="event-hub-main">
         {/* Header Section */}
         <div className="event-hub-header animate-slide-in-top">
@@ -178,8 +162,10 @@ export default function EventHub() {
               Event Hub
               <span className="icon">🎉</span>
             </h1>
-            <p className="subtitle">Discover and join exciting events happening at IUT</p>
-            <button 
+            <p className="subtitle">
+              Discover and join exciting events happening at IUT
+            </p>
+            <button
               className="add-event-btn"
               onClick={() => setIsModalOpen(true)}
             >
@@ -195,14 +181,16 @@ export default function EventHub() {
             <div className="filter-section">
               <h3 className="filter-title">Event Type</h3>
               <div className="filter-options">
-                {eventTypes.map(type => (
+                {eventTypes.map((type) => (
                   <label key={type} className="filter-option">
                     <input
                       type="radio"
                       name="type"
                       value={type}
                       checked={filters.type === type}
-                      onChange={(e) => setFilters({...filters, type: e.target.value})}
+                      onChange={(e) =>
+                        setFilters({ ...filters, type: e.target.value })
+                      }
                     />
                     <span className="filter-label">{type}</span>
                   </label>
@@ -220,18 +208,22 @@ export default function EventHub() {
                       name="club"
                       value="All"
                       checked={filters.club === "All"}
-                      onChange={(e) => setFilters({...filters, club: e.target.value})}
+                      onChange={(e) =>
+                        setFilters({ ...filters, club: e.target.value })
+                      }
                     />
                     <span className="filter-label">All Clubs</span>
                   </label>
-                  {AVAILABLE_CLUBS.map(club => (
+                  {AVAILABLE_CLUBS.map((club) => (
                     <label key={club} className="filter-option">
                       <input
                         type="radio"
                         name="club"
                         value={club}
                         checked={filters.club === club}
-                        onChange={(e) => setFilters({...filters, club: e.target.value})}
+                        onChange={(e) =>
+                          setFilters({ ...filters, club: e.target.value })
+                        }
                       />
                       <span className="filter-label">{club}</span>
                     </label>
@@ -246,16 +238,20 @@ export default function EventHub() {
                 <input
                   type="checkbox"
                   checked={filters.wishlisted}
-                  onChange={(e) => setFilters({...filters, wishlisted: e.target.checked})}
+                  onChange={(e) =>
+                    setFilters({ ...filters, wishlisted: e.target.checked })
+                  }
                 />
                 <span className="filter-label">Show Wishlisted Only</span>
               </label>
             </div>
 
             <div className="filter-section">
-              <button 
+              <button
                 className="clear-filters-btn"
-                onClick={() => setFilters({type: "All", club: "All", wishlisted: false})}
+                onClick={() =>
+                  setFilters({ type: "All", club: "All", wishlisted: false })
+                }
               >
                 Clear All Filters
               </button>
@@ -266,12 +262,19 @@ export default function EventHub() {
           <div className="events-section">
             <div className="events-header animate-slide-in-right">
               <h2 className="events-title">
-                {filteredEvents.length} Event{filteredEvents.length !== 1 ? 's' : ''} Found
+                {filteredEvents.length} Event
+                {filteredEvents.length !== 1 ? "s" : ""} Found
               </h2>
               <div className="events-count">
-                {filters.type !== "All" && <span className="filter-tag">{filters.type}</span>}
-                {filters.club !== "All" && <span className="filter-tag">{filters.club}</span>}
-                {filters.wishlisted && <span className="filter-tag">Wishlisted</span>}
+                {filters.type !== "All" && (
+                  <span className="filter-tag">{filters.type}</span>
+                )}
+                {filters.club !== "All" && (
+                  <span className="filter-tag">{filters.club}</span>
+                )}
+                {filters.wishlisted && (
+                  <span className="filter-tag">Wishlisted</span>
+                )}
               </div>
             </div>
 
@@ -280,7 +283,10 @@ export default function EventHub() {
                 <div className="no-events animate-fade-in-scale">
                   <div className="no-events-icon">🎭</div>
                   <h3>No events found</h3>
-                  <p>Try adjusting your filters or check back later for new events</p>
+                  <p>
+                    Try adjusting your filters or check back later for new
+                    events
+                  </p>
                 </div>
               ) : (
                 filteredEvents.map((event) => (
@@ -298,10 +304,10 @@ export default function EventHub() {
       </main>
 
       {/* Add Event Modal */}
-      <AddEventModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <AddEventModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
       />
     </div>
   );
-} 
+}
