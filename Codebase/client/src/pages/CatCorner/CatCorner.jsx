@@ -272,15 +272,19 @@ export default function CatCorner() {
 
 
               {/* Posts */}
-              {!loading && posts.map((post) => (
+              {!loading && posts.filter(post => (
+                post.category === 'cat' ||
+                (post.tags && post.tags.some(tag => tag.tag && (tag.tag.name === 'Cat Post' || tag.tag.name === 'cat')))
+                || post.label === 'Cat Post'
+              )).map((post) => (
                 <div key={post.id} className="post-card">
                   <div className="post-header">
                     <div className="user-info">
                       <img 
-                        src={post.user?.profilePicture ? 
-                          (post.user.profilePicture.startsWith('http') ? 
-                            post.user.profilePicture : 
-                            `http://localhost:3000${post.user.profilePicture}`
+                        src={post.user?.profile?.profilePicture ? 
+                          (post.user.profile.profilePicture.startsWith('http') ? 
+                            post.user.profile.profilePicture : 
+                            `http://localhost:3000${post.user.profile.profilePicture}`
                           ) : '/assets/default-avatar.png'
                         } 
                         alt="User" 
@@ -291,7 +295,15 @@ export default function CatCorner() {
                       />
                       <div className="user-details">
                         <h4>{post.isAnonymous ? 'Anonymous' : (post.user?.name || 'Unknown User')}</h4>
-                        <p className="post-time">{formatDateTime(post.createdAt)}</p>
+                        <p className="post-time">
+                          {formatDateTime(post.createdAt)}
+                          {/* Show cat icon if post is labeled as "Cat Post" */}
+                          {(post.category === 'cat' || 
+                            post.tags?.some(tag => tag.tag?.name === 'Cat Post') ||
+                            post.label === 'Cat Post') && (
+                            <span className="ml-2 text-orange-500" title="Cat Post">🐱</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>

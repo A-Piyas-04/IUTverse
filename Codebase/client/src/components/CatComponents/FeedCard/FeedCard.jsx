@@ -198,8 +198,14 @@ export default function FeedCard({ post, onPostUpdate, refreshPosts }) {
               {post.user || "Anonymous"}
             </h4>
             <p className="post-meta">
-              {formatDate(post.createdAt || post.time)} •{" "}
-              <span className="text-green-500">🐱</span>
+              {formatDate(post.createdAt || post.time)}
+              {/* Show cat icon if post is labeled as "Cat Post" */}
+              {(post.category === 'cat' || 
+                post.tags?.some(tag => tag.tag?.name === 'Cat Post') ||
+                post.label === 'Cat Post') && (
+                <span className="ml-2 text-orange-500" title="Cat Post">🐱</span>
+              )}
+              <span className="text-green-500 ml-1">•</span>
             </p>
           </div>
           <button className="post-options-btn">

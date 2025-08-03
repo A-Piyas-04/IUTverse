@@ -72,22 +72,50 @@ exports.getPosts = async (req, res) => {
     
     // Filter by category using tags if category is provided
     if (category) {
-      where = {
-        OR: [
-          // Check if post has the category in the category field
-          { category: category },
-          // Check if post has a tag with the category name
-          {
-            tags: {
-              some: {
-                tag: {
-                  name: category
+      if (category === 'cat') {
+        // For cat category, include posts that would show cat icon:
+        // 1. Posts with category 'cat'
+        // 2. Posts with tags named 'cat' or 'Cat Post'
+        // 3. Posts with label field set to 'Cat Post'
+        where = {
+          OR: [
+            // Check if post has the category 'cat'
+            { category: 'cat' },
+            // Check if post has a tag with name 'cat' or 'Cat Post'
+            {
+              tags: {
+                some: {
+                  tag: {
+                    name: {
+                      in: ['cat', 'Cat Post']
+                    }
+                  }
+                }
+              }
+            },
+            // Check if post has label field set to 'Cat Post'
+            { label: 'Cat Post' }
+          ]
+        };
+      } else {
+        // For other categories, use original logic
+        where = {
+          OR: [
+            // Check if post has the category in the category field
+            { category: category },
+            // Check if post has a tag with the category name
+            {
+              tags: {
+                some: {
+                  tag: {
+                    name: category
+                  }
                 }
               }
             }
-          }
-        ]
-      };
+          ]
+        };
+      }
       console.log('Filter where clause:', JSON.stringify(where, null, 2));
     }
 
