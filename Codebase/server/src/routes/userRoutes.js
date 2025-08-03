@@ -43,6 +43,38 @@ router.get("/user/:userId", userController.getUserById);
 // Search users (protected - for chat functionality)
 router.get("/users/search", authenticateToken, userController.searchUsers);
 
+// Student ID routes
+// Update student ID (protected)
+router.put(
+  "/user/student-id",
+  authenticateToken,
+  userController.updateStudentId
+);
+
+// Get student ID (protected)
+router.get("/user/student-id", authenticateToken, userController.getStudentId);
+
+// Delete student ID (protected)
+router.delete(
+  "/user/student-id",
+  authenticateToken,
+  userController.deleteStudentId
+);
+
+// Check student ID availability (protected)
+router.get(
+  "/user/student-id/check/:studentId",
+  authenticateToken,
+  userController.checkStudentIdAvailability
+);
+
+// Get user by student ID (protected)
+router.get(
+  "/user/by-student-id/:studentId",
+  authenticateToken,
+  userController.getUserByStudentId
+);
+
 // Profile picture routes
 // Upload profile picture (protected)
 router.post(

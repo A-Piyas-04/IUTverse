@@ -65,34 +65,34 @@ exports.getPosts = async (req, res) => {
     const skip = (page - 1) * limit;
     const category = req.query.category;
 
-    console.log('getPosts called with category:', category);
+    console.log("getPosts called with category:", category);
 
     // Build where clause for filtering
     let where = {};
-    
+
     // Filter by category using tags if category is provided
     if (category) {
-      if (category === 'cat') {
+      if (category === "cat") {
         // For cat category, include posts that would show cat icon:
         // 1. Posts with category 'cat'
         // 2. Posts with tags named 'cat' or 'Cat Post'
         where = {
           OR: [
             // Check if post has the category 'cat'
-            { category: 'cat' },
+            { category: "cat" },
             // Check if post has a tag with name 'cat' or 'Cat Post'
             {
               tags: {
                 some: {
                   tag: {
                     name: {
-                      in: ['cat', 'Cat Post']
-                    }
-                  }
-                }
-              }
-            }
-          ]
+                      in: ["cat", "Cat Post"],
+                    },
+                  },
+                },
+              },
+            },
+          ],
         };
       } else {
         // For other categories, use original logic
@@ -105,15 +105,15 @@ exports.getPosts = async (req, res) => {
               tags: {
                 some: {
                   tag: {
-                    name: category
-                  }
-                }
-              }
-            }
-          ]
+                    name: category,
+                  },
+                },
+              },
+            },
+          ],
         };
       }
-      console.log('Filter where clause:', JSON.stringify(where, null, 2));
+      console.log("Filter where clause:", JSON.stringify(where, null, 2));
     }
 
     const posts = await prisma.post.findMany({
