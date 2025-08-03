@@ -76,7 +76,6 @@ exports.getPosts = async (req, res) => {
         // For cat category, include posts that would show cat icon:
         // 1. Posts with category 'cat'
         // 2. Posts with tags named 'cat' or 'Cat Post'
-        // 3. Posts with label field set to 'Cat Post'
         where = {
           OR: [
             // Check if post has the category 'cat'
@@ -92,9 +91,7 @@ exports.getPosts = async (req, res) => {
                   }
                 }
               }
-            },
-            // Check if post has label field set to 'Cat Post'
-            { label: 'Cat Post' }
+            }
           ]
         };
       } else {
