@@ -50,8 +50,8 @@ export default function HomePage() {
     const fetchPosts = async () => {
       setIsLoading(true);
       try {
-        // Fetch general category posts (excluding cat posts)
-        const postsData = await postService.getPostsByCategory('general');
+        // Fetch all posts (both general and cat posts)
+        const postsData = await postService.getPosts();
         console.log("Homepage posts data:", postsData);
 
         // Handle response - should already be filtered by category
@@ -110,8 +110,8 @@ export default function HomePage() {
       setImagePreview(null);
       setIsCatPost(false);
 
-      // Refresh posts - fetch only general category posts (homepage shows general posts)
-      const postsData = await postService.getPostsByCategory('general');
+      // Refresh posts - fetch all posts (homepage shows all posts)
+      const postsData = await postService.getPosts();
       console.log("Posts after creation:", postsData);
 
       // Handle response - should already be filtered by category
@@ -140,8 +140,8 @@ export default function HomePage() {
   // Refresh posts after interactions
   const refreshPosts = useCallback(async () => {
     try {
-      // Fetch general category posts (excluding cat posts)
-      const postsData = await postService.getPostsByCategory('general');
+      // Fetch all posts (both general and cat posts)
+      const postsData = await postService.getPosts();
       console.log("Refreshed posts data:", postsData);
 
       // Handle response - should already be filtered by category
@@ -518,8 +518,14 @@ export default function HomePage() {
                       {post.user?.name || "Anonymous"}
                     </h4>
                     <p className="post-meta">
-                      {formatDate(post.createdAt)} •{" "}
-                      <span className="text-blue-500">🌐</span>
+                      {formatDate(post.createdAt)}
+                      {/* Show cat icon if post is labeled as "Cat Post" */}
+                      {(post.category === 'cat' || 
+                        post.tags?.some(tag => tag.tag?.name === 'Cat Post') ||
+                        post.label === 'Cat Post') && (
+                        <span className="ml-2 text-orange-500" title="Cat Post">🐱</span>
+                      )}
+                      <span className="text-blue-500 ml-1">• 🌐</span>
                     </p>
                   </div>
                   <button className="post-options-btn">
