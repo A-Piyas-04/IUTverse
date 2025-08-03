@@ -248,6 +248,96 @@ class UserService {
     }
   }
 
+  // Update student ID
+  async updateStudentId(userId, studentId) {
+    try {
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: { studentId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          department: true,
+          batch: true,
+          studentId: true,
+          createdAt: true,
+        },
+      });
+      return user;
+    } catch (error) {
+      if (error.code === "P2002") {
+        throw new Error("Student ID already exists");
+      }
+      console.error("Error updating student ID:", error);
+      throw error;
+    }
+  }
+
+  // Delete/clear student ID
+  async deleteStudentId(userId) {
+    try {
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: { studentId: null },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          department: true,
+          batch: true,
+          studentId: true,
+          createdAt: true,
+        },
+      });
+      return user;
+    } catch (error) {
+      console.error("Error deleting student ID:", error);
+      throw error;
+    }
+  }
+
+  // Check if student ID exists
+  async checkStudentIdExists(studentId, excludeUserId = null) {
+    try {
+      const whereCondition = { studentId };
+      if (excludeUserId) {
+        whereCondition.id = { not: excludeUserId };
+      }
+
+      const user = await prisma.user.findFirst({
+        where: whereCondition,
+        select: { id: true },
+      });
+      return !!user;
+    } catch (error) {
+      console.error("Error checking student ID existence:", error);
+      throw error;
+    }
+  }
+
+  // Get user by student ID
+  async getUserByStudentId(studentId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { studentId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          department: true,
+          batch: true,
+          studentId: true,
+          createdAt: true,
+        },
+      });
+      return user;
+    } catch (error) {
+      console.error("Error getting user by student ID:", error);
+      throw error;
+    }
+  }
+
   // Close database connection
   async disconnect() {
     await prisma.$disconnect();

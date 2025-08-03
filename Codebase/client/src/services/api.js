@@ -166,6 +166,35 @@ class ApiService {
     });
   }
 
+  // Student ID methods
+  async updateStudentId(studentId) {
+    return this.request("/user/student-id", {
+      method: "PUT",
+      body: JSON.stringify({ studentId }),
+    });
+  }
+
+  async getStudentId() {
+    return this.request("/user/student-id", {
+      method: "GET",
+    });
+  }
+
+  async deleteStudentId() {
+    return this.request("/user/student-id", {
+      method: "DELETE",
+    });
+  }
+
+  async checkStudentIdAvailability(studentId) {
+    return this.request(
+      `/user/student-id/check/${encodeURIComponent(studentId)}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   // Get user by ID (for future use)
   async getUserById(userId) {
     return this.request(`/user/${userId}`, {
