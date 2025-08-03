@@ -200,7 +200,7 @@ export default function HomePage() {
     }
   }; // Handle menu item clicks
   const handleMenuClick = (label) => {
-    console.log('Menu item clicked:', label); // Debug log
+    console.log("Menu item clicked:", label); // Debug log
     setIsMobileMenuOpen(false); // Close mobile menu when item is selected
     switch (label) {
       case "Prayer Times":
@@ -312,15 +312,30 @@ export default function HomePage() {
       <Navbar />
 
       {/* Mobile Menu Button */}
-      <button 
+      <button
         className="md:hidden fixed top-20 left-4 z-51 bg-blue-100 hover:bg-blue-200 p-2 rounded-lg shadow-lg transition-colors"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
-        <svg className="w-6 h-6 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-6 h-6 text-blue-800"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           {isMobileMenuOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           )}
         </svg>
       </button>
@@ -329,17 +344,17 @@ export default function HomePage() {
       {isMobileMenuOpen && (
         <>
           {/* Left backdrop - covers area to the right of sidebar */}
-          <div 
+          <div
             className="md:hidden fixed top-[80px] left-[320px] right-0 bottom-0 z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
           {/* Top backdrop - covers header area */}
-          <div 
+          <div
             className="md:hidden fixed top-0 left-0 right-0 h-[80px] z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
           {/* Bottom backdrop - covers area below sidebar */}
-          <div 
+          <div
             className="md:hidden fixed top-[calc(100vh)] left-0 w-[320px] bottom-0 z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
@@ -349,8 +364,10 @@ export default function HomePage() {
       {/* MAIN CONTENT AREA */}
       <main className="main-content animate-fade-in-up">
         {/* LEFT SIDEBAR */}
-        <aside 
-          className={`left-sidebar animate-fade-in-left ${isMobileMenuOpen ? 'mobile-open' : ''}`}
+        <aside
+          className={`left-sidebar animate-fade-in-left ${
+            isMobileMenuOpen ? "mobile-open" : ""
+          }`}
         >
           <h3 className="menu-title">Menu</h3>
           <ul className="menu-list">
@@ -446,11 +463,17 @@ export default function HomePage() {
               </label>
               <button
                 className={`action-btn cat-toggle ${
-                  isCatPost ? "bg-orange-100 border-orange-300" : "hover:bg-orange-50"
+                  isCatPost
+                    ? "bg-orange-100 border-orange-300"
+                    : "hover:bg-orange-50"
                 }`}
                 onClick={() => setIsCatPost(!isCatPost)}
                 disabled={isPosting}
-                title={isCatPost ? "This will be posted as a Cat Post" : "Click to make this a Cat Post"}
+                title={
+                  isCatPost
+                    ? "This will be posted as a Cat Post"
+                    : "Click to make this a Cat Post"
+                }
               >
                 {isCatPost ? "🐱 Cat Post ✓" : "🐱 Cat Post"}
               </button>
@@ -520,10 +543,14 @@ export default function HomePage() {
                     <p className="post-meta">
                       {formatDate(post.createdAt)}
                       {/* Show cat icon if post is labeled as "Cat Post" */}
-                      {(post.category === 'cat' || 
-                        post.tags?.some(tag => tag.tag?.name === 'Cat Post') ||
-                        post.label === 'Cat Post') && (
-                        <span className="ml-2 text-orange-500" title="Cat Post">🐱</span>
+                      {(post.category === "cat" ||
+                        post.tags?.some(
+                          (tag) => tag.tag?.name === "Cat Post"
+                        ) ||
+                        post.label === "Cat Post") && (
+                        <span className="ml-2 text-orange-500" title="Cat Post">
+                          🐱
+                        </span>
                       )}
                       <span className="text-blue-500 ml-1">• 🌐</span>
                     </p>
@@ -565,7 +592,6 @@ export default function HomePage() {
                   <div className="post-reactions">
                     <div className="reaction-icons">
                       <span className="text-blue-500">👍</span>
-                      <span className="text-red-500">❤️</span>
                     </div>
                     <span>{post._count?.reactions || 0}</span>
                   </div>
@@ -659,7 +685,10 @@ export default function HomePage() {
       <Weather isOpen={showWeather} onClose={() => setShowWeather(false)} />
 
       {/* Academic Calendar Modal */}
-      <AcademicCalendar isOpen={showAcademicCalendar} onClose={() => setShowAcademicCalendar(false)} />
+      <AcademicCalendar
+        isOpen={showAcademicCalendar}
+        onClose={() => setShowAcademicCalendar(false)}
+      />
 
       {/* Animations */}
       <style>{`
