@@ -3,15 +3,39 @@
 IUTverse is a comprehensive campus-centric platform designed to streamline communication, collaboration, and resource sharing for students, faculty, and staff at the Islamic University of Technology (IUT). The platform integrates social, academic, and utility features to enhance the university experience.
 
 ## Features
-- **Weather Dashboard**: Real-time weather updates for Gazipur, Bangladesh.
-- **CatCorner**: Community-driven cat posts and interactions.
-- **Lost & Found**: Report and recover lost items on campus.
-- **Jobs Board**: Post and apply for campus-related jobs and internships.
-- **Confessions**: Anonymous sharing and polling.
-- **Academics**: Share and access academic resources.
-- **CatQA**: Ask and answer questions in a Q&A format.
-- **Profile Management**: Customizable user profiles with cover and profile pictures.
-- **Notifications**: Stay updated with real-time alerts.
+- **CatCorner**:
+  - Community-driven cat posts and interactions
+  - Cat Adventure Game (multi-level, collectibles, power-ups, responsive UI)
+- **Lost & Found**:
+  - Report lost items
+  - Browse and recover found items
+  - Item details and contact system
+- **Jobs Board**:
+  - Post campus-related jobs and internships
+  - Apply for jobs
+  - Job application tracking
+  - Comments and requirements per job
+- **Confessions**:
+  - Anonymous confession posting
+  - Polling and voting
+  - Tag-based filtering (Academic Stress, Hall Life, Wholesome, etc.)
+  - Analytics and random confession feature
+- **Academics**:
+  - Share and access academic resources
+  - Question paper sharing
+  - Academic resource hub
+- **CatQA**:
+  - Q&A format for campus-related questions
+  - Upvote/downvote answers
+- **Profile Management**:
+  - Customizable user profiles
+  - Cover and profile pictures
+  - Bio, interests, badges, academic info
+- **Event Hub**:
+  - Campus event listings and details
+- **Chat**:
+  - Real-time messaging
+
 
 ## Tech Stack
 - **Frontend**: React, Tailwind CSS, Vite
@@ -19,6 +43,15 @@ IUTverse is a comprehensive campus-centric platform designed to streamline commu
 - **Database**: PostgreSQL
 - **Authentication**: JWT-based
 - **APIs**: OpenWeatherMap, custom REST endpoints
+
+## Detailed Dependencies
+### Client
+- **Core**: react, react-dom, react-router-dom, axios, date-fns
+- **Dev**: vite, @vitejs/plugin-react, tailwindcss, postcss, autoprefixer, eslint, @types/react, @types/react-dom, eslint-plugin-react, eslint-plugin-react-hooks, eslint-plugin-react-refresh, @tailwindcss/postcss
+
+### Server
+- **Core**: express, cors, dotenv, jsonwebtoken, bcrypt, multer, nodemailer, @prisma/client, pg, pg-promise
+- **Dev**: prisma
 
 ## Getting Started
 
@@ -66,7 +99,7 @@ IUTverse is a comprehensive campus-centric platform designed to streamline commu
 ## Usage
 - Access the client at `http://localhost:5173/` (or as specified in terminal output).
 - Register or log in to explore features.
-- Use the navigation menu to access different modules (Weather, CatCorner, Lost & Found, Jobs, etc).
+- Use the navigation menu to access different modules (Weather, CatCorner, Lost & Found, Jobs, Confessions, Academics, CatQA, Profile, Notifications, Event Hub, Chat, Admin).
 
 ## Contribution Guidelines
 1. Fork the repository and create your feature branch (`git checkout -b feature/YourFeature`).
