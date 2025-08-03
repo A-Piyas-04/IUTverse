@@ -16,7 +16,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Local env files
-.env*
+.env
 
 # Editor directories and files
 .vscode/
