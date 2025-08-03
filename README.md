@@ -81,15 +81,5 @@ IUTverse is a comprehensive campus-centric platform designed to streamline commu
 - Register or log in to explore features.
 - Use the navigation menu to access different modules (Weather, CatCorner, Lost & Found, Jobs, Confessions, Academics, CatQA, Profile, Notifications, Event Hub, Chat, Admin).
 
-## Contribution Guidelines
-1. Fork the repository and create your feature branch (`git checkout -b feature/YourFeature`).
-2. Commit your changes (`git commit -am 'Add new feature'`).
-3. Push to the branch (`git push origin feature/YourFeature`).
-4. Open a Pull Request describing your changes.
-5. Ensure your code follows the project's style and passes all tests.
-
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ## Contact
 For questions, suggestions, or support, please open an issue or contact the maintainers at [ahnafpias@iut-dhaka.edu].
