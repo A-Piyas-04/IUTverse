@@ -1,6 +1,6 @@
 # IUTverse
 
-IUTverse is a comprehensive campus-centric platform designed to streamline communication, collaboration, and resource sharing for students, faculty, and staff at the Islamic University of Technology (IUT). The platform integrates social, academic, and utility features to enhance the university experience.
+IUTverse is a comprehensive campus-centric platform designed to streamline communication, collaboration, and resource sharing for students at the Islamic University of Technology (IUT). The platform integrates social, academic, and utility features to enhance the university experience.
 
 ## Features
 - **IUT Mail-Based Authentication** – Access restricted to verified IUT email users for a trusted environment.
