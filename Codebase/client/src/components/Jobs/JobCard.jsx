@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import JobComment from "./JobComment.jsx";
 import JobApplications from "./JobApplications.jsx";
+import ApiService from "../../services/api.js";
 
 export default function JobCard({
   job,
@@ -33,9 +34,9 @@ export default function JobCard({
       <div className="flex items-start gap-3 p-4 pb-3 ml-[10px]">
         <img
           src={
-            job.postedBy?.profile?.profilePicture ||
-            job.postedBy?.profileImg ||
-            "/profile_picture.jpg"
+            job.postedBy?.profile?.profilePicture
+              ? ApiService.getProfilePictureUrl(job.postedBy.id)
+              : job.postedBy?.profileImg || "/profile_picture.jpg"
           }
           alt="Profile"
           className="w-[35px] h-[35px] mr-[12px] rounded-full mt-[30px] cursor-pointer hover:opacity-80 transition-opacity"
