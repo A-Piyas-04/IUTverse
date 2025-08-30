@@ -1,0 +1,285 @@
+# IUTverse Project Structure Analysis
+
+## Project Overview
+IUTverse is a comprehensive campus social platform built with the PERN stack (PostgreSQL, Express.js, React, Node.js) designed specifically for Islamic University of Technology (IUT) students. The platform integrates academic resources, social networking, job opportunities, and campus-specific features.
+
+## Technology Stack
+- **Frontend**: React 18 with Vite, Tailwind CSS
+- **Backend**: Node.js with Express.js
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT (JSON Web Tokens)
+- **File Upload**: Multer middleware
+- **Email Service**: Nodemailer
+- **Security**: bcrypt for password hashing
+
+## Root Directory Structure
+```
+IUTverse/
+├── Codebase/
+│   ├── client/          # React frontend application
+│   └── server/          # Node.js backend application
+├── Documents/           # Project documentation
+├── ER Diagram details.txt
+├── presentation_guidelines.txt
+└── judging_criteria_analysis.txt
+```
+
+## Client-Side Structure (Frontend)
+```
+client/
+├── public/              # Static assets
+├── src/
+│   ├── App.jsx          # Main application component
+│   ├── main.jsx         # Application entry point
+│   ├── components/      # Reusable UI components
+│   │   ├── CatComponents/     # Cat Corner specific components
+│   │   │   ├── CatLeftSidebar/
+│   │   │   ├── CatProfiles/
+│   │   │   ├── CatRightSidebar/
+│   │   │   ├── FeedCard/
+│   │   │   └── PostModal/
+│   │   ├── ErrorBoundary/     # Error handling component
+│   │   ├── Jobs/              # Job-related components
+│   │   │   ├── JobApplications.jsx
+│   │   │   ├── JobCard.jsx
+│   │   │   ├── JobCategories.jsx
+│   │   │   ├── JobComment.jsx
+│   │   │   ├── JobForm.jsx
+│   │   │   ├── JobReply.jsx
+│   │   │   ├── RecentPosters.jsx
+│   │   │   └── useJobsLogic.js
+│   │   ├── LoadingSpinner/    # Loading UI component
+│   │   ├── Navbar/            # Navigation component
+│   │   ├── PageTransition/    # Page transition effects
+│   │   ├── PostModal.jsx      # General post modal
+│   │   └── ProtectedRoute.jsx # Route protection
+│   ├── contexts/        # React Context providers
+│   ├── hooks/           # Custom React hooks
+│   ├── pages/           # Main application pages
+│   │   ├── AboutUs/           # Team information page
+│   │   ├── AcademicResourceHub/ # Academic resources
+│   │   ├── Admin/             # Moderation panel
+│   │   ├── CatCorner/         # Cat-themed social feature
+│   │   │   └── view/
+│   │   │       ├── CatBreak/
+│   │   │       ├── CatFacts/
+│   │   │       ├── CatGame/
+│   │   │       ├── CatProfiles/
+│   │   │       ├── CatQA/
+│   │   │       └── Sidebar/
+│   │   ├── Chat/              # Real-time messaging
+│   │   │   └── components/
+│   │   │       ├── ChatWindow.jsx
+│   │   │       ├── ConversationList.jsx
+│   │   │       └── StartChatModal.jsx
+│   │   ├── Confessions/       # Anonymous confessions
+│   │   │   └── components/
+│   │   │       ├── AnalyticsWidget.jsx
+│   │   │       ├── ConfessionCard.jsx
+│   │   │       ├── ConfessionModal.jsx
+│   │   │       └── RandomConfessionModal.jsx
+│   │   ├── EventHub/          # Campus events
+│   │   │   └── components/
+│   │   │       ├── AddEventModal.jsx
+│   │   │       └── EventCard.jsx
+│   │   ├── Jobs/              # Job board
+│   │   ├── Login/             # User authentication
+│   │   ├── LostAndFound/      # Lost & found items
+│   │   │   └── components/
+│   │   │       ├── AddPostModal.jsx
+│   │   │       └── LostFoundCard.jsx
+│   │   ├── Profile/           # User profiles
+│   │   ├── Signup/            # User registration
+│   │   └── homepage/          # Dashboard
+│   │       └── view/
+│   │           ├── AcademicCalendar/
+│   │           ├── BrainTeaser/
+│   │           ├── IUTFacts/
+│   │           ├── PrayerTime/
+│   │           └── Weather/
+│   ├── services/        # API service functions
+│   ├── styles/          # Global CSS styles
+│   ├── tests/           # Frontend tests
+│   └── utils/           # Utility functions
+├── package.json         # Frontend dependencies
+└── vite.config.js       # Vite configuration
+```
+
+## Server-Side Structure (Backend)
+```
+server/
+├── prisma/              # Database schema and migrations
+│   ├── migrations/      # Database migration files
+│   └── schema.prisma    # Database schema definition
+├── src/
+│   ├── app.js           # Express application setup
+│   ├── config/          # Configuration files
+│   │   ├── config.js    # General configuration
+│   │   ├── database.js  # Database configuration
+│   │   └── email.js     # Email service configuration
+│   ├── controllers/     # Request handlers
+│   │   ├── academicResourceController.js
+│   │   ├── authController.js
+│   │   ├── catPostController.js
+│   │   ├── catQAController.js
+│   │   ├── chatController.js
+│   │   ├── commentController.js
+│   │   ├── confessionController.js
+│   │   ├── jobApplicationController.js
+│   │   ├── jobCommentController.js
+│   │   ├── jobController.js
+│   │   ├── lostAndFoundController.js
+│   │   ├── postController.js
+│   │   ├── profileController.js
+│   │   └── userController.js
+│   ├── middleware/      # Express middleware
+│   │   ├── auth.js      # Authentication middleware
+│   │   ├── authMiddleware.js
+│   │   ├── confessionValidation.js
+│   │   ├── coverPictureUpload.js
+│   │   ├── logging.js   # Request logging
+│   │   ├── profilePictureUpload.js
+│   │   ├── upload.js    # File upload handling
+│   │   ├── uploadMiddleware.js
+│   │   └── uploadPdf.js # PDF upload handling
+│   ├── routes/          # API route definitions
+│   │   ├── academicResourceRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── catPostRoutes.js
+│   │   ├── catQARoutes.js
+│   │   ├── chatRoutes.js
+│   │   ├── confessionRoutes.js
+│   │   ├── index.js     # Main route aggregator
+│   │   ├── jobRoutes.js
+│   │   ├── lostAndFoundRoutes.js
+│   │   ├── postRoutes.js
+│   │   └── userRoutes.js
+│   ├── services/        # Business logic layer
+│   │   ├── academicResourceService.js
+│   │   ├── catPostService.js
+│   │   ├── catQAService.js
+│   │   ├── chatService.js
+│   │   ├── confessionService.js
+│   │   ├── emailService.js
+│   │   ├── jobApplicationService.js
+│   │   ├── jobCommentService.js
+│   │   ├── jobService.js
+│   │   ├── lostAndFoundService.js
+│   │   └── userService.js
+│   └── utils/           # Utility functions
+│       └── authUtils.js # Authentication utilities
+├── test/                # Backend tests
+├── uploads/             # User uploaded files
+├── files/               # Static files
+├── package.json         # Backend dependencies
+└── deleteAllPosts.js    # Utility script
+```
+
+## Core Features & Modules
+
+### 1. Authentication & User Management
+- **Files**: `authController.js`, `authRoutes.js`, `userController.js`
+- **Features**: JWT-based authentication, user registration, profile management
+- **Security**: bcrypt password hashing, protected routes
+
+### 2. Job Board System
+- **Files**: `jobController.js`, `jobApplicationController.js`, `jobCommentController.js`
+- **Features**: Job posting, applications, comments, categories
+- **Components**: JobCard, JobForm, JobApplications
+
+### 3. Academic Resource Hub
+- **Files**: `academicResourceController.js`, `AcademicResourceHub.jsx`
+- **Features**: Course materials, question papers, department-wise resources
+- **Database**: QuestionPaper, AcademicResource, Department models
+
+### 4. Social Features
+- **Posts**: General social posts with comments and likes
+- **Confessions**: Anonymous confession system with polls
+- **Cat Corner**: Unique cat-themed social feature with profiles, posts, Q&A
+
+### 5. Communication Systems
+- **Chat**: Real-time messaging between users
+- **Components**: ChatWindow, ConversationList, StartChatModal
+- **Database**: Conversation, ChatMessage models
+
+### 6. Campus Services
+- **Lost & Found**: Item reporting and recovery system
+- **Event Hub**: Campus event management
+- **Homepage Widgets**: Prayer times, weather, academic calendar, IUT facts
+
+### 7. Administrative Features
+- **Moderation**: Admin panel for content management
+- **User Management**: Profile verification, content moderation
+
+## Database Schema (Prisma)
+
+### Core Models
+- **User**: Authentication and basic user data
+- **Profile**: Extended user information and preferences
+- **Post**: General social posts with comments and likes
+- **Job**: Job postings with applications and comments
+- **Event**: Campus events with RSVP functionality
+- **LostFoundItem**: Lost and found item management
+- **Confession**: Anonymous confessions with reactions
+- **Cat**: Cat profiles for the Cat Corner feature
+- **AcademicResource**: Educational materials and resources
+- **ChatMessage**: Real-time messaging system
+
+### Relationships
+- User-Profile (1:1)
+- User-Posts (1:Many)
+- Post-Comments (1:Many)
+- Job-Applications (1:Many)
+- User-Conversations (Many:Many)
+- Department-Resources (1:Many)
+
+## API Structure
+
+### Main API Endpoints
+- `/api/auth/*` - Authentication (login, register, logout)
+- `/api/users/*` - User management and profiles
+- `/api/jobs/*` - Job board functionality
+- `/api/posts/*` - Social posts and comments
+- `/api/confessions/*` - Anonymous confession system
+- `/api/chat/*` - Real-time messaging
+- `/api/academic/*` - Academic resources
+- `/api/lost-and-found/*` - Lost and found items
+- `/api/cat-posts/*` - Cat Corner posts
+- `/api/cat-qa/*` - Cat Corner Q&A
+
+## File Upload System
+- **Profile Pictures**: Handled by `profilePictureUpload.js`
+- **Cover Pictures**: Handled by `coverPictureUpload.js`
+- **General Files**: Handled by `upload.js`
+- **PDF Documents**: Handled by `uploadPdf.js`
+- **Storage**: Local filesystem in `/uploads` and `/files` directories
+
+## Security Features
+- JWT-based authentication
+- Password hashing with bcrypt
+- Protected routes and middleware
+- Input validation and sanitization
+- File upload restrictions
+- CORS configuration
+
+## Development & Testing
+- **Frontend**: Vite development server with hot reload
+- **Backend**: Express server with nodemon for development
+- **Database**: Prisma migrations for schema management
+- **Testing**: Test files in both client and server directories
+
+## Deployment Structure
+- **Static Files**: Served from `/uploads` and `/files`
+- **Environment**: Configurable through environment variables
+- **Database**: PostgreSQL with Prisma ORM
+- **Email**: Nodemailer integration for notifications
+
+## Key Architectural Decisions
+1. **Modular Structure**: Clear separation between controllers, services, and routes
+2. **Component-Based Frontend**: Reusable React components with CSS modules
+3. **Service Layer**: Business logic separated from controllers
+4. **Middleware Pipeline**: Authentication, validation, and file upload handling
+5. **Database Design**: Normalized schema with proper relationships
+6. **API Design**: RESTful endpoints with consistent naming conventions
+
+This structure demonstrates a well-organized, scalable web application with clear separation of concerns, comprehensive feature set, and modern development practices.
