@@ -6,6 +6,8 @@ import ApiService from '../../services/api.js';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
@@ -13,20 +15,6 @@ export default function SignupPage() {
   const validateIUTEmail = (email) => {
     const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
     return iutEmailRegex.test(email);
-  };
-
-  const generatePassword = (email) => {
-    const username = email.split('@')[0];
-    if (username.length < 6) {
-      throw new Error('Username too short');
-    }
-    
-    const firstThree = username.substring(0, 3);
-    const lastThree = username.substring(username.length - 3);
-    const randomNum1 = Math.floor(Math.random() * 10);
-    const randomNum2 = Math.floor(Math.random() * 10);
-    
-    return `${firstThree}${lastThree}${randomNum1}${randomNum2}`;
   };
 
   const handleSubmit = async (e) => {
@@ -37,15 +25,19 @@ export default function SignupPage() {
       return;
     }
 
+    if (password.length < 8) {
+      setMessage('Password must be at least 8 characters long');
+      return;
+    }
+
     setLoading(true);
     setMessage('');
 
     try {
-      // Send signup request to backend using API service (only email, backend generates password)
-      const result = await ApiService.signup(email);
+      const result = await ApiService.signup(email, password, name);
 
       if (result.success) {
-        setMessage('Password sent to your email! Redirecting to login...');
+        setMessage('Account created! Check your email if confirmation is enabled. Redirecting to login...');
         setTimeout(() => {
           navigate('/login');
         }, 2000);
@@ -74,8 +66,18 @@ export default function SignupPage() {
       <div className="auth-form-container" style={{ backgroundImage: `url(${loginImage})` }}>
         <form className="auth-form" onSubmit={handleSubmit}>
           <h2>Get Started</h2>
-          <p className="signup-subtitle">Enter your IUT email to receive your login password</p>
+          <p className="signup-subtitle">Create your IUTverse account with your IUT email</p>
           
+          <label htmlFor="name">Display Name</label>
+          <input
+            id="name"
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={loading}
+          />
+
           <label htmlFor="email">IUT Email Address</label>
           <input
             id="email"
@@ -86,19 +88,30 @@ export default function SignupPage() {
             required
             disabled={loading}
           />
+
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="At least 8 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+          />
           
           {message && (
-            <div className={`message ${message.includes('sent') ? 'success' : 'error'}`}>
+            <div className={`message ${message.includes('created') ? 'success' : 'error'}`}>
               {message}
             </div>
           )}
           
           <button type="submit" disabled={loading}>
-            {loading ? 'Sending Password...' : 'Send Password to Email'}
+            {loading ? 'Creating Account...' : 'Create Account'}
           </button>
           
           <div className="auth-link">
-            Already have a password? <a href="/login">Login here</a>
+            Already have an account? <a href="/login">Login here</a>
           </div>
         </form>
       </div>

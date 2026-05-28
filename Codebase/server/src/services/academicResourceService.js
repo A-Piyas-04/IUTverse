@@ -1,179 +1,158 @@
-const { PrismaClient } = require("@prisma/client");
-const path = require("path");
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  profileSelect,
+  publicUrl,
+} = require("../utils/supabaseData");
 
-const prisma = new PrismaClient();
+const mapDepartment = (department) => ({
+  id: department.id,
+  name: department.name,
+  createdAt: department.created_at,
+});
 
-// Create a new academic resource
+const mapResource = (resource) => ({
+  id: resource.id,
+  title: resource.title,
+  type: resource.type,
+  departmentId: resource.department_id,
+  department: resource.department ? mapDepartment(resource.department) : null,
+  fileUrl: resource.file_path,
+  filePublicUrl: publicUrl(resource.file_bucket, resource.file_path),
+  fileBucket: resource.file_bucket,
+  externalLink: resource.external_link,
+  courseCode: resource.course_code,
+  uploadedById: resource.uploaded_by_id,
+  uploadedBy: mapProfile(resource.uploadedBy),
+  status: resource.status,
+  createdAt: resource.created_at,
+  updatedAt: resource.updated_at,
+});
+
+const resourceSelect = `*, department:departments(id, name, created_at), uploadedBy:profiles!academic_resources_uploaded_by_id_fkey(${profileSelect})`;
+
 const createAcademicResource = async (resourceData) => {
-  try {
-    console.log("[AcademicResourceService] Creating resource:", resourceData);
+  const supabase = ensureSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("academic_resources")
+    .insert({
+      title: resourceData.title,
+      type: resourceData.type,
+      department_id: resourceData.departmentId,
+      file_path: resourceData.filePath || null,
+      file_bucket: resourceData.fileBucket || null,
+      file_mime_type: resourceData.fileMimeType || null,
+      file_size_bytes: resourceData.fileSizeBytes || null,
+      external_link: resourceData.externalLink || null,
+      course_code: resourceData.courseCode || null,
+      uploaded_by_id: resourceData.uploadedById,
+    })
+    .select(resourceSelect)
+    .single();
 
-    const resource = await prisma.academicResource.create({
-      data: resourceData,
-      include: {
-        department: true,
-      },
-    });
-
-    console.log(
-      "[AcademicResourceService] Resource created successfully:",
-      resource
-    );
-    return resource;
-  } catch (error) {
-    console.error("[AcademicResourceService] Error creating resource:", error);
-    throw error;
-  }
+  if (error) throw error;
+  return mapResource(data);
 };
 
-// Get all academic resources with optional filtering
 const getAllAcademicResources = async (filters = {}) => {
-  try {
-    const where = {};
+  const supabase = ensureSupabaseAdmin();
+  let query = supabase
+    .from("academic_resources")
+    .select(resourceSelect)
+    .neq("status", "deleted")
+    .order("created_at", { ascending: false });
 
-    // Add filters if provided
-    if (filters.departmentId) {
-      where.departmentId = parseInt(filters.departmentId);
-    }
+  if (filters.departmentId) query = query.eq("department_id", Number(filters.departmentId));
+  if (filters.type) query = query.eq("type", filters.type);
+  if (filters.courseCode) query = query.ilike("course_code", `%${filters.courseCode}%`);
 
-    if (filters.type) {
-      where.type = filters.type;
-    }
-
-    if (filters.courseCode) {
-      where.courseCode = {
-        contains: filters.courseCode,
-        mode: "insensitive",
-      };
-    }
-
-    console.log(
-      "[AcademicResourceService] Fetching resources with filters:",
-      where
-    );
-
-    const resources = await prisma.academicResource.findMany({
-      where,
-      include: {
-        department: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    console.log("[AcademicResourceService] Found resources:", resources.length);
-    return resources;
-  } catch (error) {
-    console.error("[AcademicResourceService] Error fetching resources:", error);
-    throw error;
-  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return data.map(mapResource);
 };
 
-// Get academic resource by ID
 const getAcademicResourceById = async (id) => {
-  try {
-    console.log("[AcademicResourceService] Fetching resource by ID:", id);
+  const supabase = ensureSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("academic_resources")
+    .select(resourceSelect)
+    .eq("id", Number(id))
+    .maybeSingle();
 
-    const resource = await prisma.academicResource.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        department: true,
-      },
-    });
-
-    console.log("[AcademicResourceService] Resource found:", !!resource);
-    return resource;
-  } catch (error) {
-    console.error(
-      "[AcademicResourceService] Error fetching resource by ID:",
-      error
-    );
-    throw error;
-  }
+  if (error) throw error;
+  return data ? mapResource(data) : null;
 };
 
-// Get all departments
 const getAllDepartments = async () => {
-  try {
-    console.log("[AcademicResourceService] Fetching all departments");
+  const supabase = ensureSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("departments")
+    .select("*")
+    .order("name", { ascending: true });
 
-    const departments = await prisma.department.findMany({
-      orderBy: {
-        name: "asc",
-      },
-    });
-
-    console.log(
-      "[AcademicResourceService] Found departments:",
-      departments.length
-    );
-    return departments;
-  } catch (error) {
-    console.error(
-      "[AcademicResourceService] Error fetching departments:",
-      error
-    );
-    throw error;
-  }
+  if (error) throw error;
+  return data.map(mapDepartment);
 };
 
-// Create a new department
 const createDepartment = async (name) => {
-  try {
-    console.log("[AcademicResourceService] Creating department:", name);
+  const supabase = ensureSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("departments")
+    .insert({ name })
+    .select("*")
+    .single();
 
-    const department = await prisma.department.create({
-      data: { name },
-    });
-
-    console.log("[AcademicResourceService] Department created:", department);
-    return department;
-  } catch (error) {
-    console.error(
-      "[AcademicResourceService] Error creating department:",
-      error
-    );
-    throw error;
-  }
+  if (error) throw error;
+  return mapDepartment(data);
 };
 
-// Update academic resource
-const updateAcademicResource = async (id, updateData) => {
-  try {
-    console.log("[AcademicResourceService] Updating resource:", id, updateData);
-
-    const resource = await prisma.academicResource.update({
-      where: { id: parseInt(id) },
-      data: updateData,
-      include: {
-        department: true,
-      },
-    });
-
-    console.log("[AcademicResourceService] Resource updated successfully");
-    return resource;
-  } catch (error) {
-    console.error("[AcademicResourceService] Error updating resource:", error);
-    throw error;
+const updateAcademicResource = async (id, updateData, userId) => {
+  const existing = await getAcademicResourceById(id);
+  if (!existing) throw new Error("Academic resource not found");
+  if (existing.uploadedById && existing.uploadedById !== userId) {
+    throw new Error("Unauthorized to update this academic resource");
   }
+
+  const payload = {};
+  if (updateData.title !== undefined) payload.title = updateData.title;
+  if (updateData.type !== undefined) payload.type = updateData.type;
+  if (updateData.departmentId !== undefined) payload.department_id = updateData.departmentId;
+  if (updateData.externalLink !== undefined) payload.external_link = updateData.externalLink || null;
+  if (updateData.courseCode !== undefined) payload.course_code = updateData.courseCode || null;
+  if (updateData.filePath !== undefined) payload.file_path = updateData.filePath;
+  if (updateData.fileBucket !== undefined) payload.file_bucket = updateData.fileBucket;
+  if (updateData.fileMimeType !== undefined) payload.file_mime_type = updateData.fileMimeType;
+  if (updateData.fileSizeBytes !== undefined) payload.file_size_bytes = updateData.fileSizeBytes;
+
+  const supabase = ensureSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("academic_resources")
+    .update(payload)
+    .eq("id", Number(id))
+    .select(resourceSelect)
+    .single();
+
+  if (error) throw error;
+  return mapResource(data);
 };
 
-// Delete academic resource
-const deleteAcademicResource = async (id) => {
-  try {
-    console.log("[AcademicResourceService] Deleting resource:", id);
-
-    const resource = await prisma.academicResource.delete({
-      where: { id: parseInt(id) },
-    });
-
-    console.log("[AcademicResourceService] Resource deleted successfully");
-    return resource;
-  } catch (error) {
-    console.error("[AcademicResourceService] Error deleting resource:", error);
-    throw error;
+const deleteAcademicResource = async (id, userId) => {
+  const existing = await getAcademicResourceById(id);
+  if (!existing) throw new Error("Academic resource not found");
+  if (existing.uploadedById && existing.uploadedById !== userId) {
+    throw new Error("Unauthorized to delete this academic resource");
   }
+
+  const supabase = ensureSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("academic_resources")
+    .delete()
+    .eq("id", Number(id))
+    .select(resourceSelect)
+    .single();
+
+  if (error) throw error;
+  return mapResource(data);
 };
 
 module.exports = {

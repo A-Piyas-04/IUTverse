@@ -1,5 +1,6 @@
 // API service for making requests to the backend
 import { authUtils } from "../utils/auth.js";
+import { supabase, isSupabaseConfigured } from "./supabaseClient.js";
 
 const API_BASE_URL = "/api";
 
@@ -9,7 +10,7 @@ class ApiService {
 
     // Prepare headers based on request content
     const headers = {
-      ...authUtils.getAuthHeader(),
+      ...(await authUtils.getAuthHeaderAsync()),
       ...options.headers,
     };
 
@@ -99,16 +100,63 @@ class ApiService {
 
   // Auth endpoints
   async login(email, password) {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) return { success: false, error: error.message };
+
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.display_name || data.user.email,
+        createdAt: data.user.created_at,
+      };
+
+      return {
+        success: true,
+        data: {
+          token: data.session.access_token,
+          refreshToken: data.session.refresh_token,
+          user: userData,
+        },
+      };
+    }
+
     return this.request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
   }
 
-  async signup(email) {
+  async signup(email, password, name) {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: name || email.split("@")[0],
+          },
+        },
+      });
+
+      if (error) return { success: false, error: error.message };
+
+      return {
+        success: true,
+        data: {
+          token: data.session?.access_token || null,
+          user: data.user,
+        },
+      };
+    }
+
     return this.request("/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password, name }),
     });
   }
 
@@ -310,7 +358,7 @@ class ApiService {
     formData.append("profilePicture", file);
 
     // Get the authorization token directly to ensure it's included
-    const authHeaders = authUtils.getAuthHeader();
+    const authHeaders = await authUtils.getAuthHeaderAsync();
 
     // Create a URL directly instead of using the request helper
     const url = `${API_BASE_URL}/profile/upload-picture`;
@@ -357,7 +405,7 @@ class ApiService {
     formData.append("coverPicture", file);
 
     // Get the authorization token directly to ensure it's included
-    const authHeaders = authUtils.getAuthHeader();
+    const authHeaders = await authUtils.getAuthHeaderAsync();
 
     // Create a URL directly instead of using the request helper
     const url = `${API_BASE_URL}/profile/upload-cover`;

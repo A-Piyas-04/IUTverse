@@ -37,9 +37,9 @@ const sendMessage = async (req, res) => {
     const { conversationId, receiverId, content } = req.body;
     const senderId = req.user.userId;
 
-    if (!conversationId || !receiverId || !content) {
+    if (!conversationId || !content) {
       return res.status(400).json({
-        message: "Conversation ID, receiver ID, and content are required",
+        message: "Conversation ID and content are required",
       });
     }
 

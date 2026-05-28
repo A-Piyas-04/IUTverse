@@ -1,173 +1,144 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  profileSelect,
+} = require("../utils/supabaseData");
+
+const mapComment = (comment) => ({
+  id: comment.id,
+  content: comment.content,
+  jobId: comment.job_id,
+  authorId: comment.author_id,
+  parentCommentId: comment.parent_comment_id,
+  createdAt: comment.created_at,
+  updatedAt: comment.updated_at,
+  author: mapProfile(comment.author),
+  replies: (comment.replies || []).map(mapComment),
+});
 
 class JobCommentService {
   async createComment(data) {
-    return prisma.jobComment.create({
-      data,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: { profilePicture: true },
-            },
-          },
-        },
-        replies: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                profile: {
-                  select: { profilePicture: true },
-                },
-              },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data: comment, error } = await supabase
+      .from("job_comments")
+      .insert({
+        content: data.content,
+        job_id: Number(data.jobId),
+        author_id: data.authorId,
+        parent_comment_id: data.parentCommentId || null,
+      })
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapComment(comment);
   }
 
   async getCommentsByJobId(jobId) {
-    return prisma.jobComment.findMany({
-      where: {
-        jobId: Number(jobId),
-        parentCommentId: null, // Only get top-level comments
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: { profilePicture: true },
-            },
-          },
-        },
-        replies: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                profile: {
-                  select: { profilePicture: true },
-                },
-              },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data: comments, error } = await supabase
+      .from("job_comments")
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .eq("job_id", Number(jobId))
+      .is("parent_comment_id", null)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    const ids = comments.map((comment) => comment.id);
+    let replies = [];
+    if (ids.length) {
+      const result = await supabase
+        .from("job_comments")
+        .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+        .in("parent_comment_id", ids)
+        .order("created_at", { ascending: true });
+      if (result.error) throw result.error;
+      replies = result.data;
+    }
+
+    return comments.map((comment) =>
+      mapComment({
+        ...comment,
+        replies: replies.filter((reply) => reply.parent_comment_id === comment.id),
+      })
+    );
   }
 
   async createReply(commentId, data) {
-    return prisma.jobComment.create({
-      data: {
-        ...data,
-        parentCommentId: Number(commentId),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: { profilePicture: true },
-            },
-          },
-        },
-      },
+    return this.createComment({
+      ...data,
+      parentCommentId: Number(commentId),
     });
   }
 
   async updateComment(commentId, content, userId) {
-    // First check if the comment belongs to the user
-    const comment = await prisma.jobComment.findUnique({
-      where: { id: Number(commentId) },
-    });
-
-    if (!comment || comment.authorId !== userId) {
+    const supabase = ensureSupabaseAdmin();
+    const comment = await this.getRawComment(commentId);
+    if (!comment || comment.author_id !== userId) {
       throw new Error("Unauthorized to update this comment");
     }
 
-    return prisma.jobComment.update({
-      where: { id: Number(commentId) },
-      data: { content },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: { profilePicture: true },
-            },
-          },
-        },
-      },
-    });
+    const { data, error } = await supabase
+      .from("job_comments")
+      .update({ content })
+      .eq("id", Number(commentId))
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapComment(data);
   }
 
   async deleteComment(commentId, userId) {
-    // First check if the comment belongs to the user
-    const comment = await prisma.jobComment.findUnique({
-      where: { id: Number(commentId) },
-    });
-
-    if (!comment || comment.authorId !== userId) {
+    const supabase = ensureSupabaseAdmin();
+    const comment = await this.getRawComment(commentId);
+    if (!comment || comment.author_id !== userId) {
       throw new Error("Unauthorized to delete this comment");
     }
 
-    // Delete the comment (this will cascade delete replies due to schema)
-    return prisma.jobComment.delete({
-      where: { id: Number(commentId) },
-    });
+    const { data, error } = await supabase
+      .from("job_comments")
+      .delete()
+      .eq("id", Number(commentId))
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getRawComment(commentId) {
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("job_comments")
+      .select("*")
+      .eq("id", Number(commentId))
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
   }
 
   async getCommentById(commentId) {
-    return prisma.jobComment.findUnique({
-      where: { id: Number(commentId) },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: { profilePicture: true },
-            },
-          },
-        },
-        replies: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                profile: {
-                  select: { profilePicture: true },
-                },
-              },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data: comment, error } = await supabase
+      .from("job_comments")
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .eq("id", Number(commentId))
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!comment) return null;
+
+    const { data: replies, error: repliesError } = await supabase
+      .from("job_comments")
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .eq("parent_comment_id", Number(commentId))
+      .order("created_at", { ascending: true });
+
+    if (repliesError) throw repliesError;
+    return mapComment({ ...comment, replies });
   }
 }
 

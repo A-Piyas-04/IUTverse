@@ -1,275 +1,201 @@
-const { PrismaClient } = require('@prisma/client');
-const path = require('path');
-const fs = require('fs').promises;
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  pageRange,
+  profileSelect,
+  publicUrl,
+  uploadToBucket,
+} = require("../utils/supabaseData");
 
-const prisma = new PrismaClient();
+const mapPost = (post) => ({
+  id: post.id,
+  userId: post.user_id,
+  caption: post.caption,
+  image: post.image_path,
+  imageUrl: publicUrl(post.image_bucket, post.image_path),
+  imageBucket: post.image_bucket,
+  likeCount: post.like_count,
+  createdAt: post.created_at,
+  updatedAt: post.updated_at,
+  user: mapProfile(post.user),
+  likes: post.likes || [],
+  comments: (post.comments || []).map((comment) => ({
+    id: comment.id,
+    userId: comment.user_id,
+    catPostId: comment.cat_post_id,
+    content: comment.content,
+    createdAt: comment.created_at,
+    updatedAt: comment.updated_at,
+    user: mapProfile(comment.user),
+  })),
+});
 
 class CatPostService {
   async createPost(userId, caption, imageFile) {
-    try {
-      // Handle image upload
-      let imagePath = null;
-      if (imageFile) {
-        const uploadDir = path.join(__dirname, '../../uploads/cat-posts');
-        await fs.mkdir(uploadDir, { recursive: true });
-        
-        const fileName = `${Date.now()}-${imageFile.originalname}`;
-        const filePath = path.join(uploadDir, fileName);
-        
-        await fs.writeFile(filePath, imageFile.buffer);
-        imagePath = `/uploads/cat-posts/${fileName}`;
-      }
+    const supabase = ensureSupabaseAdmin();
+    const image = await uploadToBucket({
+      bucket: "cat-posts",
+      userId,
+      file: imageFile,
+      prefix: "cat-post",
+    });
 
-      const post = await prisma.catPost.create({
-        data: {
-          ...(userId && { userId }), // Only include userId if it exists
-          caption,
-          image: imagePath,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          likes: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          comments: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-          },
-        },
-      });
+    const { data, error } = await supabase
+      .from("cat_posts")
+      .insert({
+        user_id: userId,
+        caption,
+        image_path: image.path,
+        image_bucket: image.bucket,
+        image_mime_type: image.mimeType,
+        image_size_bytes: image.size,
+      })
+      .select(`*, user:profiles!cat_posts_user_id_fkey(${profileSelect})`)
+      .single();
 
-      return post;
-    } catch (error) {
-      console.error('Error creating cat post:', error);
-      throw new Error('Failed to create cat post');
-    }
+    if (error) throw error;
+    return mapPost(data);
   }
 
   async getAllPosts(page = 1, limit = 10) {
-    try {
-      const skip = (page - 1) * limit;
-      
-      const posts = await prisma.catPost.findMany({
-        skip,
-        take: limit,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          likes: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          comments: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-          },
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const range = pageRange(page, limit);
+    const { data, count, error } = await supabase
+      .from("cat_posts")
+      .select(`*, user:profiles!cat_posts_user_id_fkey(${profileSelect})`, { count: "exact" })
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .range(range.from, range.to);
 
-      const total = await prisma.catPost.count();
-      
-      return {
-        posts,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
-    } catch (error) {
-      console.error('Error fetching cat posts:', error);
-      throw new Error('Failed to fetch cat posts');
-    }
+    if (error) throw error;
+
+    const posts = await Promise.all(data.map((post) => this.withComments(post)));
+    return {
+      posts,
+      pagination: {
+        page: range.page,
+        limit: range.limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / range.limit),
+      },
+    };
   }
 
   async toggleLike(userId, postId) {
-    try {
-      const existingLike = await prisma.catPostLike.findUnique({
-        where: {
-          userId_catPostId: {
-            userId,
-            catPostId: postId,
-          },
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data: existing, error: findError } = await supabase
+      .from("cat_post_likes")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("cat_post_id", Number(postId))
+      .maybeSingle();
 
-      if (existingLike) {
-        // Unlike
-        await prisma.catPostLike.delete({
-          where: {
-            id: existingLike.id,
-          },
-        });
-        return { liked: false };
-      } else {
-        // Like
-        await prisma.catPostLike.create({
-          data: {
-            userId,
-            catPostId: postId,
-          },
-        });
-        return { liked: true };
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      throw new Error('Failed to toggle like');
+    if (findError) throw findError;
+
+    if (existing) {
+      const { error } = await supabase
+        .from("cat_post_likes")
+        .delete()
+        .eq("id", existing.id);
+      if (error) throw error;
+      await this.recountLikes(postId);
+      return { liked: false };
     }
+
+    const { error } = await supabase
+      .from("cat_post_likes")
+      .insert({ user_id: userId, cat_post_id: Number(postId) });
+
+    if (error) throw error;
+    await this.recountLikes(postId);
+    return { liked: true };
   }
 
   async addComment(userId, postId, content) {
-    try {
-      const comment = await prisma.catPostComment.create({
-        data: {
-          userId,
-          catPostId: postId,
-          content,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("cat_post_comments")
+      .insert({
+        user_id: userId,
+        cat_post_id: Number(postId),
+        content,
+      })
+      .select(`*, user:profiles!cat_post_comments_user_id_fkey(${profileSelect})`)
+      .single();
 
-      return comment;
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      throw new Error('Failed to add comment');
-    }
+    if (error) throw error;
+    return {
+      id: data.id,
+      userId: data.user_id,
+      catPostId: data.cat_post_id,
+      content: data.content,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      user: mapProfile(data.user),
+    };
   }
 
   async getPostById(postId) {
-    try {
-      const post = await prisma.catPost.findUnique({
-        where: { id: postId },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          likes: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-          comments: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-          },
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("cat_posts")
+      .select(`*, user:profiles!cat_posts_user_id_fkey(${profileSelect})`)
+      .eq("id", Number(postId))
+      .maybeSingle();
 
-      if (!post) {
-        throw new Error('Post not found');
-      }
-
-      return post;
-    } catch (error) {
-      console.error('Error fetching post:', error);
-      throw error;
-    }
+    if (error) throw error;
+    if (!data) throw new Error("Post not found");
+    return this.withComments(data);
   }
 
   async deletePost(userId, postId) {
-    try {
-      const post = await prisma.catPost.findUnique({
-        where: { id: postId },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data: post, error: findError } = await supabase
+      .from("cat_posts")
+      .select("*")
+      .eq("id", Number(postId))
+      .maybeSingle();
 
-      if (!post) {
-        throw new Error('Post not found');
-      }
+    if (findError) throw findError;
+    if (!post) throw new Error("Post not found");
+    if (post.user_id !== userId) throw new Error("Unauthorized to delete this post");
 
-      if (post.userId !== userId) {
-        throw new Error('Unauthorized to delete this post');
-      }
+    const { error } = await supabase
+      .from("cat_posts")
+      .delete()
+      .eq("id", Number(postId));
 
-      // Delete image file if exists
-      if (post.image) {
-        const imagePath = path.join(__dirname, '../../', post.image);
-        try {
-          await fs.unlink(imagePath);
-        } catch (err) {
-          console.warn('Failed to delete image file:', err.message);
-        }
-      }
+    if (error) throw error;
+    return { success: true };
+  }
 
-      await prisma.catPost.delete({
-        where: { id: postId },
-      });
+  async withComments(post) {
+    const supabase = ensureSupabaseAdmin();
+    const { data: comments, error } = await supabase
+      .from("cat_post_comments")
+      .select(`*, user:profiles!cat_post_comments_user_id_fkey(${profileSelect})`)
+      .eq("cat_post_id", post.id)
+      .order("created_at", { ascending: false });
 
-      return { success: true };
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      throw error;
-    }
+    if (error) throw error;
+
+    const { data: likes, error: likesError } = await supabase
+      .from("cat_post_likes")
+      .select("id, user_id, cat_post_id, created_at")
+      .eq("cat_post_id", post.id);
+
+    if (likesError) throw likesError;
+    return mapPost({ ...post, comments, likes });
+  }
+
+  async recountLikes(postId) {
+    const supabase = ensureSupabaseAdmin();
+    const { count, error } = await supabase
+      .from("cat_post_likes")
+      .select("id", { count: "exact", head: true })
+      .eq("cat_post_id", Number(postId));
+    if (error) throw error;
+    await supabase.from("cat_posts").update({ like_count: count || 0 }).eq("id", Number(postId));
   }
 }
 

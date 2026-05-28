@@ -1,6 +1,5 @@
 const userService = require("../services/userService");
-const path = require("path");
-const fs = require("fs");
+const storageService = require("../services/storageService");
 
 // GET /api/profile/:userId
 const getProfile = async (req, res) => {
@@ -54,34 +53,29 @@ const uploadProfilePicture = async (req, res) => {
     }
 
     const userId = req.user.userId;
-    // We save the path relative to the uploads directory to make it accessible via the static middleware
-    const filePath = `/uploads/profiles/${path.basename(req.file.path)}`;
+    const uploaded = await storageService.uploadObject({
+      bucket: "avatars",
+      userId,
+      file: req.file,
+      prefix: "profile",
+    });
 
-    // If user already has a profile picture, delete the old one
     const currentProfile = await userService.getProfile(userId);
-    if (currentProfile && currentProfile.profilePicture) {
-      // Extract the filename from the stored path
-      const oldFilename = path.basename(currentProfile.profilePicture);
-      const oldImagePath = path.join(
-        __dirname,
-        "../../uploads/profiles",
-        oldFilename
-      );
-
-      // Check if file exists and delete it
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
+    if (currentProfile?.profile_image_path) {
+      await storageService.removeObject({
+        bucket: "avatars",
+        objectPath: currentProfile.profile_image_path,
+      });
     }
 
-    // Update the profile with the new profile picture path
     const updatedProfile = await userService.updateProfile(userId, {
-      profilePicture: filePath,
+      profilePicture: uploaded.path,
     });
 
     res.status(200).json({
       message: "Profile picture uploaded successfully",
-      profilePicture: filePath,
+      profilePicture: uploaded.path,
+      profilePictureUrl: storageService.publicUrl("avatars", uploaded.path),
       profile: updatedProfile,
     });
   } catch (error) {
@@ -100,24 +94,13 @@ const getProfilePicture = async (req, res) => {
       return res.status(400).json({ message: "Invalid userId" });
 
     const profile = await userService.getProfile(userId);
-    if (!profile || !profile.profilePicture) {
+    if (!profile || !(profile.profile_image_path || profile.profilePicture)) {
       return res.status(404).json({ message: "Profile picture not found" });
     }
 
-    // Extract the filename from the stored path
-    const filename = path.basename(profile.profilePicture);
-    const imagePath = path.join(__dirname, "../../uploads/profiles", filename);
-
-    // Check if file exists
-    if (!fs.existsSync(imagePath)) {
-      return res
-        .status(404)
-        .json({ message: "Profile picture file not found" });
-    }
-
-    // Send the file with proper content type
-    res.set("Content-Type", "image/jpeg"); // Adjust based on file type if needed
-    res.sendFile(imagePath);
+    const imagePath = profile.profile_image_path || profile.profilePicture;
+    const url = storageService.publicUrl("avatars", imagePath);
+    res.redirect(url);
   } catch (error) {
     res.status(500).json({
       message: "Error retrieving profile picture",
@@ -132,20 +115,13 @@ const deleteProfilePicture = async (req, res) => {
     const userId = req.user.userId;
 
     const profile = await userService.getProfile(userId);
-    if (!profile || !profile.profilePicture) {
+    if (!profile || !(profile.profile_image_path || profile.profilePicture)) {
       return res.status(404).json({ message: "Profile picture not found" });
     }
 
-    // Extract the filename from the stored path
-    const filename = path.basename(profile.profilePicture);
-    const imagePath = path.join(__dirname, "../../uploads/profiles", filename);
+    const imagePath = profile.profile_image_path || profile.profilePicture;
+    await storageService.removeObject({ bucket: "avatars", objectPath: imagePath });
 
-    // Check if file exists and delete it
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-    }
-
-    // Update the profile to remove the profile picture reference
     await userService.updateProfile(userId, {
       profilePicture: null,
     });
@@ -167,34 +143,29 @@ const uploadCoverPicture = async (req, res) => {
     }
 
     const userId = req.user.userId;
-    // We save the path relative to the uploads directory to make it accessible via the static middleware
-    const filePath = `/uploads/covers/${path.basename(req.file.path)}`;
+    const uploaded = await storageService.uploadObject({
+      bucket: "covers",
+      userId,
+      file: req.file,
+      prefix: "cover",
+    });
 
-    // If user already has a cover picture, delete the old one
     const currentProfile = await userService.getProfile(userId);
-    if (currentProfile && currentProfile.coverPicture) {
-      // Extract the filename from the stored path
-      const oldFilename = path.basename(currentProfile.coverPicture);
-      const oldImagePath = path.join(
-        __dirname,
-        "../../uploads/covers",
-        oldFilename
-      );
-
-      // Check if file exists and delete it
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
+    if (currentProfile?.cover_image_path) {
+      await storageService.removeObject({
+        bucket: "covers",
+        objectPath: currentProfile.cover_image_path,
+      });
     }
 
-    // Update the profile with the new cover picture path
     const updatedProfile = await userService.updateProfile(userId, {
-      coverPicture: filePath,
+      coverPicture: uploaded.path,
     });
 
     res.status(200).json({
       message: "Cover picture uploaded successfully",
-      coverPicture: filePath,
+      coverPicture: uploaded.path,
+      coverPictureUrl: storageService.publicUrl("covers", uploaded.path),
       profile: updatedProfile,
     });
   } catch (error) {
@@ -213,22 +184,13 @@ const getCoverPicture = async (req, res) => {
       return res.status(400).json({ message: "Invalid userId" });
 
     const profile = await userService.getProfile(userId);
-    if (!profile || !profile.coverPicture) {
+    if (!profile || !(profile.cover_image_path || profile.coverPicture)) {
       return res.status(404).json({ message: "Cover picture not found" });
     }
 
-    // Extract the filename from the stored path
-    const filename = path.basename(profile.coverPicture);
-    const imagePath = path.join(__dirname, "../../uploads/covers", filename);
-
-    // Check if file exists
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ message: "Cover picture file not found" });
-    }
-
-    // Send the file with proper content type
-    res.set("Content-Type", "image/jpeg"); // Adjust based on file type if needed
-    res.sendFile(imagePath);
+    const imagePath = profile.cover_image_path || profile.coverPicture;
+    const url = storageService.publicUrl("covers", imagePath);
+    res.redirect(url);
   } catch (error) {
     res.status(500).json({
       message: "Error retrieving cover picture",
@@ -243,20 +205,13 @@ const deleteCoverPicture = async (req, res) => {
     const userId = req.user.userId;
 
     const profile = await userService.getProfile(userId);
-    if (!profile || !profile.coverPicture) {
+    if (!profile || !(profile.cover_image_path || profile.coverPicture)) {
       return res.status(404).json({ message: "Cover picture not found" });
     }
 
-    // Extract the filename from the stored path
-    const filename = path.basename(profile.coverPicture);
-    const imagePath = path.join(__dirname, "../../uploads/covers", filename);
+    const imagePath = profile.cover_image_path || profile.coverPicture;
+    await storageService.removeObject({ bucket: "covers", objectPath: imagePath });
 
-    // Check if file exists and delete it
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-    }
-
-    // Update the profile to remove the cover picture reference
     await userService.updateProfile(userId, {
       coverPicture: null,
     });

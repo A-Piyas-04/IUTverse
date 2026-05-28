@@ -4,7 +4,6 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import loginImage from '../../assets/login.png';
 import ApiService from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { authUtils } from '../../utils/auth.js';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

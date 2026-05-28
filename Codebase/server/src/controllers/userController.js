@@ -60,7 +60,7 @@ const getUserById = async (req, res) => {
     const { userId } = req.params;
 
     // Validate userId
-    if (!userId || isNaN(Number(userId))) {
+    if (!userId) {
       return res.status(400).json({
         message: "Valid user ID is required",
       });

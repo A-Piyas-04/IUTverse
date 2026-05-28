@@ -28,7 +28,6 @@ router.use("/api/lost-and-found", lostAndFoundRoutes);
 
 // Confession routes
 router.use("/api", confessionRoutes);
-router.use("/api/lost-and-found", lostAndFoundRoutes);
 
 // Cat Post routes
 router.use("/api/cat-posts", catPostRoutes);

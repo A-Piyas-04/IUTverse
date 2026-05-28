@@ -1,347 +1,308 @@
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcrypt");
+const {
+  supabaseAdmin,
+  isSupabaseAdminConfigured,
+} = require("../config/supabase");
 
-const prisma = new PrismaClient();
+const ensureSupabaseAdmin = () => {
+  if (!isSupabaseAdminConfigured) {
+    throw new Error("Supabase Admin is not configured");
+  }
+};
+
+const toLegacyUser = (profile, authUser = null) => {
+  if (!profile) return null;
+
+  return {
+    id: profile.id,
+    legacyUserId: profile.legacy_user_id,
+    email: authUser?.email || null,
+    name: profile.display_name,
+    department: profile.department?.name || null,
+    departmentId: profile.department_id,
+    batch: profile.batch,
+    studentId: profile.student_id,
+    role: profile.role,
+    createdAt: profile.created_at,
+    profile: {
+      bio: profile.bio,
+      profilePicture: profile.profile_image_path,
+      coverPicture: profile.cover_image_path,
+      interests: profile.interests || [],
+      badges: profile.badges || [],
+      collegeName: profile.college_name,
+      currentBed: profile.current_bed,
+      currentHall: profile.current_hall,
+      currentProgram: profile.current_program,
+      currentResidence: profile.current_residence,
+      currentRoom: profile.current_room,
+      currentSemester: profile.current_semester,
+      currentYear: profile.current_year,
+      hometown: profile.hometown,
+      schoolName: profile.school_name,
+    },
+  };
+};
+
+const profileSelect = `
+  id,
+  legacy_user_id,
+  display_name,
+  department_id,
+  batch,
+  student_id,
+  role,
+  bio,
+  interests,
+  badges,
+  college_name,
+  current_bed,
+  current_hall,
+  current_program,
+  current_residence,
+  current_room,
+  current_semester,
+  current_year,
+  hometown,
+  school_name,
+  profile_image_path,
+  cover_image_path,
+  created_at,
+  department:departments(name)
+`;
+
+const profilePayload = (profileData) => {
+  const allowed = {
+    bio: "bio",
+    interests: "interests",
+    badges: "badges",
+    collegeName: "college_name",
+    currentBed: "current_bed",
+    currentHall: "current_hall",
+    currentProgram: "current_program",
+    currentResidence: "current_residence",
+    currentRoom: "current_room",
+    currentSemester: "current_semester",
+    currentYear: "current_year",
+    hometown: "hometown",
+    schoolName: "school_name",
+    profilePicture: "profile_image_path",
+    coverPicture: "cover_image_path",
+    departmentId: "department_id",
+    batch: "batch",
+    studentId: "student_id",
+    name: "display_name",
+    displayName: "display_name",
+  };
+
+  return Object.entries(profileData || {}).reduce((payload, [key, value]) => {
+    const column = allowed[key];
+    if (column) payload[column] = value;
+    return payload;
+  }, {});
+};
 
 class UserService {
-  // Create a new user
   async createUser(email, password, additionalData = {}) {
-    try {
-      // Hash the password before storing
-      const passwordHash = await bcrypt.hash(password, 10);
+    ensureSupabaseAdmin();
 
-      const user = await prisma.user.create({
-        data: {
-          email,
-          passwordHash,
-          ...additionalData,
-        },
-      });
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        display_name: additionalData.name || email.split("@")[0],
+      },
+    });
 
-      console.log(`User created: ${email}`);
-      return user;
-    } catch (error) {
-      if (error.code === "P2002") {
-        throw new Error("User already exists");
-      }
-      throw error;
-    }
+    if (error) throw error;
+
+    await supabaseAdmin.from("profiles").upsert({
+      id: data.user.id,
+      display_name: additionalData.name || email.split("@")[0],
+      ...profilePayload(additionalData),
+    });
+
+    return toLegacyUser(await this.getProfile(data.user.id), data.user);
   }
 
-  // Find user by email
   async findUserByEmail(email) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          profile: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error("Error finding user:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (error) throw error;
+
+    const authUser = data.users.find((user) => user.email === email);
+    if (!authUser) return null;
+
+    const profile = await this.getProfile(authUser.id);
+    return toLegacyUser(profile, authUser);
   }
 
-  // Verify user password
-  async verifyPassword(email, password) {
-    try {
-      const user = await this.findUserByEmail(email);
-      if (!user) {
-        return null;
-      }
-
-      const isValid = await bcrypt.compare(password, user.passwordHash);
-      return isValid ? user : null;
-    } catch (error) {
-      console.error("Error verifying password:", error);
-      throw error;
-    }
+  async verifyPassword() {
+    throw new Error("Password verification has moved to Supabase Auth");
   }
 
-  // Get all users (for development/testing)
   async getAllUsers() {
-    try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          createdAt: true,
-        },
-      });
-      return users;
-    } catch (error) {
-      console.error("Error getting users:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select(profileSelect)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data.map((profile) => toLegacyUser(profile));
   }
 
-  // Check if user exists
   async userExists(email) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-        select: { id: true },
-      });
-      return !!user;
-    } catch (error) {
-      console.error("Error checking user existence:", error);
-      throw error;
-    }
+    return Boolean(await this.findUserByEmail(email));
   }
 
-  // Get user by email (for token validation)
   async getUserByEmail(email) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          createdAt: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error("Error getting user by email:", error);
-      throw error;
-    }
+    return this.findUserByEmail(email);
   }
 
-  // Get profile by userId
   async getProfile(userId) {
-    try {
-      const profile = await prisma.profile.findUnique({
-        where: { userId },
-      });
-      return profile;
-    } catch (error) {
-      console.error("Error getting profile:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select(profileSelect)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
   }
 
-  // Create profile
   async createProfile(userId, profileData) {
-    try {
-      const profile = await prisma.profile.create({
-        data: {
-          userId,
-          ...profileData,
-        },
-      });
-      return profile;
-    } catch (error) {
-      console.error("Error creating profile:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .upsert({
+        id: userId,
+        ...profilePayload(profileData),
+      })
+      .select(profileSelect)
+      .single();
+
+    if (error) throw error;
+    return toLegacyUser(data).profile;
   }
 
-  // Update profile
   async updateProfile(userId, profileData) {
-    try {
-      const profile = await prisma.profile.update({
-        where: { userId },
-        data: profileData,
-      });
-      return profile;
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .update(profilePayload(profileData))
+      .eq("id", userId)
+      .select(profileSelect)
+      .single();
+
+    if (error) throw error;
+    return toLegacyUser(data).profile;
   }
 
-  // Update user name
   async updateUserName(userId, name) {
-    try {
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: { name },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          batch: true,
-          studentId: true,
-          createdAt: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error("Error updating user name:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .update({ display_name: name })
+      .eq("id", userId)
+      .select(profileSelect)
+      .single();
+
+    if (error) throw error;
+    return toLegacyUser(data);
   }
 
-  // Get user by ID
   async getUserById(userId) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: Number(userId) },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          batch: true,
-          studentId: true,
-          createdAt: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error("Error getting user by ID:", error);
-      throw error;
-    }
+    const profile = await this.getProfile(userId);
+    return toLegacyUser(profile);
   }
 
-  // Search users by name or email
   async searchUsers(query, excludeUserId, limit = 20) {
-    try {
-      const users = await prisma.user.findMany({
-        where: {
-          AND: [
-            {
-              id: {
-                not: excludeUserId,
-              },
-            },
-            {
-              OR: [
-                {
-                  name: {
-                    contains: query,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  email: {
-                    contains: query,
-                    mode: "insensitive",
-                  },
-                },
-              ],
-            },
-          ],
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          department: true,
-          batch: true,
-        },
-        take: limit,
-        orderBy: [{ name: "asc" }, { email: "asc" }],
-      });
+    ensureSupabaseAdmin();
 
-      return users;
-    } catch (error) {
-      console.error("Error searching users:", error);
-      throw error;
-    }
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select(profileSelect)
+      .neq("id", excludeUserId)
+      .ilike("display_name", `%${query}%`)
+      .limit(limit)
+      .order("display_name", { ascending: true });
+
+    if (error) throw error;
+    return data.map((profile) => toLegacyUser(profile));
   }
 
-  // Update student ID
   async updateStudentId(userId, studentId) {
-    try {
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: { studentId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          batch: true,
-          studentId: true,
-          createdAt: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      if (error.code === "P2002") {
-        throw new Error("Student ID already exists");
-      }
-      console.error("Error updating student ID:", error);
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .update({ student_id: studentId })
+      .eq("id", userId)
+      .select(profileSelect)
+      .single();
+
+    if (error) {
+      if (error.code === "23505") throw new Error("Student ID already exists");
       throw error;
     }
+
+    return toLegacyUser(data);
   }
 
-  // Delete/clear student ID
   async deleteStudentId(userId) {
-    try {
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: { studentId: null },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          batch: true,
-          studentId: true,
-          createdAt: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error("Error deleting student ID:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .update({ student_id: null })
+      .eq("id", userId)
+      .select(profileSelect)
+      .single();
+
+    if (error) throw error;
+    return toLegacyUser(data);
   }
 
-  // Check if student ID exists
   async checkStudentIdExists(studentId, excludeUserId = null) {
-    try {
-      const whereCondition = { studentId };
-      if (excludeUserId) {
-        whereCondition.id = { not: excludeUserId };
-      }
+    ensureSupabaseAdmin();
 
-      const user = await prisma.user.findFirst({
-        where: whereCondition,
-        select: { id: true },
-      });
-      return !!user;
-    } catch (error) {
-      console.error("Error checking student ID existence:", error);
-      throw error;
+    let query = supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("student_id", studentId)
+      .limit(1);
+
+    if (excludeUserId) {
+      query = query.neq("id", excludeUserId);
     }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data.length > 0;
   }
 
-  // Get user by student ID
   async getUserByStudentId(studentId) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { studentId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          department: true,
-          batch: true,
-          studentId: true,
-          createdAt: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error("Error getting user by student ID:", error);
-      throw error;
-    }
+    ensureSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select(profileSelect)
+      .eq("student_id", studentId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return toLegacyUser(data);
   }
 
-  // Close database connection
-  async disconnect() {
-    await prisma.$disconnect();
-  }
+  async disconnect() {}
 }
 
 module.exports = new UserService();

@@ -12,7 +12,7 @@ router.post('/login', login);
 // Token validation endpoint (protected)
 router.get('/validate', authenticateToken, validateToken);
 
-// Get all users endpoint (for development/testing)
-router.get('/users', getAllUsers);
+// Get all users endpoint
+router.get('/users', authenticateToken, getAllUsers);
 
 module.exports = router;
