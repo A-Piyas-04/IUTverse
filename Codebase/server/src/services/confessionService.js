@@ -1,263 +1,228 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { ensureSupabaseAdmin, pageRange } = require("../utils/supabaseData");
+
+const defaultReactionCounts = {
+  like: 0,
+  funny: 0,
+  relatable: 0,
+  angry: 0,
+  insightful: 0,
+};
 
 class ConfessionService {
   async createConfession(data) {
+    const supabase = ensureSupabaseAdmin();
     const { content, tag, poll } = data;
 
-    // Create confession with optional poll
-    return prisma.confession.create({
-      data: {
-        content,
-        tag,
-        poll: poll
-          ? {
-              create: {
-                question: poll.question,
-                options: {
-                  create: poll.options.map((option, index) => ({
-                    text: option.text,
-                    orderIndex: index,
-                  })),
-                },
-              },
-            }
-          : undefined,
-      },
-      include: {
-        reactions: true,
-        poll: {
-          include: {
-            options: {
-              orderBy: { orderIndex: "asc" },
-            },
-            votes: true,
-          },
-        },
-      },
-    });
+    const { data: confession, error } = await supabase
+      .from("confessions")
+      .insert({ content, tag })
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    if (poll) {
+      const { data: pollRow, error: pollError } = await supabase
+        .from("confession_polls")
+        .insert({
+          confession_id: confession.id,
+          question: poll.question,
+        })
+        .select("*")
+        .single();
+
+      if (pollError) throw pollError;
+
+      const { error: optionError } = await supabase
+        .from("confession_poll_options")
+        .insert(
+          poll.options.map((option, index) => ({
+            poll_id: pollRow.id,
+            text: option.text,
+            order_index: index,
+          }))
+        );
+
+      if (optionError) throw optionError;
+    }
+
+    return this.getConfessionById(confession.id);
   }
 
   async getAllConfessions(page = 1, limit = 20, tag = null, sortBy = "recent") {
-    const skip = (page - 1) * limit;
-    const where = tag && tag !== "all" ? { tag } : {};
+    const supabase = ensureSupabaseAdmin();
+    const range = pageRange(page, limit);
+    let query = supabase
+      .from("confessions")
+      .select("*")
+      .eq("status", "active")
+      .range(range.from, range.to);
 
-    let orderBy;
-    switch (sortBy) {
-      case "mostReacted":
-        // This will need to be handled differently since we need to count reactions
-        orderBy = { createdAt: "desc" }; // Fallback for now
-        break;
-      case "mostVoted":
-        // This will need to be handled differently since we need to count poll votes
-        orderBy = { createdAt: "desc" }; // Fallback for now
-        break;
-      default:
-        orderBy = { createdAt: "desc" };
+    if (tag && tag !== "all") query = query.eq("tag", tag);
+    if (sortBy === "mostReacted") {
+      query = query.order("reaction_count", { ascending: false });
+    } else {
+      query = query.order("created_at", { ascending: false });
     }
 
-    const confessions = await prisma.confession.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy,
-      include: {
-        reactions: true,
-        poll: {
-          include: {
-            options: {
-              orderBy: { orderIndex: "asc" },
-            },
-          },
-        },
-      },
-    });
-
-    // Transform the data to match frontend expectations
-    return confessions.map(this.transformConfession);
+    const { data, error } = await query;
+    if (error) throw error;
+    return Promise.all(data.map((confession) => this.hydrateConfession(confession)));
   }
 
   async getConfessionById(id) {
-    const confession = await prisma.confession.findUnique({
-      where: { id: Number(id) },
-      include: {
-        reactions: true,
-        poll: {
-          include: {
-            options: {
-              orderBy: { orderIndex: "asc" },
-            },
-          },
-        },
-      },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("confessions")
+      .select("*")
+      .eq("id", Number(id))
+      .maybeSingle();
 
-    return confession ? this.transformConfession(confession) : null;
+    if (error) throw error;
+    return data ? this.hydrateConfession(data) : null;
   }
 
   async getRandomConfession() {
-    const totalCount = await prisma.confession.count();
-    if (totalCount === 0) return null;
+    const supabase = ensureSupabaseAdmin();
+    const { count, error: countError } = await supabase
+      .from("confessions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active");
 
-    const randomIndex = Math.floor(Math.random() * totalCount);
+    if (countError) throw countError;
+    if (!count) return null;
 
-    const confession = await prisma.confession.findMany({
-      skip: randomIndex,
-      take: 1,
-      include: {
-        reactions: true,
-        poll: {
-          include: {
-            options: {
-              orderBy: { orderIndex: "asc" },
-            },
-          },
-        },
-      },
-    });
+    const offset = Math.floor(Math.random() * count);
+    const { data, error } = await supabase
+      .from("confessions")
+      .select("*")
+      .eq("status", "active")
+      .range(offset, offset)
+      .single();
 
-    return confession.length > 0
-      ? this.transformConfession(confession[0])
-      : null;
+    if (error) throw error;
+    return this.hydrateConfession(data);
   }
 
   async addReaction(confessionId, userId, reactionType) {
-    // Use upsert to either create new reaction or update existing one
-    // This allows user to change their reaction type
-    return prisma.confessionReaction.upsert({
-      where: {
-        confessionId_userId: {
-          confessionId: Number(confessionId),
-          userId: Number(userId),
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("confession_reactions")
+      .upsert(
+        {
+          confession_id: Number(confessionId),
+          user_id: userId,
+          reaction_type: reactionType,
         },
-      },
-      create: {
-        confessionId: Number(confessionId),
-        userId: Number(userId),
-        reactionType,
-      },
-      update: {
-        reactionType,
-      },
-    });
+        { onConflict: "confession_id,user_id" }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    await this.recountReactions(confessionId);
+    return data;
   }
 
   async removeReaction(confessionId, userId) {
-    return prisma.confessionReaction.deleteMany({
-      where: {
-        confessionId: Number(confessionId),
-        userId: Number(userId),
-      },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { error } = await supabase
+      .from("confession_reactions")
+      .delete()
+      .eq("confession_id", Number(confessionId))
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    await this.recountReactions(confessionId);
+    return { success: true };
   }
 
   async voteOnPoll(pollId, optionId, userId) {
-    // Check if user already voted on this poll
-    const existingVote = await prisma.confessionPollVote.findUnique({
-      where: {
-        pollId_userId: {
-          pollId: Number(pollId),
-          userId: Number(userId),
-        },
-      },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("confession_poll_votes")
+      .insert({
+        poll_id: Number(pollId),
+        option_id: Number(optionId),
+        user_id: userId,
+      })
+      .select()
+      .single();
 
-    if (existingVote) {
-      throw new Error("User has already voted on this poll");
+    if (error) {
+      if (error.code === "23505") throw new Error("User has already voted on this poll");
+      throw error;
     }
 
-    // Use transaction to ensure data consistency
-    return prisma.$transaction(async (tx) => {
-      // Create the vote
-      await tx.confessionPollVote.create({
-        data: {
-          pollId: Number(pollId),
-          optionId: Number(optionId),
-          userId: Number(userId),
-        },
-      });
-
-      // Update option vote count
-      await tx.confessionPollOption.update({
-        where: { id: Number(optionId) },
-        data: { votes: { increment: 1 } },
-      });
-
-      // Update poll total votes
-      await tx.confessionPoll.update({
-        where: { id: Number(pollId) },
-        data: { totalVotes: { increment: 1 } },
-      });
-
-      // Return updated poll with options
-      return tx.confessionPoll.findUnique({
-        where: { id: Number(pollId) },
-        include: {
-          options: {
-            orderBy: { orderIndex: "asc" },
-          },
-        },
-      });
-    });
+    return data;
   }
 
   async getUserReactions(confessionId, userId) {
-    return prisma.confessionReaction.findUnique({
-      where: {
-        confessionId_userId: {
-          confessionId: Number(confessionId),
-          userId: Number(userId),
-        },
-      },
-      select: {
-        reactionType: true,
-      },
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("confession_reactions")
+      .select("reaction_type")
+      .eq("confession_id", Number(confessionId))
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return data.map((reaction) => ({ reactionType: reaction.reaction_type }));
   }
 
   async hasUserVoted(pollId, userId) {
-    const vote = await prisma.confessionPollVote.findUnique({
-      where: {
-        pollId_userId: {
-          pollId: Number(pollId),
-          userId: Number(userId),
-        },
-      },
-    });
-    return !!vote;
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("confession_poll_votes")
+      .select("id")
+      .eq("poll_id", Number(pollId))
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
   }
 
-  // Helper method to transform confession data for frontend
-  transformConfession(confession) {
-    // Group reactions by type and count them
-    const reactionCounts = confession.reactions.reduce(
+  async hydrateConfession(confession) {
+    const supabase = ensureSupabaseAdmin();
+    const { data: reactions, error: reactionsError } = await supabase
+      .from("confession_reactions")
+      .select("reaction_type")
+      .eq("confession_id", confession.id);
+
+    if (reactionsError) throw reactionsError;
+
+    const reactionCounts = reactions.reduce(
       (acc, reaction) => {
-        acc[reaction.reactionType] = (acc[reaction.reactionType] || 0) + 1;
+        acc[reaction.reaction_type] = (acc[reaction.reaction_type] || 0) + 1;
         return acc;
       },
-      {
-        like: 0,
-        funny: 0,
-        relatable: 0,
-        angry: 0,
-        insightful: 0,
-      }
+      { ...defaultReactionCounts }
     );
 
-    // Transform poll data if exists
+    const { data: poll } = await supabase
+      .from("confession_polls")
+      .select("*")
+      .eq("confession_id", confession.id)
+      .maybeSingle();
+
     let pollData = null;
-    if (confession.poll) {
-      const totalVotes = confession.poll.totalVotes;
+    if (poll) {
+      const { data: options, error: optionsError } = await supabase
+        .from("confession_poll_options")
+        .select("*")
+        .eq("poll_id", poll.id)
+        .order("order_index", { ascending: true });
+
+      if (optionsError) throw optionsError;
       pollData = {
-        id: confession.poll.id,
-        question: confession.poll.question,
-        totalVotes,
-        options: confession.poll.options.map((option) => ({
+        id: poll.id,
+        question: poll.question,
+        totalVotes: poll.total_votes,
+        options: options.map((option) => ({
           id: option.id,
           text: option.text,
-          votes: option.votes,
-          percentage:
-            totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0,
+          votes: option.vote_count,
+          percentage: poll.total_votes > 0 ? Math.round((option.vote_count / poll.total_votes) * 100) : 0,
         })),
       };
     }
@@ -266,82 +231,55 @@ class ConfessionService {
       id: confession.id,
       content: confession.content,
       tag: confession.tag,
-      timestamp: confession.createdAt,
+      timestamp: confession.created_at,
       reactions: reactionCounts,
       poll: pollData,
     };
   }
 
+  async recountReactions(confessionId) {
+    const supabase = ensureSupabaseAdmin();
+    const { count, error } = await supabase
+      .from("confession_reactions")
+      .select("id", { count: "exact", head: true })
+      .eq("confession_id", Number(confessionId));
+    if (error) throw error;
+    await supabase.from("confessions").update({ reaction_count: count || 0 }).eq("id", Number(confessionId));
+  }
+
   async getConfessionAnalytics() {
-    const totalConfessions = await prisma.confession.count();
+    const supabase = ensureSupabaseAdmin();
+    const { count: totalConfessions, error } = await supabase
+      .from("confessions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active");
+    if (error) throw error;
 
-    // Get tag counts
-    const tagCounts = await prisma.confession.groupBy({
-      by: ["tag"],
-      _count: {
-        tag: true,
-      },
-      orderBy: {
-        _count: {
-          tag: "desc",
-        },
-      },
-      take: 3,
-    });
+    const { data: confessions, error: listError } = await supabase
+      .from("confessions")
+      .select("*")
+      .eq("status", "active");
+    if (listError) throw listError;
 
-    const topTags = tagCounts.map((item) => ({
-      tag: item.tag,
-      count: item._count.tag,
-    }));
+    const tagCounts = new Map();
+    for (const confession of confessions) {
+      tagCounts.set(confession.tag, (tagCounts.get(confession.tag) || 0) + 1);
+    }
 
-    // Get most reacted confession (this requires a more complex query)
-    const mostReacted = await prisma.confession.findFirst({
-      include: {
-        reactions: true,
-        poll: {
-          include: {
-            options: true,
-          },
-        },
-      },
-      orderBy: {
-        reactions: {
-          _count: "desc",
-        },
-      },
-    });
+    const topTags = [...tagCounts.entries()]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
 
-    // Get most voted poll
-    const mostVotedPoll = await prisma.confession.findFirst({
-      where: {
-        poll: {
-          isNot: null,
-        },
-      },
-      include: {
-        poll: {
-          include: {
-            options: true,
-          },
-        },
-      },
-      orderBy: {
-        poll: {
-          totalVotes: "desc",
-        },
-      },
-    });
+    const mostReacted = confessions.sort((a, b) => b.reaction_count - a.reaction_count)[0];
 
     return {
-      totalConfessions,
+      totalConfessions: totalConfessions || 0,
       topTags,
       mostReacted: mostReacted
-        ? {
-            confession: this.transformConfession(mostReacted),
-            total: mostReacted.reactions.length,
-          }
+        ? { confession: await this.hydrateConfession(mostReacted), total: mostReacted.reaction_count }
         : { confession: null, total: 0 },
-      mostVotedPoll: mostVotedPoll || { poll: { totalVotes: 0 } },
+      mostVotedPoll: { poll: { totalVotes: 0 } },
     };
   }
 }

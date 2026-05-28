@@ -9,10 +9,9 @@ router.get('/', lostAndFoundController.getAllPosts.bind(lostAndFoundController))
 // Get a specific post by ID (public)
 router.get('/:postId', lostAndFoundController.getPostById.bind(lostAndFoundController));
 
-// Create a new lost and found post (temporarily public for testing, with file upload)
+// Create a new lost and found post
 router.post('/', 
-  // Temporarily commenting out authentication for testing
-  // authenticateToken, 
+  authenticateToken, 
   upload.single('image'), 
   lostAndFoundController.createPost.bind(lostAndFoundController)
 );

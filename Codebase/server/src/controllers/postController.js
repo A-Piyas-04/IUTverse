@@ -1,642 +1,316 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
-const fs = require("fs");
-const path = require("path");
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  pageRange,
+  profileSelect,
+  publicUrl,
+  uploadToBucket,
+} = require("../utils/supabaseData");
 
-// Create a new post
+const mapReaction = (reaction) => ({
+  id: reaction.id,
+  postId: reaction.post_id,
+  userId: reaction.user_id,
+  reactionType: reaction.reaction_type,
+  user: mapProfile(reaction.user),
+});
+
+const mapComment = (comment) => ({
+  id: comment.id,
+  postId: comment.post_id,
+  userId: comment.author_id,
+  content: comment.content,
+  createdAt: comment.created_at,
+  updatedAt: comment.updated_at,
+  parentCommentId: comment.parent_comment_id,
+  user: mapProfile(comment.user),
+  replies: (comment.replies || []).map(mapComment),
+  _count: { replies: comment.replies?.length || 0 },
+});
+
+const mapPost = (post) => ({
+  id: post.id,
+  userId: post.author_id,
+  content: post.content,
+  category: post.categories?.[0]?.category?.name || null,
+  isAnonymous: post.is_anonymous,
+  createdAt: post.created_at,
+  updatedAt: post.updated_at,
+  image: post.image_path,
+  imageUrl: publicUrl(post.image_bucket, post.image_path),
+  likesCount: post.reaction_count,
+  commentCount: post.comment_count,
+  user: mapProfile(post.user),
+  tags: (post.categories || []).map((link) => ({ tag: link.category })),
+  reactions: (post.reactions || []).map(mapReaction),
+  comments: (post.comments || []).map(mapComment),
+  _count: {
+    comments: post.comment_count,
+    reactions: post.reaction_count,
+  },
+});
+
+const hydratePost = async (post, commentLimit = 3) => {
+  const supabase = ensureSupabaseAdmin();
+  const [categories, reactions, comments] = await Promise.all([
+    supabase
+      .from("post_category_links")
+      .select("category:post_categories(id, name)")
+      .eq("post_id", post.id),
+    supabase
+      .from("post_reactions")
+      .select(`*, user:profiles!post_reactions_user_id_fkey(${profileSelect})`)
+      .eq("post_id", post.id),
+    supabase
+      .from("post_comments")
+      .select(`*, user:profiles!post_comments_author_id_fkey(${profileSelect})`)
+      .eq("post_id", post.id)
+      .is("parent_comment_id", null)
+      .order("created_at", { ascending: false })
+      .limit(commentLimit),
+  ]);
+
+  if (categories.error) throw categories.error;
+  if (reactions.error) throw reactions.error;
+  if (comments.error) throw comments.error;
+
+  return mapPost({
+    ...post,
+    categories: categories.data,
+    reactions: reactions.data,
+    comments: comments.data,
+  });
+};
+
+const attachCategory = async (postId, categoryName) => {
+  if (!categoryName) return;
+  const supabase = ensureSupabaseAdmin();
+  const { data: category, error } = await supabase
+    .from("post_categories")
+    .upsert({ name: categoryName }, { onConflict: "name" })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  const { error: linkError } = await supabase
+    .from("post_category_links")
+    .upsert({ post_id: postId, category_id: category.id }, { onConflict: "post_id,category_id" });
+  if (linkError) throw linkError;
+};
+
 exports.createPost = async (req, res) => {
   try {
     const { content, category, isAnonymous } = req.body;
     const userId = req.user.id;
+    const image = await uploadToBucket({
+      bucket: "post-media",
+      userId,
+      file: req.file,
+      prefix: "post",
+    });
 
-    // Get image path if uploaded
-    let imagePath = null;
-    if (req.file) {
-      imagePath = `/uploads/posts/${req.file.filename}`;
-    }
-
-    const post = await prisma.post.create({
-      data: {
-        userId,
+    const supabase = ensureSupabaseAdmin();
+    const { data: post, error } = await supabase
+      .from("posts")
+      .insert({
+        author_id: userId,
         content,
-        category,
-        isAnonymous: isAnonymous === "true" || isAnonymous === true,
-        image: imagePath,
-      },
-    });
+        is_anonymous: isAnonymous === "true" || isAnonymous === true,
+        image_path: image.path,
+        image_bucket: image.bucket,
+        image_mime_type: image.mimeType,
+        image_size_bytes: image.size,
+      })
+      .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`)
+      .single();
 
-    // If category is provided, create or find the tag and associate it with the post
-    if (category) {
-      // Find or create the confession tag
-      const confessionTag = await prisma.confessionTag.upsert({
-        where: { name: category },
-        update: {},
-        create: { name: category },
-      });
+    if (error) throw error;
+    await attachCategory(post.id, category);
 
-      // Create the post-tag relationship
-      await prisma.postTag.create({
-        data: {
-          postId: post.id,
-          tagId: confessionTag.id,
-        },
-      });
-    }
-
-    return res.status(201).json({
-      success: true,
-      data: post,
-    });
+    return res.status(201).json({ success: true, data: await hydratePost(post) });
   } catch (error) {
     console.error("Error creating post:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create post",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to create post", error: error.message });
   }
 };
 
-// Get all posts with pagination
 exports.getPosts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, from, to } = pageRange(req.query.page || 1, req.query.limit || 10);
     const category = req.query.category;
+    const supabase = ensureSupabaseAdmin();
 
-    console.log("getPosts called with category:", category);
-
-    // Build where clause for filtering
-    let where = {};
-
-    // Filter by category using tags if category is provided
+    let idsFilter = null;
     if (category) {
-      if (category === "cat") {
-        // For cat category, include posts that would show cat icon:
-        // 1. Posts with category 'cat'
-        // 2. Posts with tags named 'cat' or 'Cat Post'
-        where = {
-          OR: [
-            // Check if post has the category 'cat'
-            { category: "cat" },
-            // Check if post has a tag with name 'cat' or 'Cat Post'
-            {
-              tags: {
-                some: {
-                  tag: {
-                    name: {
-                      in: ["cat", "Cat Post"],
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        };
-      } else {
-        // For other categories, use original logic
-        where = {
-          OR: [
-            // Check if post has the category in the category field
-            { category: category },
-            // Check if post has a tag with the category name
-            {
-              tags: {
-                some: {
-                  tag: {
-                    name: category,
-                  },
-                },
-              },
-            },
-          ],
-        };
+      const { data: links, error: linkError } = await supabase
+        .from("post_category_links")
+        .select("post_id, category:post_categories!inner(name)")
+        .eq("category.name", category);
+      if (linkError) throw linkError;
+      idsFilter = links.map((link) => link.post_id);
+      if (!idsFilter.length) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+          pagination: { page, limit, totalPosts: 0, totalPages: 0 },
+        });
       }
-      console.log("Filter where clause:", JSON.stringify(where, null, 2));
     }
 
-    const posts = await prisma.post.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: {
-                profilePicture: true,
-              },
-            },
-          },
-        },
-        tags: {
-          include: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        reactions: {
-          select: {
-            id: true,
-            userId: true,
-            reactionType: true,
-            user: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        comments: {
-          where: {
-            parentCommentId: null, // Only fetch top-level comments
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profile: {
-                  select: {
-                    profilePicture: true,
-                  },
-                },
-              },
-            },
-            _count: {
-              select: {
-                replies: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 3, // Only include the most recent 3 comments
-        },
-        _count: {
-          select: {
-            comments: true,
-            reactions: true,
-          },
-        },
-      },
-    });
+    let query = supabase
+      .from("posts")
+      .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`, { count: "exact" })
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (idsFilter) query = query.in("id", idsFilter);
 
-    // Get total posts count for pagination info with same filter
-    const totalPosts = await prisma.post.count({ where });
+    const { data, count, error } = await query;
+    if (error) throw error;
 
+    const posts = await Promise.all(data.map((post) => hydratePost(post)));
     return res.status(200).json({
       success: true,
       data: posts,
       pagination: {
         page,
         limit,
-        totalPosts,
-        totalPages: Math.ceil(totalPosts / limit),
+        totalPosts: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
       },
     });
   } catch (error) {
     console.error("Error fetching posts:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch posts",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch posts", error: error.message });
   }
 };
 
-// Get a single post by ID with all comments
 exports.getPost = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const post = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profile: {
-              select: {
-                profilePicture: true,
-              },
-            },
-          },
-        },
-        reactions: {
-          select: {
-            id: true,
-            userId: true,
-            reactionType: true,
-            user: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        comments: {
-          where: {
-            parentCommentId: null, // Only fetch top-level comments
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profile: {
-                  select: {
-                    profilePicture: true,
-                  },
-                },
-              },
-            },
-            replies: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    profile: {
-                      select: {
-                        profilePicture: true,
-                      },
-                    },
-                  },
-                },
-              },
-              orderBy: {
-                createdAt: "asc",
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
-    });
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: post,
-    });
+    const supabase = ensureSupabaseAdmin();
+    const { data: post, error } = await supabase
+      .from("posts")
+      .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`)
+      .eq("id", Number(req.params.id))
+      .maybeSingle();
+    if (error) throw error;
+    if (!post) return res.status(404).json({ success: false, message: "Post not found" });
+    return res.status(200).json({ success: true, data: await hydratePost(post, 100) });
   } catch (error) {
     console.error("Error fetching post:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch post",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch post", error: error.message });
   }
 };
 
-// Update a post
 exports.updatePost = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { content, category, isAnonymous } = req.body;
+    const supabase = ensureSupabaseAdmin();
+    const postId = Number(req.params.id);
     const userId = req.user.id;
+    const { data: existing, error: findError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .maybeSingle();
 
-    // Check if post exists and belongs to user
-    const existingPost = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
-    });
-
-    if (!existingPost) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
+    if (findError) throw findError;
+    if (!existing) return res.status(404).json({ success: false, message: "Post not found" });
+    if (existing.author_id !== userId) {
+      return res.status(403).json({ success: false, message: "You are not authorized to update this post" });
     }
 
-    if (existingPost.userId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to update this post",
-      });
-    }
-
-    // Handle image upload if present
-    let imagePath = existingPost.image;
+    const payload = {};
+    if (req.body.content !== undefined) payload.content = req.body.content;
+    if (req.body.isAnonymous !== undefined) payload.is_anonymous = req.body.isAnonymous === "true" || req.body.isAnonymous === true;
     if (req.file) {
-      // Delete old image if it exists
-      if (existingPost.image) {
-        const oldImagePath = path.join(__dirname, "../..", existingPost.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
-
-      imagePath = `/uploads/posts/${req.file.filename}`;
+      const image = await uploadToBucket({ bucket: "post-media", userId, file: req.file, prefix: "post" });
+      payload.image_path = image.path;
+      payload.image_bucket = image.bucket;
+      payload.image_mime_type = image.mimeType;
+      payload.image_size_bytes = image.size;
     }
 
-    const post = await prisma.post.update({
-      where: { id: parseInt(id) },
-      data: {
-        content,
-        category,
-        isAnonymous: isAnonymous === "true" || isAnonymous === true,
-        image: imagePath,
-        updatedAt: new Date(),
-      },
-    });
+    const { data: post, error } = await supabase
+      .from("posts")
+      .update(payload)
+      .eq("id", postId)
+      .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`)
+      .single();
 
-    return res.status(200).json({
-      success: true,
-      data: post,
-    });
+    if (error) throw error;
+    if (req.body.category) await attachCategory(post.id, req.body.category);
+    return res.status(200).json({ success: true, data: await hydratePost(post) });
   } catch (error) {
     console.error("Error updating post:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update post",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to update post", error: error.message });
   }
 };
 
-// Delete a post
 exports.deletePost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const supabase = ensureSupabaseAdmin();
+    const postId = Number(req.params.id);
     const userId = req.user.id;
+    const { data: existing, error: findError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .maybeSingle();
 
-    // Check if post exists and belongs to user
-    const existingPost = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
-    });
-
-    if (!existingPost) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
+    if (findError) throw findError;
+    if (!existing) return res.status(404).json({ success: false, message: "Post not found" });
+    if (existing.author_id !== userId) {
+      return res.status(403).json({ success: false, message: "You are not authorized to delete this post" });
     }
 
-    if (existingPost.userId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to delete this post",
-      });
-    }
-
-    // Delete image if exists
-    if (existingPost.image) {
-      const imagePath = path.join(__dirname, "../..", existingPost.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
-
-    // Delete the post and all associated data
-    await prisma.post.delete({
-      where: { id: parseInt(id) },
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Post deleted successfully",
-    });
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
+    if (error) throw error;
+    return res.status(200).json({ success: true, message: "Post deleted successfully" });
   } catch (error) {
     console.error("Error deleting post:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete post",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to delete post", error: error.message });
   }
 };
 
-// React to a post
 exports.reactToPost = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { reactionType } = req.body;
+    const supabase = ensureSupabaseAdmin();
+    const postId = Number(req.params.id);
     const userId = req.user.id;
+    const { reactionType } = req.body;
 
-    // Check if post exists
-    const post = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
-    });
+    const { data: existing, error: findError } = await supabase
+      .from("post_reactions")
+      .select("*")
+      .eq("post_id", postId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (findError) throw findError;
 
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
-    }
-
-    // Check if user already reacted
-    const existingReaction = await prisma.postReaction.findFirst({
-      where: {
-        postId: parseInt(id),
-        userId,
-      },
-    });
-
-    if (existingReaction) {
-      // If same reaction type, remove the reaction (toggle)
-      if (existingReaction.reactionType === reactionType) {
-        await prisma.postReaction.delete({
-          where: { id: existingReaction.id },
-        });
-
-        // Decrement like count
-        await prisma.post.update({
-          where: { id: parseInt(id) },
-          data: {
-            likesCount: {
-              decrement: 1,
-            },
-          },
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: "Reaction removed",
-          action: "removed",
-        });
-      } else {
-        // If different reaction type, update it
-        await prisma.postReaction.update({
-          where: { id: existingReaction.id },
-          data: { reactionType },
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: "Reaction updated",
-          action: "updated",
-        });
-      }
+    let action;
+    if (existing?.reaction_type === reactionType) {
+      const { error } = await supabase.from("post_reactions").delete().eq("id", existing.id);
+      if (error) throw error;
+      action = "removed";
     } else {
-      // Create new reaction
-      await prisma.postReaction.create({
-        data: {
-          postId: parseInt(id),
-          userId,
-          reactionType,
-        },
-      });
-
-      // Increment like count
-      await prisma.post.update({
-        where: { id: parseInt(id) },
-        data: {
-          likesCount: {
-            increment: 1,
-          },
-        },
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: "Reaction added",
-        action: "added",
-      });
+      const { error } = await supabase
+        .from("post_reactions")
+        .upsert(
+          { post_id: postId, user_id: userId, reaction_type: reactionType },
+          { onConflict: "post_id,user_id" }
+        );
+      if (error) throw error;
+      action = existing ? "updated" : "added";
     }
+
+    return res.status(action === "added" ? 201 : 200).json({ success: true, message: `Reaction ${action}`, action });
   } catch (error) {
     console.error("Error handling post reaction:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to process reaction",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to process reaction", error: error.message });
   }
 };
 
-// Get user's feed
 exports.getUserFeed = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    // Get user info to filter posts
-    const userInfo = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        department: true,
-        batch: true,
-      },
-    });
-
-    const posts = await prisma.post.findMany({
-      where: {
-        OR: [
-          { user: { department: userInfo.department } },
-          { user: { batch: userInfo.batch } },
-        ],
-      },
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            profile: {
-              select: {
-                profilePicture: true,
-              },
-            },
-          },
-        },
-        reactions: {
-          select: {
-            id: true,
-            userId: true,
-            reactionType: true,
-          },
-        },
-        comments: {
-          where: {
-            parentCommentId: null,
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profile: {
-                  select: {
-                    profilePicture: true,
-                  },
-                },
-              },
-            },
-            _count: {
-              select: {
-                replies: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 3,
-        },
-        _count: {
-          select: {
-            comments: true,
-            reactions: true,
-          },
-        },
-      },
-    });
-
-    // Get total posts count for pagination
-    const totalPosts = await prisma.post.count({
-      where: {
-        OR: [
-          { user: { department: userInfo.department } },
-          { user: { batch: userInfo.batch } },
-        ],
-      },
-    });
-
-    return res.status(200).json({
-      success: true,
-      data: posts,
-      pagination: {
-        page,
-        limit,
-        totalPosts,
-        totalPages: Math.ceil(totalPosts / limit),
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching user feed:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch user feed",
-      error: error.message,
-    });
-  }
+  req.query.category = req.query.category || undefined;
+  return exports.getPosts(req, res);
 };

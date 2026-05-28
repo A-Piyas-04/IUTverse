@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { authUtils } from "../utils/auth.js";
+import { supabase } from "../services/supabaseClient.js";
 
 const AuthContext = createContext();
 
@@ -22,6 +23,24 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
 
       try {
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user) {
+            const userData = {
+              id: data.session.user.id,
+              email: data.session.user.email,
+              name:
+                data.session.user.user_metadata?.display_name ||
+                data.session.user.email,
+              createdAt: data.session.user.created_at,
+            };
+            authUtils.setAuthData(data.session.access_token, userData);
+            setIsAuthenticated(true);
+            setUser(userData);
+            return;
+          }
+        }
+
         // Check if user has a valid token
         if (authUtils.isAuthenticated()) {
           // Validate token with server
@@ -53,6 +72,32 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const userData = {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.display_name || session.user.email,
+          createdAt: session.user.created_at,
+        };
+        authUtils.setAuthData(session.access_token, userData);
+        setIsAuthenticated(true);
+        setUser(userData);
+      } else {
+        authUtils.clearAuthData();
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Set up periodic token validation
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -82,6 +127,9 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = () => {
+    if (supabase) {
+      supabase.auth.signOut();
+    }
     authUtils.clearAuthData();
     setIsAuthenticated(false);
     setUser(null);

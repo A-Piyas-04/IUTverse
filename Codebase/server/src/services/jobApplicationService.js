@@ -1,148 +1,88 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  profileSelect,
+} = require("../utils/supabaseData");
+
+const mapApplication = (application) => ({
+  id: application.id,
+  jobId: application.job_id,
+  applicantId: application.applicant_id,
+  appliedAt: application.applied_at,
+  applicant: mapProfile(application.applicant),
+});
 
 class JobApplicationService {
   async applyToJob(jobId, applicantId) {
-    try {
-      // Check if user has already applied to this job
-      const existingApplication = await prisma.jobApplication.findUnique({
-        where: {
-          jobId_applicantId: {
-            jobId: Number(jobId),
-            applicantId: Number(applicantId),
-          },
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("job_applications")
+      .insert({
+        job_id: Number(jobId),
+        applicant_id: applicantId,
+      })
+      .select(`*, applicant:profiles!job_applications_applicant_id_fkey(${profileSelect})`)
+      .single();
 
-      if (existingApplication) {
+    if (error) {
+      if (error.code === "23505") {
         throw new Error("You have already applied to this job");
       }
-
-      // Create new application
-      return await prisma.jobApplication.create({
-        data: {
-          jobId: Number(jobId),
-          applicantId: Number(applicantId),
-        },
-        include: {
-          applicant: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              profile: {
-                select: { profilePicture: true },
-              },
-            },
-          },
-        },
-      });
-    } catch (error) {
       throw error;
     }
+
+    return mapApplication(data);
   }
 
   async removeApplication(jobId, applicantId) {
-    try {
-      const application = await prisma.jobApplication.findUnique({
-        where: {
-          jobId_applicantId: {
-            jobId: Number(jobId),
-            applicantId: Number(applicantId),
-          },
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("job_applications")
+      .delete()
+      .eq("job_id", Number(jobId))
+      .eq("applicant_id", applicantId)
+      .select()
+      .maybeSingle();
 
-      if (!application) {
-        throw new Error("Application not found");
-      }
-
-      await prisma.jobApplication.delete({
-        where: {
-          jobId_applicantId: {
-            jobId: Number(jobId),
-            applicantId: Number(applicantId),
-          },
-        },
-      });
-
-      return { message: "Application removed successfully" };
-    } catch (error) {
-      throw error;
-    }
+    if (error) throw error;
+    if (!data) throw new Error("Application not found");
+    return { message: "Application removed successfully" };
   }
 
   async getJobApplications(jobId) {
-    try {
-      return await prisma.jobApplication.findMany({
-        where: {
-          jobId: Number(jobId),
-        },
-        include: {
-          applicant: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              profile: {
-                select: { profilePicture: true },
-              },
-            },
-          },
-        },
-        orderBy: {
-          appliedAt: "desc",
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("job_applications")
+      .select(`*, applicant:profiles!job_applications_applicant_id_fkey(${profileSelect})`)
+      .eq("job_id", Number(jobId))
+      .order("applied_at", { ascending: false });
+
+    if (error) throw error;
+    return data.map(mapApplication);
   }
 
   async getUserApplicationStatus(jobId, userId) {
-    try {
-      console.log("[JobApplicationService] Checking application status for:", {
-        jobId: Number(jobId),
-        userId: Number(userId),
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("job_applications")
+      .select("id")
+      .eq("job_id", Number(jobId))
+      .eq("applicant_id", userId)
+      .maybeSingle();
 
-      const application = await prisma.jobApplication.findUnique({
-        where: {
-          jobId_applicantId: {
-            jobId: Number(jobId),
-            applicantId: Number(userId),
-          },
-        },
-      });
-
-      console.log(
-        "[JobApplicationService] Found application:",
-        !!application,
-        application ? application.id : "none"
-      );
-
-      return { hasApplied: !!application };
-    } catch (error) {
-      console.error(
-        "[JobApplicationService] Error in getUserApplicationStatus:",
-        error
-      );
-      throw error;
-    }
+    if (error) throw error;
+    return { hasApplied: !!data };
   }
 
   async getApplicationCount(jobId) {
-    try {
-      const count = await prisma.jobApplication.count({
-        where: {
-          jobId: Number(jobId),
-        },
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { count, error } = await supabase
+      .from("job_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("job_id", Number(jobId));
 
-      return { count };
-    } catch (error) {
-      throw error;
-    }
+    if (error) throw error;
+    return { count: count || 0 };
   }
 }
 

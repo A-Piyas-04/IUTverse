@@ -11,7 +11,7 @@ router.get('/', catPostController.getAllPosts);
 router.get('/:id', catPostController.getPostById);
 
 // Create new post (with image upload)
-router.post('/', upload.single('image'), catPostController.createPost);
+router.post('/', authenticateToken, upload.single('image'), catPostController.createPost);
 
 // Delete post (authenticated)
 router.delete('/:id', authenticateToken, catPostController.deletePost);

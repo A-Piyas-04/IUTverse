@@ -1,215 +1,144 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  profileSelect,
+} = require("../utils/supabaseData");
+
+const mapAnswer = (answer) => ({
+  id: answer.id,
+  userId: answer.user_id,
+  questionId: answer.question_id,
+  answer: answer.answer,
+  createdAt: answer.created_at,
+  updatedAt: answer.updated_at,
+  user: mapProfile(answer.user),
+});
+
+const mapQuestion = (question) => ({
+  id: question.id,
+  userId: question.user_id,
+  question: question.question,
+  createdAt: question.created_at,
+  updatedAt: question.updated_at,
+  user: mapProfile(question.user),
+  answers: (question.answers || []).map(mapAnswer),
+});
 
 class CatQAService {
-  // Get all questions with their answers
-  async getAllQuestions() {
-    try {
-      const questions = await prisma.catQuestion.findMany({
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          answers: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            },
-            orderBy: {
-              createdAt: 'asc'
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
-      return questions;
-    } catch (error) {
-      throw new Error(`Failed to fetch questions: ${error.message}`);
-    }
+  async getAllQuestions(page = 1, limit = 50) {
+    const supabase = ensureSupabaseAdmin();
+    const from = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 100);
+    const to = from + Math.min(Number(limit), 100) - 1;
+
+    const { data, error } = await supabase
+      .from("cat_questions")
+      .select(`*, user:profiles!cat_questions_user_id_fkey(${profileSelect})`)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error) throw new Error(`Failed to fetch questions: ${error.message}`);
+    return Promise.all(data.map((question) => this.withAnswers(question)));
   }
 
-  // Create a new question
   async createQuestion(questionData) {
-    try {
-      const { question, userId } = questionData;
-      
-      if (!question || question.trim().length === 0) {
-        throw new Error('Question content is required');
-      }
-
-      const newQuestion = await prisma.catQuestion.create({
-        data: {
-          question: question.trim(),
-          userId: userId || null
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          answers: true
-        }
-      });
-
-      return newQuestion;
-    } catch (error) {
-      throw new Error(`Failed to create question: ${error.message}`);
+    const { question, userId } = questionData;
+    if (!question || question.trim().length === 0) {
+      throw new Error("Question content is required");
     }
+
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("cat_questions")
+      .insert({ question: question.trim(), user_id: userId })
+      .select(`*, user:profiles!cat_questions_user_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw new Error(`Failed to create question: ${error.message}`);
+    return mapQuestion({ ...data, answers: [] });
   }
 
-  // Get a specific question by ID
   async getQuestionById(questionId) {
-    try {
-      const question = await prisma.catQuestion.findUnique({
-        where: {
-          id: parseInt(questionId)
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          answers: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            },
-            orderBy: {
-              createdAt: 'asc'
-            }
-          }
-        }
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("cat_questions")
+      .select(`*, user:profiles!cat_questions_user_id_fkey(${profileSelect})`)
+      .eq("id", Number(questionId))
+      .maybeSingle();
 
-      if (!question) {
-        throw new Error('Question not found');
-      }
-
-      return question;
-    } catch (error) {
-      throw new Error(`Failed to fetch question: ${error.message}`);
-    }
+    if (error) throw new Error(`Failed to fetch question: ${error.message}`);
+    if (!data) throw new Error("Question not found");
+    return this.withAnswers(data);
   }
 
-  // Add an answer to a question
   async addAnswer(answerData) {
-    try {
-      const { questionId, answer, userId } = answerData;
-      
-      if (!answer || answer.trim().length === 0) {
-        throw new Error('Answer content is required');
-      }
-
-      // Check if question exists
-      const question = await prisma.catQuestion.findUnique({
-        where: { id: parseInt(questionId) }
-      });
-
-      if (!question) {
-        throw new Error('Question not found');
-      }
-
-      const newAnswer = await prisma.catAnswer.create({
-        data: {
-          answer: answer.trim(),
-          questionId: parseInt(questionId),
-          userId: userId || null
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          question: {
-            select: {
-              id: true,
-              question: true
-            }
-          }
-        }
-      });
-
-      return newAnswer;
-    } catch (error) {
-      throw new Error(`Failed to add answer: ${error.message}`);
+    const { questionId, answer, userId } = answerData;
+    if (!answer || answer.trim().length === 0) {
+      throw new Error("Answer content is required");
     }
+
+    await this.getQuestionById(questionId);
+
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("cat_answers")
+      .insert({
+        answer: answer.trim(),
+        question_id: Number(questionId),
+        user_id: userId,
+      })
+      .select(`*, user:profiles!cat_answers_user_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw new Error(`Failed to add answer: ${error.message}`);
+    return mapAnswer(data);
   }
 
-  // Delete a question (only by the author or admin)
   async deleteQuestion(questionId, userId) {
-    try {
-      const question = await prisma.catQuestion.findUnique({
-        where: { id: parseInt(questionId) }
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data: question, error: findError } = await supabase
+      .from("cat_questions")
+      .select("*")
+      .eq("id", Number(questionId))
+      .maybeSingle();
 
-      if (!question) {
-        throw new Error('Question not found');
-      }
+    if (findError) throw new Error(`Failed to delete question: ${findError.message}`);
+    if (!question) throw new Error("Question not found");
+    if (question.user_id !== userId) throw new Error("Unauthorized to delete this question");
 
-      // Check if user is the author (for now, allow anyone to delete for testing)
-      // if (question.userId !== userId) {
-      //   throw new Error('Unauthorized to delete this question');
-      // }
-
-      await prisma.catQuestion.delete({
-        where: { id: parseInt(questionId) }
-      });
-
-      return { message: 'Question deleted successfully' };
-    } catch (error) {
-      throw new Error(`Failed to delete question: ${error.message}`);
-    }
+    const { error } = await supabase.from("cat_questions").delete().eq("id", Number(questionId));
+    if (error) throw new Error(`Failed to delete question: ${error.message}`);
+    return { message: "Question deleted successfully" };
   }
 
-  // Delete an answer (only by the author or admin)
   async deleteAnswer(answerId, userId) {
-    try {
-      const answer = await prisma.catAnswer.findUnique({
-        where: { id: parseInt(answerId) }
-      });
+    const supabase = ensureSupabaseAdmin();
+    const { data: answer, error: findError } = await supabase
+      .from("cat_answers")
+      .select("*")
+      .eq("id", Number(answerId))
+      .maybeSingle();
 
-      if (!answer) {
-        throw new Error('Answer not found');
-      }
+    if (findError) throw new Error(`Failed to delete answer: ${findError.message}`);
+    if (!answer) throw new Error("Answer not found");
+    if (answer.user_id !== userId) throw new Error("Unauthorized to delete this answer");
 
-      // Check if user is the author (for now, allow anyone to delete for testing)
-      // if (answer.userId !== userId) {
-      //   throw new Error('Unauthorized to delete this answer');
-      // }
+    const { error } = await supabase.from("cat_answers").delete().eq("id", Number(answerId));
+    if (error) throw new Error(`Failed to delete answer: ${error.message}`);
+    return { message: "Answer deleted successfully" };
+  }
 
-      await prisma.catAnswer.delete({
-        where: { id: parseInt(answerId) }
-      });
+  async withAnswers(question) {
+    const supabase = ensureSupabaseAdmin();
+    const { data: answers, error } = await supabase
+      .from("cat_answers")
+      .select(`*, user:profiles!cat_answers_user_id_fkey(${profileSelect})`)
+      .eq("question_id", question.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: true });
 
-      return { message: 'Answer deleted successfully' };
-    } catch (error) {
-      throw new Error(`Failed to delete answer: ${error.message}`);
-    }
+    if (error) throw new Error(`Failed to fetch answers: ${error.message}`);
+    return mapQuestion({ ...question, answers });
   }
 }
 

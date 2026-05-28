@@ -1,7 +1,3 @@
-const { PrismaClient } = require('@prisma/client');
+const { supabaseAdmin } = require("./supabase");
 
-const prisma = new PrismaClient({
-  log: ['query', 'error', 'warn'],
-});
-
-module.exports = prisma;
+module.exports = supabaseAdmin;

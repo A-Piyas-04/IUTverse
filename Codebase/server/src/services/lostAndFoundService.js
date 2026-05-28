@@ -1,232 +1,167 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const {
+  ensureSupabaseAdmin,
+  mapProfile,
+  profileSelect,
+  publicUrl,
+  uploadToBucket,
+} = require("../utils/supabaseData");
+
+const mapPost = (post) => ({
+  id: post.id,
+  userId: post.user_id,
+  type: post.type,
+  title: post.title,
+  description: post.description,
+  image: post.image_path,
+  imageUrl: publicUrl(post.image_bucket, post.image_path),
+  imageBucket: post.image_bucket,
+  imageMimeType: post.image_mime_type,
+  imageSizeBytes: post.image_size_bytes,
+  location: post.location,
+  contact: post.contact,
+  status: post.status,
+  createdAt: post.created_at,
+  updatedAt: post.updated_at,
+  user: mapProfile(post.user),
+});
+
+const allowedUpdateFields = (data) => {
+  const payload = {};
+  for (const field of ["type", "title", "description", "location", "contact", "status"]) {
+    if (data[field] !== undefined) payload[field] = data[field];
+  }
+  return payload;
+};
 
 class LostAndFoundService {
-  // Get all lost and found posts with optional filters
   async getAllPosts(filters = {}) {
-    try {
-      const where = {};
-      
-      if (filters.type && filters.type !== 'all') {
-        where.type = filters.type;
-      }
-      
-      if (filters.status) {
-        where.status = filters.status;
-      }
-      
-      if (filters.search) {
-        where.OR = [
-          { title: { contains: filters.search, mode: 'insensitive' } },
-          { description: { contains: filters.search, mode: 'insensitive' } },
-          { location: { contains: filters.search, mode: 'insensitive' } }
-        ];
-      }
-      
-      const posts = await prisma.lostAndFound.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
-      
-      return posts;
-    } catch (error) {
-      console.error('Error getting lost and found posts:', error);
-      throw error;
+    const supabase = ensureSupabaseAdmin();
+    let query = supabase
+      .from("lost_and_found_posts")
+      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`)
+      .order("created_at", { ascending: false });
+
+    if (filters.type && filters.type !== "all") query = query.eq("type", filters.type);
+    if (filters.status) query = query.eq("status", filters.status);
+    if (filters.search) {
+      const search = `%${filters.search}%`;
+      query = query.or(`title.ilike.${search},description.ilike.${search},location.ilike.${search}`);
     }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data.map(mapPost);
   }
-  
-  // Get a single post by ID
+
   async getPostById(postId) {
-    try {
-      const post = await prisma.lostAndFound.findUnique({
-        where: { id: parseInt(postId) },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      });
-      
-      return post;
-    } catch (error) {
-      console.error('Error getting lost and found post by ID:', error);
-      throw error;
-    }
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("lost_and_found_posts")
+      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`)
+      .eq("id", Number(postId))
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapPost(data) : null;
   }
-  
-  // Create a new lost and found post
-  async createPost(userId, postData) {
-    try {
-      console.log('LostAndFoundService - Creating post with data:', {
-        userId,
-        type: postData.type,
-        title: postData.title,
-        description: postData.description?.substring(0, 20) + '...',
-        hasImage: !!postData.image,
-        location: postData.location,
-        contact: postData.contact
-      });
-      
-      // Validate userId is a number or can be parsed to a number
-      let userIdInt;
-      try {
-        userIdInt = parseInt(userId);
-        if (isNaN(userIdInt)) {
-          throw new Error('Invalid user ID format');
-        }
-        console.log('LostAndFoundService - Parsed userId to:', userIdInt);
-      } catch (parseError) {
-        console.error('LostAndFoundService - Error parsing userId:', parseError);
-        throw new Error(`Invalid userId: ${userId}. Must be a valid integer.`);
-      }
-      
-      // Prepare data for database
-      const createData = {
-        userId: userIdInt,
+
+  async createPost(userId, postData, imageFile = null) {
+    const supabase = ensureSupabaseAdmin();
+    const image = await uploadToBucket({
+      bucket: "lost-found",
+      userId,
+      file: imageFile,
+      prefix: "item",
+    });
+
+    const { data, error } = await supabase
+      .from("lost_and_found_posts")
+      .insert({
+        user_id: userId,
         type: postData.type,
         title: postData.title,
         description: postData.description,
-        image: postData.image || null, // Ensure null if image is undefined
         location: postData.location,
         contact: postData.contact,
-        status: 'active'
-      };
-      
-      console.log('LostAndFoundService - Final data being sent to database:', createData);
-      
-      const post = await prisma.lostAndFound.create({
-        data: createData,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      });
-      
-      console.log('LostAndFoundService - Post created successfully with ID:', post.id);
-      return post;
-    } catch (error) {
-      console.error('LostAndFoundService - Error creating lost and found post:', error);
-      console.error('LostAndFoundService - Error stack:', error.stack);
-      
-      // Provide more specific error messages based on error type
-      if (error.code === 'P2003') {
-        throw new Error('Foreign key constraint failed. User ID may not exist.');
-      } else if (error.code === 'P2002') {
-        throw new Error('A unique constraint would be violated on LostAndFound.');
-      } else {
-        throw error;
-      }
-    }
+        image_path: image.path,
+        image_bucket: image.bucket,
+        image_mime_type: image.mimeType,
+        image_size_bytes: image.size,
+      })
+      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapPost(data);
   }
-  
-  // Update a lost and found post
-  async updatePost(postId, userId, updateData) {
-    try {
-      // First check if the post exists and belongs to the user
-      const existingPost = await prisma.lostAndFound.findUnique({
-        where: { id: parseInt(postId) }
+
+  async updatePost(postId, userId, updateData, imageFile = null) {
+    const supabase = ensureSupabaseAdmin();
+    const existing = await this.getRawPost(postId);
+    if (!existing) throw new Error("Post not found");
+    if (existing.user_id !== userId) throw new Error("Unauthorized to update this post");
+
+    const payload = allowedUpdateFields(updateData);
+    if (imageFile) {
+      const image = await uploadToBucket({
+        bucket: "lost-found",
+        userId,
+        file: imageFile,
+        prefix: "item",
       });
-      
-      if (!existingPost) {
-        throw new Error('Post not found');
-      }
-      
-      if (existingPost.userId !== parseInt(userId)) {
-        throw new Error('Unauthorized to update this post');
-      }
-      
-      const updatedPost = await prisma.lostAndFound.update({
-        where: { id: parseInt(postId) },
-        data: updateData,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      });
-      
-      return updatedPost;
-    } catch (error) {
-      console.error('Error updating lost and found post:', error);
-      throw error;
+      payload.image_path = image.path;
+      payload.image_bucket = image.bucket;
+      payload.image_mime_type = image.mimeType;
+      payload.image_size_bytes = image.size;
     }
+
+    const { data, error } = await supabase
+      .from("lost_and_found_posts")
+      .update(payload)
+      .eq("id", Number(postId))
+      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapPost(data);
   }
-  
-  // Delete a lost and found post
+
   async deletePost(postId, userId) {
-    try {
-      // First check if the post exists and belongs to the user
-      const existingPost = await prisma.lostAndFound.findUnique({
-        where: { id: parseInt(postId) }
-      });
-      
-      if (!existingPost) {
-        throw new Error('Post not found');
-      }
-      
-      if (existingPost.userId !== parseInt(userId)) {
-        throw new Error('Unauthorized to delete this post');
-      }
-      
-      await prisma.lostAndFound.delete({
-        where: { id: parseInt(postId) }
-      });
-      
-      return { message: 'Post deleted successfully' };
-    } catch (error) {
-      console.error('Error deleting lost and found post:', error);
-      throw error;
-    }
+    const supabase = ensureSupabaseAdmin();
+    const existing = await this.getRawPost(postId);
+    if (!existing) throw new Error("Post not found");
+    if (existing.user_id !== userId) throw new Error("Unauthorized to delete this post");
+
+    const { error } = await supabase
+      .from("lost_and_found_posts")
+      .delete()
+      .eq("id", Number(postId));
+
+    if (error) throw error;
+    return { message: "Post deleted successfully" };
   }
-  
-  // Mark post as resolved
+
   async markAsResolved(postId, userId) {
-    try {
-      return await this.updatePost(postId, userId, { status: 'resolved' });
-    } catch (error) {
-      console.error('Error marking post as resolved:', error);
-      throw error;
-    }
+    return this.updatePost(postId, userId, { status: "resolved" });
   }
-  
-  // Mark post as active
+
   async markAsActive(postId, userId) {
-    try {
-      return await this.updatePost(postId, userId, { status: 'active' });
-    } catch (error) {
-      console.error('Error marking post as active:', error);
-      throw error;
-    }
+    return this.updatePost(postId, userId, { status: "active" });
   }
-  
-  // Close database connection
-  async disconnect() {
-    await prisma.$disconnect();
+
+  async getRawPost(postId) {
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("lost_and_found_posts")
+      .select("*")
+      .eq("id", Number(postId))
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
   }
+
+  async disconnect() {}
 }
 
 module.exports = new LostAndFoundService();

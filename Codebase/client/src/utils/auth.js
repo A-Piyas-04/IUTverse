@@ -1,4 +1,6 @@
 // Authentication utilities
+import { supabase } from "../services/supabaseClient.js";
+
 const AUTH_TOKEN_KEY = 'iutverse_auth_token';
 const USER_DATA_KEY = 'iutverse_user_data';
 
@@ -30,6 +32,13 @@ export const authUtils = {
   // Get stored token
   getToken() {
     return localStorage.getItem(AUTH_TOKEN_KEY);
+  },
+
+  async getSupabaseToken() {
+    if (!supabase) return this.getToken();
+
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || this.getToken();
   },
 
   // Get stored user data
@@ -98,6 +107,11 @@ export const authUtils = {
   // Get authorization header
   getAuthHeader() {
     const token = this.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
+
+  async getAuthHeaderAsync() {
+    const token = await this.getSupabaseToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 };

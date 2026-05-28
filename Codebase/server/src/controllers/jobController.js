@@ -38,7 +38,7 @@ const getJobById = async (req, res) => {
 const updateJob = async (req, res) => {
   try {
     console.log('[JobController] Attempting to update job:', { id: req.params.id, body: req.body });
-    const job = await jobService.updateJob(req.params.id, req.body);
+    const job = await jobService.updateJob(req.params.id, req.body, req.user.userId);
     console.log('[JobController] Job updated successfully:', job);
     res.json(job);
   } catch (error) {
