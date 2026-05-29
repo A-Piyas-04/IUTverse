@@ -218,3 +218,37 @@ Known follow-up:
 - Realtime chat should be manually checked with two authenticated browser sessions.
 - Validation is now in shared helpers and touched flows; older untouched edge controllers can continue migrating to the helpers during future edits.
 - Client code still has some legacy `/uploads` and `/files` URL fallback references outside the active backend migration scope; review them when the frontend media layer is cleaned up.
+
+### 2026-05-30 - Open Issues #1-#32 Security Pass
+
+Goal: address the remaining open items from original issues `#1-#32` without revisiting already solved Supabase/auth/upload/global-error work.
+
+Changed:
+
+- Added `helmet` security headers and disabled `x-powered-by`.
+- Replaced unrestricted CORS with an allowlist guard using `CORS_ORIGINS` and `CORS_ALLOW_CREDENTIALS`.
+- Added `express-rate-limit` and wired general API, auth-sensitive, and write-route limiters.
+- Added configurable rate-limit env defaults to `env.example`.
+- Added `DELETE /api/jobs/:id` as an owner/admin soft delete that sets job status to `deleted`.
+- Removed placeholder email credential fallbacks from `config/email.js` and `emailService.js`.
+- Updated the old email helper so it no longer sends plaintext passwords.
+- Added `npm run security:scan-env` through `scripts/scanSecrets.js`.
+- Added `security-credential-rotation.md` with provider rotation and git history cleanup guidance.
+
+Verification:
+
+- `npm.cmd install helmet express-rate-limit` completed and updated server package files.
+- `npm run security:scan-env` passed.
+- `node scripts/scanSecrets.js --self-test` passed.
+- Full `node --check` pass across `Codebase/server/src/**/*.js` passed.
+- Server app import check passed.
+- Local HTTP smoke check confirmed allowed CORS origin, blocked CORS origin, and Helmet `x-content-type-options: nosniff`.
+- Forced low-threshold rate-limit smoke check returned `429` on the second `/api` request.
+- Client build passed with `npx.cmd vite build --outDir .codex-build-check --emptyOutDir true`; temporary output was removed.
+- Read-only Supabase smoke checks passed for jobs, posts, departments, Cat Q&A, and confessions.
+
+Known follow-up:
+
+- Real credential rotation must still be completed in Supabase, Gmail/Google, deployment providers, and any local collaborator environments.
+- Git history rewriting was documented but intentionally not performed automatically.
+- Production deployments must set `CORS_ORIGINS` to real frontend origins before launch.

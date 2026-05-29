@@ -5,12 +5,14 @@ const commentController = require("../controllers/commentController");
 const { authenticateToken } = require("../middleware/auth");
 const upload = require("../middleware/uploadMiddleware");
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
+const { createLimiter } = require("../middleware/security");
 
 // POST ROUTES
 // Create a new post
 router.post(
   "/posts",
   authenticateToken,
+  createLimiter,
   upload.single("image"),
   imageUploadErrorHandler,
   postController.createPost
@@ -26,6 +28,7 @@ router.get("/posts/:id", postController.getPost);
 router.put(
   "/posts/:id",
   authenticateToken,
+  createLimiter,
   upload.single("image"),
   imageUploadErrorHandler,
   postController.updatePost
@@ -35,7 +38,7 @@ router.put(
 router.delete("/posts/:id", authenticateToken, postController.deletePost);
 
 // React to a post (like, etc.)
-router.post("/posts/:id/react", authenticateToken, postController.reactToPost);
+router.post("/posts/:id/react", authenticateToken, createLimiter, postController.reactToPost);
 
 // Get user's personalized feed
 router.get("/feed", authenticateToken, postController.getUserFeed);
@@ -45,6 +48,7 @@ router.get("/feed", authenticateToken, postController.getUserFeed);
 router.post(
   "/posts/:postId/comments",
   authenticateToken,
+  createLimiter,
   commentController.createComment
 );
 
@@ -58,6 +62,7 @@ router.get("/comments/:commentId/replies", commentController.getCommentReplies);
 router.put(
   "/comments/:commentId",
   authenticateToken,
+  createLimiter,
   commentController.updateComment
 );
 

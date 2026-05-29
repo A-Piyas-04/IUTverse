@@ -105,4 +105,23 @@ const updateJob = async (req, res) => {
   }
 };
 
-module.exports = { createJob, getAllJobs, getJobById, updateJob }; 
+const deleteJob = async (req, res) => {
+  try {
+    const id = positiveInt(req.params.id, "Job ID");
+    if (id.error) return response.badRequest(res, id.error);
+
+    const job = await jobService.deleteJob(id.value, req.user.userId, req.user.role);
+    res.json({
+      success: true,
+      message: "Job deleted successfully",
+      data: job,
+    });
+  } catch (error) {
+    console.error("[JobController] Error deleting job:", error);
+    if (error.message.includes("Unauthorized")) return response.forbidden(res, error.message);
+    if (error.message.includes("not found")) return response.notFound(res, error.message);
+    response.serverError(res, "Error deleting job", error.message);
+  }
+};
+
+module.exports = { createJob, getAllJobs, getJobById, updateJob, deleteJob }; 

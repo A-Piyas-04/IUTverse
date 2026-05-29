@@ -9,16 +9,17 @@ const {
   validateToken,
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
+const { authLimiter } = require("../middleware/security");
 
 // Signup endpoint
-router.post('/signup', signup);
+router.post('/signup', authLimiter, signup);
 
 // Login endpoint
-router.post('/login', login);
+router.post('/login', authLimiter, login);
 
 // Password reset/change endpoints
-router.post('/password/reset-request', requestPasswordReset);
-router.put('/password', authenticateToken, changePassword);
+router.post('/password/reset-request', authLimiter, requestPasswordReset);
+router.put('/password', authenticateToken, authLimiter, changePassword);
 
 // Token validation endpoint (protected)
 router.get('/validate', authenticateToken, validateToken);

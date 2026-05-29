@@ -1,13 +1,25 @@
 const nodemailer = require('nodemailer');
 const config = require('./config');
 
-// Email configuration (you'll need to configure this with actual email service)
-const transporter = nodemailer.createTransport({
-  service: config.email.service,
-  auth: {
-    user: config.email.user || 'your-email@gmail.com', // Replace with your email
-    pass: config.email.pass || 'your-app-password' // Replace with your app password
+const ensureEmailConfigured = () => {
+  if (!config.email.user || !config.email.pass) {
+    throw new Error("Email service is not configured. Set EMAIL_USER and EMAIL_PASS to enable email sending.");
   }
-});
+};
 
-module.exports = transporter;
+const createTransporter = () => {
+  ensureEmailConfigured();
+
+  return nodemailer.createTransport({
+    service: config.email.service,
+    auth: {
+      user: config.email.user,
+      pass: config.email.pass,
+    },
+  });
+};
+
+module.exports = {
+  createTransporter,
+  ensureEmailConfigured,
+};
