@@ -2,6 +2,7 @@ const {
   supabaseAdmin,
   isSupabaseAdminConfigured,
 } = require("../config/supabase");
+const { sanitizePlainText, sanitizePlainTextArray } = require("../utils/validation");
 
 const ensureSupabaseAdmin = () => {
   if (!isSupabaseAdminConfigured) {
@@ -96,7 +97,15 @@ const profilePayload = (profileData) => {
 
   return Object.entries(profileData || {}).reduce((payload, [key, value]) => {
     const column = allowed[key];
-    if (column) payload[column] = value;
+    if (!column) return payload;
+
+    if (Array.isArray(value)) {
+      payload[column] = sanitizePlainTextArray(value, { max: 100 });
+    } else if (typeof value === "string") {
+      payload[column] = sanitizePlainText(value, { max: 1000 });
+    } else {
+      payload[column] = value;
+    }
     return payload;
   }, {});
 };

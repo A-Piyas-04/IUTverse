@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import chatApi from "../services/chatApi.js";
 import { authUtils } from "../utils/auth.js";
+import { isSupabaseConfigured, supabase } from "../services/supabaseClient.js";
 
 // Helper function to get current user ID from auth
 const getCurrentUserId = () => {
@@ -283,18 +284,7 @@ export const useChat = () => {
 
   // Helper function to get current user ID (you'll need to implement this based on your auth context)
   const getCurrentUserId = () => {
-    // This should get the user ID from your auth context
-    // For now, returning a placeholder - you'll need to integrate with your auth system
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return payload.userId;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    return authUtils.getUserData()?.id || null;
   };
 
   // Select a conversation
@@ -329,6 +319,43 @@ export const useChat = () => {
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !activeConversation?.id) return undefined;
+
+    const channel = supabase
+      .channel(`chat:${activeConversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+          filter: `conversation_id=eq.${activeConversation.id}`,
+        },
+        async () => {
+          await loadMessages(activeConversation.id);
+          await loadConversations();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `id=eq.${activeConversation.id}`,
+        },
+        async () => {
+          await loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeConversation?.id, loadConversations, loadMessages]);
 
   return {
     conversations,

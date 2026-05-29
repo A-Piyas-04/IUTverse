@@ -3,6 +3,7 @@ const {
   mapProfile,
   profileSelect,
 } = require("../utils/supabaseData");
+const { optionalText, sanitizePlainText, sanitizePlainTextArray } = require("../utils/validation");
 
 const mapJob = (job) => ({
   id: job.id,
@@ -25,11 +26,11 @@ class JobService {
     const { data: job, error } = await supabase
       .from("jobs")
       .insert({
-        title: data.title,
+        title: sanitizePlainText(data.title, { max: 160 }),
         type: data.type,
-        description: data.description,
-        requirements: data.requirements || [],
-        compensation: data.compensation || null,
+        description: sanitizePlainText(data.description, { max: 5000 }),
+        requirements: sanitizePlainTextArray(data.requirements || [], { max: 300 }),
+        compensation: optionalText(data.compensation, { max: 200 }),
         deadline: data.deadline || null,
         posted_by_id: data.postedById,
       })
@@ -74,11 +75,11 @@ class JobService {
     }
 
     const payload = {};
-    if (data.title !== undefined) payload.title = data.title;
+    if (data.title !== undefined) payload.title = sanitizePlainText(data.title, { max: 160 });
     if (data.type !== undefined) payload.type = data.type;
-    if (data.description !== undefined) payload.description = data.description;
-    if (data.requirements !== undefined) payload.requirements = data.requirements;
-    if (data.compensation !== undefined) payload.compensation = data.compensation;
+    if (data.description !== undefined) payload.description = sanitizePlainText(data.description, { max: 5000 });
+    if (data.requirements !== undefined) payload.requirements = sanitizePlainTextArray(data.requirements, { max: 300 });
+    if (data.compensation !== undefined) payload.compensation = optionalText(data.compensation, { max: 200 });
     if (data.deadline !== undefined) payload.deadline = data.deadline;
     if (data.status !== undefined) payload.status = data.status;
 

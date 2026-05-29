@@ -1,5 +1,7 @@
 const academicResourceService = require("../services/academicResourceService");
 const storageService = require("../services/storageService");
+const response = require("../utils/responses");
+const { enumValueExact, optionalText, positiveInt, requiredText } = require("../utils/validation");
 
 const validTypes = ["QUESTION", "NOTE", "BOOK", "CLASS_LECTURE", "OTHER"];
 
@@ -7,33 +9,23 @@ const createAcademicResource = async (req, res) => {
   try {
     const { title, type, departmentId, externalLink, courseCode } = req.body;
 
-    if (!title || !type || !departmentId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields: title, type, and departmentId are required",
-      });
-    }
+    const titleResult = requiredText(title, "Title", { max: 160 });
+    if (titleResult.error) return response.badRequest(res, titleResult.error);
+    const typeResult = enumValueExact(type, validTypes, "Type");
+    if (typeResult.error) return response.badRequest(res, typeResult.error);
+    const departmentResult = positiveInt(departmentId, "Department ID");
+    if (departmentResult.error) return response.badRequest(res, departmentResult.error);
 
     if (!req.file && !externalLink) {
-      return res.status(400).json({
-        success: false,
-        message: "Either a PDF file or external link must be provided",
-      });
-    }
-
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid type. Must be one of: ${validTypes.join(", ")}`,
-      });
+      return response.badRequest(res, "Either a PDF file or external link must be provided");
     }
 
     const resourceData = {
-      title,
-      type,
-      departmentId: Number(departmentId),
-      externalLink: externalLink || null,
-      courseCode: courseCode || null,
+      title: titleResult.value,
+      type: typeResult.value,
+      departmentId: departmentResult.value,
+      externalLink: optionalText(externalLink, { max: 500 }),
+      courseCode: optionalText(courseCode, { max: 60 }),
       uploadedById: req.user.userId,
     };
 
@@ -70,9 +62,17 @@ const getAllAcademicResources = async (req, res) => {
   try {
     const { departmentId, type, courseCode } = req.query;
     const filters = {};
-    if (departmentId) filters.departmentId = departmentId;
-    if (type) filters.type = type;
-    if (courseCode) filters.courseCode = courseCode;
+    if (departmentId) {
+      const id = positiveInt(departmentId, "Department ID");
+      if (id.error) return response.badRequest(res, id.error);
+      filters.departmentId = id.value;
+    }
+    if (type) {
+      const typeResult = enumValueExact(type, validTypes, "Type");
+      if (typeResult.error) return response.badRequest(res, typeResult.error);
+      filters.type = typeResult.value;
+    }
+    if (courseCode) filters.courseCode = optionalText(courseCode, { max: 60 });
 
     const resources = await academicResourceService.getAllAcademicResources(filters);
     res.json({
@@ -92,7 +92,10 @@ const getAllAcademicResources = async (req, res) => {
 
 const getAcademicResourceById = async (req, res) => {
   try {
-    const resource = await academicResourceService.getAcademicResourceById(req.params.id);
+    const id = positiveInt(req.params.id, "Resource ID");
+    if (id.error) return response.badRequest(res, id.error);
+
+    const resource = await academicResourceService.getAcademicResourceById(id.value);
     if (!resource) {
       return res.status(404).json({
         success: false,
@@ -136,14 +139,10 @@ const getAllDepartments = async (req, res) => {
 const createDepartment = async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name) {
-      return res.status(400).json({
-        success: false,
-        message: "Department name is required",
-      });
-    }
+    const nameResult = requiredText(name, "Department name", { max: 120 });
+    if (nameResult.error) return response.badRequest(res, nameResult.error);
 
-    const department = await academicResourceService.createDepartment(name);
+    const department = await academicResourceService.createDepartment(nameResult.value);
     res.status(201).json({
       success: true,
       message: "Department created successfully",
@@ -163,11 +162,23 @@ const updateAcademicResource = async (req, res) => {
   try {
     const { title, type, departmentId, externalLink, courseCode } = req.body;
     const updateData = {};
-    if (title) updateData.title = title;
-    if (type) updateData.type = type;
-    if (departmentId) updateData.departmentId = Number(departmentId);
-    if (externalLink !== undefined) updateData.externalLink = externalLink;
-    if (courseCode !== undefined) updateData.courseCode = courseCode;
+    if (title !== undefined) {
+      const titleResult = requiredText(title, "Title", { max: 160 });
+      if (titleResult.error) return response.badRequest(res, titleResult.error);
+      updateData.title = titleResult.value;
+    }
+    if (type !== undefined) {
+      const typeResult = enumValueExact(type, validTypes, "Type");
+      if (typeResult.error) return response.badRequest(res, typeResult.error);
+      updateData.type = typeResult.value;
+    }
+    if (departmentId !== undefined) {
+      const departmentResult = positiveInt(departmentId, "Department ID");
+      if (departmentResult.error) return response.badRequest(res, departmentResult.error);
+      updateData.departmentId = departmentResult.value;
+    }
+    if (externalLink !== undefined) updateData.externalLink = optionalText(externalLink, { max: 500 });
+    if (courseCode !== undefined) updateData.courseCode = optionalText(courseCode, { max: 60 });
 
     if (req.file) {
       const uploaded = await storageService.uploadObject({
@@ -182,8 +193,11 @@ const updateAcademicResource = async (req, res) => {
       updateData.fileSizeBytes = uploaded.size;
     }
 
+    const id = positiveInt(req.params.id, "Resource ID");
+    if (id.error) return response.badRequest(res, id.error);
+
     const resource = await academicResourceService.updateAcademicResource(
-      req.params.id,
+      id.value,
       updateData,
       req.user.userId
     );
@@ -206,7 +220,10 @@ const updateAcademicResource = async (req, res) => {
 
 const deleteAcademicResource = async (req, res) => {
   try {
-    await academicResourceService.deleteAcademicResource(req.params.id, req.user.userId);
+    const id = positiveInt(req.params.id, "Resource ID");
+    if (id.error) return response.badRequest(res, id.error);
+
+    await academicResourceService.deleteAcademicResource(id.value, req.user.userId);
     res.json({
       success: true,
       message: "Academic resource deleted successfully",

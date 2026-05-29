@@ -4,6 +4,7 @@ const {
   profileSelect,
   publicUrl,
 } = require("../utils/supabaseData");
+const { optionalText, sanitizePlainText } = require("../utils/validation");
 
 const mapDepartment = (department) => ({
   id: department.id,
@@ -36,15 +37,15 @@ const createAcademicResource = async (resourceData) => {
   const { data, error } = await supabase
     .from("academic_resources")
     .insert({
-      title: resourceData.title,
+      title: sanitizePlainText(resourceData.title, { max: 160 }),
       type: resourceData.type,
       department_id: resourceData.departmentId,
       file_path: resourceData.filePath || null,
       file_bucket: resourceData.fileBucket || null,
       file_mime_type: resourceData.fileMimeType || null,
       file_size_bytes: resourceData.fileSizeBytes || null,
-      external_link: resourceData.externalLink || null,
-      course_code: resourceData.courseCode || null,
+      external_link: optionalText(resourceData.externalLink, { max: 500 }),
+      course_code: optionalText(resourceData.courseCode, { max: 60 }),
       uploaded_by_id: resourceData.uploadedById,
     })
     .select(resourceSelect)
@@ -98,7 +99,7 @@ const createDepartment = async (name) => {
   const supabase = ensureSupabaseAdmin();
   const { data, error } = await supabase
     .from("departments")
-    .insert({ name })
+    .insert({ name: sanitizePlainText(name, { max: 120 }) })
     .select("*")
     .single();
 
@@ -114,11 +115,11 @@ const updateAcademicResource = async (id, updateData, userId) => {
   }
 
   const payload = {};
-  if (updateData.title !== undefined) payload.title = updateData.title;
+  if (updateData.title !== undefined) payload.title = sanitizePlainText(updateData.title, { max: 160 });
   if (updateData.type !== undefined) payload.type = updateData.type;
   if (updateData.departmentId !== undefined) payload.department_id = updateData.departmentId;
-  if (updateData.externalLink !== undefined) payload.external_link = updateData.externalLink || null;
-  if (updateData.courseCode !== undefined) payload.course_code = updateData.courseCode || null;
+  if (updateData.externalLink !== undefined) payload.external_link = optionalText(updateData.externalLink, { max: 500 });
+  if (updateData.courseCode !== undefined) payload.course_code = optionalText(updateData.courseCode, { max: 60 });
   if (updateData.filePath !== undefined) payload.file_path = updateData.filePath;
   if (updateData.fileBucket !== undefined) payload.file_bucket = updateData.fileBucket;
   if (updateData.fileMimeType !== undefined) payload.file_mime_type = updateData.fileMimeType;

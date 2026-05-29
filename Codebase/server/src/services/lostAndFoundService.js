@@ -5,6 +5,7 @@ const {
   publicUrl,
   uploadToBucket,
 } = require("../utils/supabaseData");
+const { sanitizePlainText } = require("../utils/validation");
 
 const mapPost = (post) => ({
   id: post.id,
@@ -28,7 +29,7 @@ const mapPost = (post) => ({
 const allowedUpdateFields = (data) => {
   const payload = {};
   for (const field of ["type", "title", "description", "location", "contact", "status"]) {
-    if (data[field] !== undefined) payload[field] = data[field];
+    if (data[field] !== undefined) payload[field] = sanitizePlainText(data[field], { max: 3000 });
   }
   return payload;
 };
@@ -79,10 +80,10 @@ class LostAndFoundService {
       .insert({
         user_id: userId,
         type: postData.type,
-        title: postData.title,
-        description: postData.description,
-        location: postData.location,
-        contact: postData.contact,
+        title: sanitizePlainText(postData.title, { max: 160 }),
+        description: sanitizePlainText(postData.description, { max: 3000 }),
+        location: sanitizePlainText(postData.location, { max: 200 }),
+        contact: sanitizePlainText(postData.contact, { max: 200 }),
         image_path: image.path,
         image_bucket: image.bucket,
         image_mime_type: image.mimeType,

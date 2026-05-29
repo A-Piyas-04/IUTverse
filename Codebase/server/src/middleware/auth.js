@@ -1,20 +1,21 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { supabaseAdmin, isSupabaseAdminConfigured } = require('../config/supabase');
+const response = require("../utils/responses");
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({ message: 'Access token required' });
+    return response.unauthorized(res, 'Access token required');
   }
 
   if (isSupabaseAdminConfigured) {
     const { data, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !data?.user) {
-      return res.status(403).json({ message: 'Invalid Supabase token' });
+      return response.forbidden(res, 'Invalid Supabase token');
     }
 
     const { data: profile } = await supabaseAdmin
@@ -37,15 +38,15 @@ const authenticateToken = async (req, res, next) => {
   }
 
   if (!config.jwtSecret) {
-    return res.status(500).json({ message: 'Supabase Auth is not configured' });
+    return response.serverError(res, 'Supabase Auth is not configured');
   }
 
   jwt.verify(token, config.jwtSecret, (err, user) => {
     if (err) {
       if (err.name === 'TokenExpiredError') {
-        return res.status(403).json({ message: 'Token has expired' });
+        return response.forbidden(res, 'Token has expired');
       }
-      return res.status(403).json({ message: 'Invalid token' });
+      return response.forbidden(res, 'Invalid token');
     }
 
     req.user = {

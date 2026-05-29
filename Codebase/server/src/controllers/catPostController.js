@@ -1,4 +1,6 @@
 const catPostService = require('../services/catPostService');
+const response = require("../utils/responses");
+const { pagination, positiveInt, requiredText } = require("../utils/validation");
 
 const createPost = async (req, res) => {
   try {
@@ -6,12 +8,11 @@ const createPost = async (req, res) => {
     const userId = req.user ? req.user.id : null;
     const { caption } = req.body;
     const image = req.file;
+
+    const captionResult = requiredText(caption, "Caption", { max: 1000 });
+    if (captionResult.error) return response.badRequest(res, captionResult.error);
     
-    if (!caption || !caption.trim()) {
-      return res.status(400).json({ success: false, message: 'Caption is required' });
-    }
-    
-    const post = await catPostService.createPost(userId, caption, image);
+    const post = await catPostService.createPost(userId, captionResult.value, image);
     res.status(201).json({ success: true, data: post });
   } catch (error) {
     console.error('Create post error:', error);
@@ -23,8 +24,9 @@ const getAllPosts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const safePage = pagination(page, limit, 100);
     
-    const result = await catPostService.getAllPosts(page, limit);
+    const result = await catPostService.getAllPosts(safePage.page, safePage.limit);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     console.error('Get posts error:', error);
@@ -34,13 +36,10 @@ const getAllPosts = async (req, res) => {
 
 const getPostById = async (req, res) => {
   try {
-    const postId = parseInt(req.params.id);
+    const postId = positiveInt(req.params.id, "Post ID");
+    if (postId.error) return response.badRequest(res, postId.error);
     
-    if (!postId) {
-      return res.status(400).json({ success: false, message: 'Invalid post ID' });
-    }
-    
-    const post = await catPostService.getPostById(postId);
+    const post = await catPostService.getPostById(postId.value);
     res.status(200).json({ success: true, data: post });
   } catch (error) {
     console.error('Get post error:', error);
@@ -55,13 +54,10 @@ const getPostById = async (req, res) => {
 const toggleLike = async (req, res) => {
   try {
     const userId = req.user.id;
-    const postId = parseInt(req.params.id);
+    const postId = positiveInt(req.params.id, "Post ID");
+    if (postId.error) return response.badRequest(res, postId.error);
     
-    if (!postId) {
-      return res.status(400).json({ success: false, message: 'Invalid post ID' });
-    }
-    
-    const result = await catPostService.toggleLike(userId, postId);
+    const result = await catPostService.toggleLike(userId, postId.value);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     console.error('Toggle like error:', error);
@@ -72,18 +68,14 @@ const toggleLike = async (req, res) => {
 const addComment = async (req, res) => {
   try {
     const userId = req.user.id;
-    const postId = parseInt(req.params.id);
+    const postId = positiveInt(req.params.id, "Post ID");
     const { content } = req.body;
+    if (postId.error) return response.badRequest(res, postId.error);
+
+    const contentResult = requiredText(content, "Comment content", { max: 1000 });
+    if (contentResult.error) return response.badRequest(res, contentResult.error);
     
-    if (!postId) {
-      return res.status(400).json({ success: false, message: 'Invalid post ID' });
-    }
-    
-    if (!content || !content.trim()) {
-      return res.status(400).json({ success: false, message: 'Comment content is required' });
-    }
-    
-    const comment = await catPostService.addComment(userId, postId, content);
+    const comment = await catPostService.addComment(userId, postId.value, contentResult.value);
     res.status(201).json({ success: true, data: comment });
   } catch (error) {
     console.error('Add comment error:', error);
@@ -94,13 +86,10 @@ const addComment = async (req, res) => {
 const deletePost = async (req, res) => {
   try {
     const userId = req.user.id;
-    const postId = parseInt(req.params.id);
+    const postId = positiveInt(req.params.id, "Post ID");
+    if (postId.error) return response.badRequest(res, postId.error);
     
-    if (!postId) {
-      return res.status(400).json({ success: false, message: 'Invalid post ID' });
-    }
-    
-    const result = await catPostService.deletePost(userId, postId);
+    const result = await catPostService.deletePost(userId, postId.value);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     console.error('Delete post error:', error);

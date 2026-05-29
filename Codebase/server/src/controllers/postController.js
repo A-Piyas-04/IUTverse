@@ -6,6 +6,8 @@ const {
   publicUrl,
   uploadToBucket,
 } = require("../utils/supabaseData");
+const { badRequest, forbidden, notFound, serverError } = require("../utils/responses");
+const { optionalText, positiveInt, requiredText } = require("../utils/validation");
 
 const mapReaction = (reaction) => ({
   id: reaction.id,
@@ -49,6 +51,8 @@ const mapPost = (post) => ({
     reactions: post.reaction_count,
   },
 });
+
+const allowedPostReactions = new Set(["like", "funny", "relatable", "angry", "insightful", "helpful", "wholesome"]);
 
 const hydratePost = async (post, commentLimit = 3) => {
   const supabase = ensureSupabaseAdmin();
@@ -98,9 +102,43 @@ const attachCategory = async (postId, categoryName) => {
   if (linkError) throw linkError;
 };
 
+const getCategoryPostIds = async (category) => {
+  if (!category) return null;
+
+  const supabase = ensureSupabaseAdmin();
+  const { data: links, error } = await supabase
+    .from("post_category_links")
+    .select("post_id, category:post_categories!inner(name)")
+    .eq("category.name", category);
+
+  if (error) throw error;
+  return links.map((link) => link.post_id);
+};
+
+const respondWithPosts = async (res, query, page, limit, emptyTotal = 0) => {
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  const posts = await Promise.all((data || []).map((post) => hydratePost(post)));
+  return res.status(200).json({
+    success: true,
+    data: posts,
+    pagination: {
+      page,
+      limit,
+      totalPosts: count ?? emptyTotal,
+      totalPages: Math.ceil((count ?? emptyTotal) / limit),
+    },
+  });
+};
+
 exports.createPost = async (req, res) => {
   try {
-    const { content, category, isAnonymous } = req.body;
+    const contentResult = requiredText(req.body.content, "Post content", { max: 5000 });
+    if (contentResult.error) return badRequest(res, contentResult.error);
+
+    const category = optionalText(req.body.category, { max: 80 });
+    const isAnonymous = req.body.isAnonymous;
     const userId = req.user.id;
     const image = await uploadToBucket({
       bucket: "post-media",
@@ -114,7 +152,7 @@ exports.createPost = async (req, res) => {
       .from("posts")
       .insert({
         author_id: userId,
-        content,
+        content: contentResult.value,
         is_anonymous: isAnonymous === "true" || isAnonymous === true,
         image_path: image.path,
         image_bucket: image.bucket,
@@ -130,7 +168,7 @@ exports.createPost = async (req, res) => {
     return res.status(201).json({ success: true, data: await hydratePost(post) });
   } catch (error) {
     console.error("Error creating post:", error);
-    return res.status(500).json({ success: false, message: "Failed to create post", error: error.message });
+    return serverError(res, "Failed to create post", error.message);
   }
 };
 
@@ -140,14 +178,8 @@ exports.getPosts = async (req, res) => {
     const category = req.query.category;
     const supabase = ensureSupabaseAdmin();
 
-    let idsFilter = null;
-    if (category) {
-      const { data: links, error: linkError } = await supabase
-        .from("post_category_links")
-        .select("post_id, category:post_categories!inner(name)")
-        .eq("category.name", category);
-      if (linkError) throw linkError;
-      idsFilter = links.map((link) => link.post_id);
+    const idsFilter = await getCategoryPostIds(category);
+    if (idsFilter) {
       if (!idsFilter.length) {
         return res.status(200).json({
           success: true,
@@ -165,47 +197,40 @@ exports.getPosts = async (req, res) => {
       .range(from, to);
     if (idsFilter) query = query.in("id", idsFilter);
 
-    const { data, count, error } = await query;
-    if (error) throw error;
-
-    const posts = await Promise.all(data.map((post) => hydratePost(post)));
-    return res.status(200).json({
-      success: true,
-      data: posts,
-      pagination: {
-        page,
-        limit,
-        totalPosts: count || 0,
-        totalPages: Math.ceil((count || 0) / limit),
-      },
-    });
+    return respondWithPosts(res, query, page, limit);
   } catch (error) {
     console.error("Error fetching posts:", error);
-    return res.status(500).json({ success: false, message: "Failed to fetch posts", error: error.message });
+    return serverError(res, "Failed to fetch posts", error.message);
   }
 };
 
 exports.getPost = async (req, res) => {
   try {
     const supabase = ensureSupabaseAdmin();
+    const idResult = positiveInt(req.params.id, "Post ID");
+    if (idResult.error) return badRequest(res, idResult.error);
+
     const { data: post, error } = await supabase
       .from("posts")
       .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`)
-      .eq("id", Number(req.params.id))
+      .eq("id", idResult.value)
       .maybeSingle();
     if (error) throw error;
-    if (!post) return res.status(404).json({ success: false, message: "Post not found" });
+    if (!post) return notFound(res, "Post not found");
     return res.status(200).json({ success: true, data: await hydratePost(post, 100) });
   } catch (error) {
     console.error("Error fetching post:", error);
-    return res.status(500).json({ success: false, message: "Failed to fetch post", error: error.message });
+    return serverError(res, "Failed to fetch post", error.message);
   }
 };
 
 exports.updatePost = async (req, res) => {
   try {
     const supabase = ensureSupabaseAdmin();
-    const postId = Number(req.params.id);
+    const idResult = positiveInt(req.params.id, "Post ID");
+    if (idResult.error) return badRequest(res, idResult.error);
+
+    const postId = idResult.value;
     const userId = req.user.id;
     const { data: existing, error: findError } = await supabase
       .from("posts")
@@ -214,13 +239,17 @@ exports.updatePost = async (req, res) => {
       .maybeSingle();
 
     if (findError) throw findError;
-    if (!existing) return res.status(404).json({ success: false, message: "Post not found" });
+    if (!existing) return notFound(res, "Post not found");
     if (existing.author_id !== userId) {
-      return res.status(403).json({ success: false, message: "You are not authorized to update this post" });
+      return forbidden(res, "You are not authorized to update this post");
     }
 
     const payload = {};
-    if (req.body.content !== undefined) payload.content = req.body.content;
+    if (req.body.content !== undefined) {
+      const contentResult = requiredText(req.body.content, "Post content", { max: 5000 });
+      if (contentResult.error) return badRequest(res, contentResult.error);
+      payload.content = contentResult.value;
+    }
     if (req.body.isAnonymous !== undefined) payload.is_anonymous = req.body.isAnonymous === "true" || req.body.isAnonymous === true;
     if (req.file) {
       const image = await uploadToBucket({ bucket: "post-media", userId, file: req.file, prefix: "post" });
@@ -238,18 +267,21 @@ exports.updatePost = async (req, res) => {
       .single();
 
     if (error) throw error;
-    if (req.body.category) await attachCategory(post.id, req.body.category);
+    if (req.body.category) await attachCategory(post.id, optionalText(req.body.category, { max: 80 }));
     return res.status(200).json({ success: true, data: await hydratePost(post) });
   } catch (error) {
     console.error("Error updating post:", error);
-    return res.status(500).json({ success: false, message: "Failed to update post", error: error.message });
+    return serverError(res, "Failed to update post", error.message);
   }
 };
 
 exports.deletePost = async (req, res) => {
   try {
     const supabase = ensureSupabaseAdmin();
-    const postId = Number(req.params.id);
+    const idResult = positiveInt(req.params.id, "Post ID");
+    if (idResult.error) return badRequest(res, idResult.error);
+
+    const postId = idResult.value;
     const userId = req.user.id;
     const { data: existing, error: findError } = await supabase
       .from("posts")
@@ -258,9 +290,9 @@ exports.deletePost = async (req, res) => {
       .maybeSingle();
 
     if (findError) throw findError;
-    if (!existing) return res.status(404).json({ success: false, message: "Post not found" });
+    if (!existing) return notFound(res, "Post not found");
     if (existing.author_id !== userId) {
-      return res.status(403).json({ success: false, message: "You are not authorized to delete this post" });
+      return forbidden(res, "You are not authorized to delete this post");
     }
 
     const { error } = await supabase.from("posts").delete().eq("id", postId);
@@ -268,16 +300,23 @@ exports.deletePost = async (req, res) => {
     return res.status(200).json({ success: true, message: "Post deleted successfully" });
   } catch (error) {
     console.error("Error deleting post:", error);
-    return res.status(500).json({ success: false, message: "Failed to delete post", error: error.message });
+    return serverError(res, "Failed to delete post", error.message);
   }
 };
 
 exports.reactToPost = async (req, res) => {
   try {
     const supabase = ensureSupabaseAdmin();
-    const postId = Number(req.params.id);
+    const idResult = positiveInt(req.params.id, "Post ID");
+    if (idResult.error) return badRequest(res, idResult.error);
+
+    const postId = idResult.value;
     const userId = req.user.id;
-    const { reactionType } = req.body;
+    const reactionType = String(req.body.reactionType || "").toLowerCase();
+
+    if (!allowedPostReactions.has(reactionType)) {
+      return badRequest(res, `reactionType must be one of: ${[...allowedPostReactions].join(", ")}`);
+    }
 
     const { data: existing, error: findError } = await supabase
       .from("post_reactions")
@@ -303,14 +342,80 @@ exports.reactToPost = async (req, res) => {
       action = existing ? "updated" : "added";
     }
 
-    return res.status(action === "added" ? 201 : 200).json({ success: true, message: `Reaction ${action}`, action });
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("reaction_count")
+      .eq("id", postId)
+      .maybeSingle();
+    if (postError) throw postError;
+
+    return res.status(action === "added" ? 201 : 200).json({
+      success: true,
+      message: `Reaction ${action}`,
+      action,
+      reactionCount: post?.reaction_count || 0,
+    });
   } catch (error) {
     console.error("Error handling post reaction:", error);
-    return res.status(500).json({ success: false, message: "Failed to process reaction", error: error.message });
+    return serverError(res, "Failed to process reaction", error.message);
   }
 };
 
 exports.getUserFeed = async (req, res) => {
-  req.query.category = req.query.category || undefined;
-  return exports.getPosts(req, res);
+  try {
+    const { page, limit, from, to } = pageRange(req.query.page || 1, req.query.limit || 10);
+    const supabase = ensureSupabaseAdmin();
+    const userId = req.user.id;
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("department_id, batch")
+      .eq("id", userId)
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    if (!profile?.department_id && !profile?.batch) {
+      req.query.category = req.query.category || undefined;
+      return exports.getPosts(req, res);
+    }
+
+    let profileQuery = supabase.from("profiles").select("id");
+    if (profile.department_id) profileQuery = profileQuery.eq("department_id", profile.department_id);
+    if (profile.batch) profileQuery = profileQuery.eq("batch", profile.batch);
+
+    const { data: matchingProfiles, error: matchingError } = await profileQuery;
+    if (matchingError) throw matchingError;
+
+    const authorIds = (matchingProfiles || []).map((matchingProfile) => matchingProfile.id);
+    if (!authorIds.length) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: { page, limit, totalPosts: 0, totalPages: 0 },
+      });
+    }
+
+    const categoryIds = await getCategoryPostIds(req.query.category);
+    if (categoryIds && !categoryIds.length) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: { page, limit, totalPosts: 0, totalPages: 0 },
+      });
+    }
+
+    let query = supabase
+      .from("posts")
+      .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`, { count: "exact" })
+      .eq("status", "active")
+      .in("author_id", authorIds)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (categoryIds) query = query.in("id", categoryIds);
+
+    return respondWithPosts(res, query, page, limit);
+  } catch (error) {
+    console.error("Error fetching user feed:", error);
+    return serverError(res, "Failed to fetch user feed", error.message);
+  }
 };

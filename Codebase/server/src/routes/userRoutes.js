@@ -5,6 +5,10 @@ const profileController = require("../controllers/profileController");
 const userController = require("../controllers/userController");
 const profilePictureUpload = require("../middleware/profilePictureUpload");
 const coverPictureUpload = require("../middleware/coverPictureUpload");
+const {
+  imageUploadErrorHandler,
+  profileImageUploadErrorHandler,
+} = require("../middleware/uploadErrors");
 
 // Get user profile (protected route)
 router.get("/profile", authenticateToken, (req, res) => {
@@ -36,9 +40,6 @@ router.put("/profile", authenticateToken, profileController.updateProfile);
 
 // Update user name (protected)
 router.put("/user", authenticateToken, userController.updateUserName);
-
-// Get user by ID (public - for viewing other profiles)
-router.get("/user/:userId", userController.getUserById);
 
 // Search users (protected - for chat functionality)
 router.get("/users/search", authenticateToken, userController.searchUsers);
@@ -75,12 +76,16 @@ router.get(
   userController.getUserByStudentId
 );
 
+// Get user by ID (public - for viewing other profiles)
+router.get("/user/:userId", userController.getUserById);
+
 // Profile picture routes
 // Upload profile picture (protected)
 router.post(
   "/profile/upload-picture",
   authenticateToken,
   profilePictureUpload.single("profilePicture"),
+  profileImageUploadErrorHandler,
   profileController.uploadProfilePicture
 );
 
@@ -100,6 +105,7 @@ router.post(
   "/profile/upload-cover",
   authenticateToken,
   coverPictureUpload.single("coverPicture"),
+  imageUploadErrorHandler,
   profileController.uploadCoverPicture
 );
 

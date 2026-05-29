@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const postController = require("../controllers/postController");
 const commentController = require("../controllers/commentController");
-const { authenticateToken } = require("../middleware/authMiddleware");
+const { authenticateToken } = require("../middleware/auth");
 const upload = require("../middleware/uploadMiddleware");
+const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 
 // POST ROUTES
 // Create a new post
@@ -11,6 +12,7 @@ router.post(
   "/posts",
   authenticateToken,
   upload.single("image"),
+  imageUploadErrorHandler,
   postController.createPost
 );
 
@@ -25,6 +27,7 @@ router.put(
   "/posts/:id",
   authenticateToken,
   upload.single("image"),
+  imageUploadErrorHandler,
   postController.updatePost
 );
 

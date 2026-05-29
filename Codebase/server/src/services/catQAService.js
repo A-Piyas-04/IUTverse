@@ -1,8 +1,10 @@
 const {
   ensureSupabaseAdmin,
   mapProfile,
+  pageRange,
   profileSelect,
 } = require("../utils/supabaseData");
+const { sanitizePlainText } = require("../utils/validation");
 
 const mapAnswer = (answer) => ({
   id: answer.id,
@@ -25,20 +27,29 @@ const mapQuestion = (question) => ({
 });
 
 class CatQAService {
-  async getAllQuestions(page = 1, limit = 50) {
+  async getAllQuestions(page = 1, limit = 20) {
     const supabase = ensureSupabaseAdmin();
-    const from = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 100);
-    const to = from + Math.min(Number(limit), 100) - 1;
+    const range = pageRange(page, limit);
 
-    const { data, error } = await supabase
+    const { data, count, error } = await supabase
       .from("cat_questions")
-      .select(`*, user:profiles!cat_questions_user_id_fkey(${profileSelect})`)
+      .select(`*, user:profiles!cat_questions_user_id_fkey(${profileSelect})`, { count: "exact" })
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .range(from, to);
+      .range(range.from, range.to);
 
     if (error) throw new Error(`Failed to fetch questions: ${error.message}`);
-    return Promise.all(data.map((question) => this.withAnswers(question)));
+    const questions = await Promise.all(data.map((question) => this.withAnswers(question)));
+
+    return {
+      questions,
+      pagination: {
+        page: range.page,
+        limit: range.limit,
+        totalQuestions: count || 0,
+        totalPages: Math.ceil((count || 0) / range.limit),
+      },
+    };
   }
 
   async createQuestion(questionData) {
@@ -50,7 +61,7 @@ class CatQAService {
     const supabase = ensureSupabaseAdmin();
     const { data, error } = await supabase
       .from("cat_questions")
-      .insert({ question: question.trim(), user_id: userId })
+      .insert({ question: sanitizePlainText(question, { max: 1000 }), user_id: userId })
       .select(`*, user:profiles!cat_questions_user_id_fkey(${profileSelect})`)
       .single();
 
@@ -83,7 +94,7 @@ class CatQAService {
     const { data, error } = await supabase
       .from("cat_answers")
       .insert({
-        answer: answer.trim(),
+        answer: sanitizePlainText(answer, { max: 2000 }),
         question_id: Number(questionId),
         user_id: userId,
       })

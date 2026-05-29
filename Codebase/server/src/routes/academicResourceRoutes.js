@@ -3,6 +3,7 @@ const router = express.Router();
 const academicResourceController = require("../controllers/academicResourceController");
 const { authenticateToken } = require("../middleware/auth");
 const uploadPdf = require("../middleware/uploadPdf");
+const { pdfUploadErrorHandler } = require("../middleware/uploadErrors");
 
 // Get all departments (public route)
 router.get("/departments", academicResourceController.getAllDepartments);
@@ -29,7 +30,7 @@ router.post(
   "/resources",
   authenticateToken,
   uploadPdf.single("pdf"),
-  uploadPdf.handlePdfUploadError,
+  pdfUploadErrorHandler,
   academicResourceController.createAcademicResource
 );
 
@@ -38,7 +39,7 @@ router.put(
   "/resources/:id",
   authenticateToken,
   uploadPdf.single("pdf"),
-  uploadPdf.handlePdfUploadError,
+  pdfUploadErrorHandler,
   academicResourceController.updateAcademicResource
 );
 

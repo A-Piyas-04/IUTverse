@@ -1,30 +1,12 @@
 const userService = require("../services/userService");
+const response = require("../utils/responses");
+const { requiredText, sanitizePlainText, uuid } = require("../utils/validation");
 
 const updateUserName = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { value: trimmedName, error } = requiredText(req.body.name, "Name", { min: 2, max: 50 });
+    if (error) return response.badRequest(res, error);
     const userId = req.user.userId; // From the authenticated token
-
-    // Validate input
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return res.status(400).json({
-        message: "Name is required and must be a non-empty string",
-      });
-    }
-
-    // Trim and validate name length
-    const trimmedName = name.trim();
-    if (trimmedName.length < 2) {
-      return res.status(400).json({
-        message: "Name must be at least 2 characters long",
-      });
-    }
-
-    if (trimmedName.length > 50) {
-      return res.status(400).json({
-        message: "Name must not exceed 50 characters",
-      });
-    }
 
     // Update user's name
     const updatedUser = await userService.updateUserName(userId, trimmedName);
@@ -60,14 +42,11 @@ const getUserById = async (req, res) => {
     const { userId } = req.params;
 
     // Validate userId
-    if (!userId) {
-      return res.status(400).json({
-        message: "Valid user ID is required",
-      });
-    }
+    const id = uuid(userId, "User ID");
+    if (id.error) return response.badRequest(res, id.error);
 
     // Get user by ID
-    const user = await userService.getUserById(userId);
+    const user = await userService.getUserById(id.value);
 
     if (!user) {
       return res.status(404).json({
@@ -100,7 +79,7 @@ const searchUsers = async (req, res) => {
       });
     }
 
-    const query = q.trim();
+    const query = sanitizePlainText(q, { max: 100 });
     if (query.length < 2) {
       return res.status(400).json({
         message: "Search query must be at least 2 characters long",

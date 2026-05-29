@@ -1,5 +1,7 @@
 const lostAndFoundService = require('../services/lostAndFoundService');
 const multer = require('multer');
+const response = require("../utils/responses");
+const { enumValue, optionalText, positiveInt, requiredText } = require("../utils/validation");
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -28,8 +30,20 @@ class LostAndFoundController {
       const filters = {
         type: req.query.type,
         status: req.query.status || 'active',
-        search: req.query.search
+        search: optionalText(req.query.search, { max: 200 })
       };
+
+      if (filters.type && filters.type !== "all") {
+        const type = enumValue(filters.type, ["lost", "found"], "Type");
+        if (type.error) return response.badRequest(res, type.error);
+        filters.type = type.value;
+      }
+
+      if (filters.status) {
+        const status = enumValue(filters.status, ["active", "resolved", "archived", "deleted", "flagged"], "Status");
+        if (status.error) return response.badRequest(res, status.error);
+        filters.status = status.value;
+      }
       
       const posts = await lostAndFoundService.getAllPosts(filters);
       
@@ -51,7 +65,10 @@ class LostAndFoundController {
   async getPostById(req, res) {
     try {
       const { postId } = req.params;
-      const post = await lostAndFoundService.getPostById(postId);
+      const postIdResult = positiveInt(postId, "Post ID");
+      if (postIdResult.error) return response.badRequest(res, postIdResult.error);
+
+      const post = await lostAndFoundService.getPostById(postIdResult.value);
       
       if (!post) {
         return res.status(404).json({
@@ -80,28 +97,27 @@ class LostAndFoundController {
       const userId = req.user.id;
       const postData = req.body;
 
-      const requiredFields = ['type', 'title', 'description', 'location', 'contact'];
-      const missingFields = requiredFields.filter(field => !postData[field]);
-      
-      if (missingFields.length > 0) {
-        console.error('Missing required fields:', missingFields);
-        return res.status(400).json({
-          success: false,
-          message: `${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`,
-          missingFields: missingFields
-        });
-      }
-      
-      if (!['lost', 'found'].includes(postData.type)) {
-        console.error('Invalid post type:', postData.type);
-        return res.status(400).json({
-          success: false,
-          message: 'Type must be either "lost" or "found"'
-        });
-      }
+      const type = enumValue(postData.type, ["lost", "found"], "Type");
+      if (type.error) return response.badRequest(res, type.error);
+      const title = requiredText(postData.title, "Title", { max: 160 });
+      if (title.error) return response.badRequest(res, title.error);
+      const description = requiredText(postData.description, "Description", { max: 3000 });
+      if (description.error) return response.badRequest(res, description.error);
+      const location = requiredText(postData.location, "Location", { max: 200 });
+      if (location.error) return response.badRequest(res, location.error);
+      const contact = requiredText(postData.contact, "Contact", { max: 200 });
+      if (contact.error) return response.badRequest(res, contact.error);
+
+      const safePostData = {
+        type: type.value,
+        title: title.value,
+        description: description.value,
+        location: location.value,
+        contact: contact.value,
+      };
       
       try {
-        const post = await lostAndFoundService.createPost(userId, postData, req.file);
+        const post = await lostAndFoundService.createPost(userId, safePostData, req.file);
         
         return res.status(201).json({
           success: true,
@@ -138,9 +154,29 @@ class LostAndFoundController {
     try {
       const { postId } = req.params;
       const userId = req.user.id;
-      const updateData = req.body;
+      const postIdResult = positiveInt(postId, "Post ID");
+      if (postIdResult.error) return response.badRequest(res, postIdResult.error);
 
-      const updatedPost = await lostAndFoundService.updatePost(postId, userId, updateData, req.file);
+      const updateData = {};
+      if (req.body.type !== undefined) {
+        const type = enumValue(req.body.type, ["lost", "found"], "Type");
+        if (type.error) return response.badRequest(res, type.error);
+        updateData.type = type.value;
+      }
+      for (const [field, label, max] of [
+        ["title", "Title", 160],
+        ["description", "Description", 3000],
+        ["location", "Location", 200],
+        ["contact", "Contact", 200],
+      ]) {
+        if (req.body[field] !== undefined) {
+          const text = requiredText(req.body[field], label, { max });
+          if (text.error) return response.badRequest(res, text.error);
+          updateData[field] = text.value;
+        }
+      }
+
+      const updatedPost = await lostAndFoundService.updatePost(postIdResult.value, userId, updateData, req.file);
       
       res.json({
         success: true,
@@ -177,8 +213,10 @@ class LostAndFoundController {
     try {
       const { postId } = req.params;
       const userId = req.user.id;
+      const postIdResult = positiveInt(postId, "Post ID");
+      if (postIdResult.error) return response.badRequest(res, postIdResult.error);
       
-      const result = await lostAndFoundService.deletePost(postId, userId);
+      const result = await lostAndFoundService.deletePost(postIdResult.value, userId);
       
       res.json({
         success: true,
@@ -214,8 +252,10 @@ class LostAndFoundController {
     try {
       const { postId } = req.params;
       const userId = req.user.id;
+      const postIdResult = positiveInt(postId, "Post ID");
+      if (postIdResult.error) return response.badRequest(res, postIdResult.error);
       
-      const updatedPost = await lostAndFoundService.markAsResolved(postId, userId);
+      const updatedPost = await lostAndFoundService.markAsResolved(postIdResult.value, userId);
       
       res.json({
         success: true,
@@ -252,8 +292,10 @@ class LostAndFoundController {
     try {
       const { postId } = req.params;
       const userId = req.user.id;
+      const postIdResult = positiveInt(postId, "Post ID");
+      if (postIdResult.error) return response.badRequest(res, postIdResult.error);
       
-      const updatedPost = await lostAndFoundService.markAsActive(postId, userId);
+      const updatedPost = await lostAndFoundService.markAsActive(postIdResult.value, userId);
       
       res.json({
         success: true,

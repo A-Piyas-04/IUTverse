@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { controller: lostAndFoundController, upload } = require('../controllers/lostAndFoundController');
+const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 
 // Get all lost and found posts (public)
 router.get('/', lostAndFoundController.getAllPosts.bind(lostAndFoundController));
@@ -13,6 +14,7 @@ router.get('/:postId', lostAndFoundController.getPostById.bind(lostAndFoundContr
 router.post('/', 
   authenticateToken, 
   upload.single('image'), 
+  imageUploadErrorHandler,
   lostAndFoundController.createPost.bind(lostAndFoundController)
 );
 
@@ -20,6 +22,7 @@ router.post('/',
 router.patch('/:postId', 
   authenticateToken, 
   upload.single('image'), 
+  imageUploadErrorHandler,
   lostAndFoundController.updatePost.bind(lostAndFoundController)
 );
 
