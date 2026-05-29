@@ -4,6 +4,7 @@ const { authenticateToken } = require("../middleware/auth");
 const jobController = require("../controllers/jobController");
 const jobCommentController = require("../controllers/jobCommentController");
 const jobApplicationController = require("../controllers/jobApplicationController");
+const { createLimiter } = require("../middleware/security");
 
 // Public - Jobs
 router.get("/jobs", jobController.getAllJobs);
@@ -24,23 +25,27 @@ router.get(
 );
 
 // Protected - Jobs
-router.post("/jobs", authenticateToken, jobController.createJob);
-router.put("/jobs/:id", authenticateToken, jobController.updateJob);
+router.post("/jobs", authenticateToken, createLimiter, jobController.createJob);
+router.put("/jobs/:id", authenticateToken, createLimiter, jobController.updateJob);
+router.delete("/jobs/:id", authenticateToken, createLimiter, jobController.deleteJob);
 
 // Protected - Comments
 router.post(
   "/jobs/:jobId/comments",
   authenticateToken,
+  createLimiter,
   jobCommentController.createComment
 );
 router.post(
   "/jobs/:jobId/comments/:commentId/reply",
   authenticateToken,
+  createLimiter,
   jobCommentController.createReply
 );
 router.put(
   "/jobs/comments/:commentId",
   authenticateToken,
+  createLimiter,
   jobCommentController.updateComment
 );
 router.delete(
@@ -53,6 +58,7 @@ router.delete(
 router.post(
   "/jobs/:jobId/apply",
   authenticateToken,
+  createLimiter,
   jobApplicationController.applyToJob
 );
 router.delete(

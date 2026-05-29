@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
 const confessionController = require("../controllers/confessionController");
+const { createLimiter } = require("../middleware/security");
 const {
   validateConfessionData,
   validateReactionData,
@@ -29,6 +30,7 @@ router.get(
 router.post(
   "/confessions",
   authenticateToken,
+  createLimiter,
   validateConfessionData,
   confessionController.createConfession
 );
@@ -37,6 +39,7 @@ router.post(
 router.post(
   "/confessions/:id/reactions",
   authenticateToken,
+  createLimiter,
   validateIdParam,
   validateReactionData,
   confessionController.addReaction
@@ -58,6 +61,7 @@ router.get(
 router.post(
   "/confessions/:id/polls/:pollId/vote",
   authenticateToken,
+  createLimiter,
   validateIdParam,
   validatePollIdParam,
   validatePollVoteData,

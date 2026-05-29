@@ -93,6 +93,27 @@ class JobService {
     if (error) throw error;
     return mapJob(job);
   }
+
+  async deleteJob(id, userId, role = "user") {
+    const supabase = ensureSupabaseAdmin();
+    const existing = await this.getJobById(id);
+
+    if (!existing) throw new Error("Job not found");
+    const canModerate = ["admin", "mod", "moderator"].includes(String(role).toLowerCase());
+    if (existing.postedById !== userId && !canModerate) {
+      throw new Error("Unauthorized to delete this job");
+    }
+
+    const { data: job, error } = await supabase
+      .from("jobs")
+      .update({ status: "deleted" })
+      .eq("id", Number(id))
+      .select(`*, postedBy:profiles!jobs_posted_by_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapJob(job);
+  }
 }
 
 module.exports = new JobService();

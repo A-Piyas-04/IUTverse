@@ -4,6 +4,7 @@ const academicResourceController = require("../controllers/academicResourceContr
 const { authenticateToken } = require("../middleware/auth");
 const uploadPdf = require("../middleware/uploadPdf");
 const { pdfUploadErrorHandler } = require("../middleware/uploadErrors");
+const { createLimiter } = require("../middleware/security");
 
 // Get all departments (public route)
 router.get("/departments", academicResourceController.getAllDepartments);
@@ -12,6 +13,7 @@ router.get("/departments", academicResourceController.getAllDepartments);
 router.post(
   "/departments",
   authenticateToken,
+  createLimiter,
   academicResourceController.createDepartment
 );
 
@@ -29,6 +31,7 @@ router.get(
 router.post(
   "/resources",
   authenticateToken,
+  createLimiter,
   uploadPdf.single("pdf"),
   pdfUploadErrorHandler,
   academicResourceController.createAcademicResource
@@ -38,6 +41,7 @@ router.post(
 router.put(
   "/resources/:id",
   authenticateToken,
+  createLimiter,
   uploadPdf.single("pdf"),
   pdfUploadErrorHandler,
   academicResourceController.updateAcademicResource

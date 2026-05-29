@@ -6,7 +6,8 @@
     "dev": "node server.js",
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate:supabase": "node scripts/applySupabaseMigrations.js"
+    "migrate:supabase": "node scripts/applySupabaseMigrations.js",
+    "security:scan-env": "node scripts/scanSecrets.js"
   },
   "keywords": [],
   "author": "",
@@ -18,11 +19,12 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^6.9.7",
     "pg": "^8.16.3",
     "pg-promise": "^11.15.0"
-  },
-  "devDependencies": {}
+  }
 }
