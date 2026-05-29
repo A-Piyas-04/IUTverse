@@ -1,4 +1,5 @@
 const { ensureSupabaseAdmin, pageRange } = require("../utils/supabaseData");
+const { sanitizePlainText } = require("../utils/validation");
 
 const defaultReactionCounts = {
   like: 0,
@@ -15,7 +16,10 @@ class ConfessionService {
 
     const { data: confession, error } = await supabase
       .from("confessions")
-      .insert({ content, tag })
+      .insert({
+        content: sanitizePlainText(content, { max: 2000 }),
+        tag: sanitizePlainText(tag, { max: 80 }),
+      })
       .select("*")
       .single();
 
@@ -26,7 +30,7 @@ class ConfessionService {
         .from("confession_polls")
         .insert({
           confession_id: confession.id,
-          question: poll.question,
+          question: sanitizePlainText(poll.question, { max: 200 }),
         })
         .select("*")
         .single();
@@ -38,7 +42,7 @@ class ConfessionService {
         .insert(
           poll.options.map((option, index) => ({
             poll_id: pollRow.id,
-            text: option.text,
+            text: sanitizePlainText(option.text, { max: 100 }),
             order_index: index,
           }))
         );
@@ -52,6 +56,11 @@ class ConfessionService {
   async getAllConfessions(page = 1, limit = 20, tag = null, sortBy = "recent") {
     const supabase = ensureSupabaseAdmin();
     const range = pageRange(page, limit);
+
+    if (sortBy === "mostVoted") {
+      return this.getMostVotedConfessions(range, tag);
+    }
+
     let query = supabase
       .from("confessions")
       .select("*")
@@ -68,6 +77,31 @@ class ConfessionService {
     const { data, error } = await query;
     if (error) throw error;
     return Promise.all(data.map((confession) => this.hydrateConfession(confession)));
+  }
+
+  async getMostVotedConfessions(range, tag = null) {
+    const supabase = ensureSupabaseAdmin();
+    let query = supabase
+      .from("confession_polls")
+      .select("*, confession:confessions!inner(*)")
+      .eq("confession.status", "active")
+      .order("total_votes", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(range.from, range.to);
+
+    if (tag && tag !== "all") {
+      query = query.eq("confession.tag", tag);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return Promise.all(
+      data
+        .map((poll) => poll.confession)
+        .filter(Boolean)
+        .map((confession) => this.hydrateConfession(confession))
+    );
   }
 
   async getConfessionById(id) {
@@ -271,7 +305,16 @@ class ConfessionService {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3);
 
-    const mostReacted = confessions.sort((a, b) => b.reaction_count - a.reaction_count)[0];
+    const mostReacted = [...confessions].sort((a, b) => b.reaction_count - a.reaction_count)[0];
+
+    const { data: mostVotedPoll } = await supabase
+      .from("confession_polls")
+      .select("*, confession:confessions!inner(*)")
+      .eq("confession.status", "active")
+      .order("total_votes", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     return {
       totalConfessions: totalConfessions || 0,
@@ -279,7 +322,11 @@ class ConfessionService {
       mostReacted: mostReacted
         ? { confession: await this.hydrateConfession(mostReacted), total: mostReacted.reaction_count }
         : { confession: null, total: 0 },
-      mostVotedPoll: { poll: { totalVotes: 0 } },
+      mostVotedPoll: {
+        poll: mostVotedPoll
+          ? (await this.hydrateConfession(mostVotedPoll.confession)).poll
+          : { totalVotes: 0 },
+      },
     };
   }
 }

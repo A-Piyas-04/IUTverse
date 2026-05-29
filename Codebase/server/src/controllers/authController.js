@@ -1,4 +1,6 @@
 const { validateIUTEmail } = require('../utils/authUtils');
+const response = require("../utils/responses");
+const { requiredText } = require("../utils/validation");
 const {
   supabase,
   supabaseAdmin,
@@ -127,6 +129,58 @@ const login = async (req, res) => {
   }
 };
 
+const requestPasswordReset = async (req, res) => {
+  try {
+    ensureSupabaseAuth();
+
+    const { value: email, error } = requiredText(req.body.email, "Email", { max: 254 });
+    if (error) return response.badRequest(res, error);
+    if (!validateIUTEmail(email)) {
+      return response.badRequest(res, "Please provide a valid IUT email address");
+    }
+
+    const options = {};
+    if (req.body.redirectTo) {
+      options.redirectTo = String(req.body.redirectTo);
+    }
+
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, options);
+    if (resetError) return response.badRequest(res, resetError.message);
+
+    return response.success(
+      res,
+      null,
+      "If that IUT email exists, a password reset email has been sent."
+    );
+  } catch (error) {
+    console.error("Password reset request error:", error);
+    return response.serverError(res, error.message || "Failed to request password reset");
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    if (!isSupabaseAdminConfigured) {
+      return response.serverError(res, "Supabase Admin is not configured");
+    }
+
+    const password = typeof req.body.password === "string" ? req.body.password : "";
+    if (password.length < 8 || password.length > 128) {
+      return response.badRequest(res, "Password must be between 8 and 128 characters long");
+    }
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, {
+      password,
+    });
+    if (updateError) return response.badRequest(res, updateError.message);
+
+    return response.success(res, null, "Password updated successfully");
+  } catch (error) {
+    console.error("Password change error:", error);
+    return response.serverError(res, "Failed to update password", error.message);
+  }
+};
+
 const getAllUsers = async (req, res) => {
   try {
     if (!isSupabaseAdminConfigured) {
@@ -169,6 +223,8 @@ const validateToken = async (req, res) => {
 module.exports = {
   signup,
   login,
+  requestPasswordReset,
+  changePassword,
   getAllUsers,
   validateToken
 };

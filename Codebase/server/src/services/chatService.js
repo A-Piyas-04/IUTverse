@@ -3,6 +3,7 @@ const {
   mapProfile,
   profileSelect,
 } = require("../utils/supabaseData");
+const { sanitizePlainText } = require("../utils/validation");
 
 const directKey = (userId1, userId2) => [userId1, userId2].sort().join(":");
 
@@ -90,7 +91,7 @@ class ChatService {
       .insert({
         conversation_id: Number(conversationId),
         sender_id: senderId,
-        content,
+        content: sanitizePlainText(content, { max: 4000 }),
       })
       .select(`*, sender:profiles!chat_messages_sender_id_fkey(${profileSelect})`)
       .single();

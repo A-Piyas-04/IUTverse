@@ -157,3 +157,64 @@ For every future refactor:
 
 Add new entries below this line.
 
+### 2026-05-30 - Near-Finished Backend Refactor Cleanup
+
+Goal: finish the small cleanup work left from the solved or mostly solved Supabase backend refactor items, without revisiting fully solved migration/security work.
+
+Changed:
+
+- Removed the remaining active `authMiddleware` compatibility import from post routes and deleted the wrapper file after confirming no active references remained.
+- Deleted the disabled `src/deleteAllPosts.js` destructive utility from production source.
+- Finished Cat Q&A pagination by wiring `page` and `limit` through the controller/service, defaulting to 20 items, capping at 100, and returning pagination metadata.
+- Added optional Cat Q&A client pagination parameters while preserving the existing `questions` response shape.
+- Implemented real confession `sortBy=mostVoted` behavior using poll `total_votes`, and replaced the analytics placeholder with a real `mostVotedPoll` query.
+- Tightened post reaction handling by normalizing old uppercase frontend reaction values, validating allowed reaction types, and returning the trigger-maintained `reactionCount`.
+- Restored personalized feed filtering safely by applying department and batch filters only when the current profile has non-null values; otherwise the feed falls back to recent posts.
+- Kept public profile email mapping privacy-safe. Public mapped profile responses still expose no real email address; current-user auth responses may still include the user's own email for session UI compatibility.
+
+Verification:
+
+- `node --check` passed for the touched backend files.
+- Full `node --check` pass across `Codebase/server/src/**/*.js` passed.
+- Server app import check passed.
+- Search confirmed no active `Codebase/server/src` or server package references to `authMiddleware`, `deleteAllPosts`, `PrismaClient`, `@prisma/client`, `prisma.`, `passwordHash`, `/uploads`, or `/files`.
+- Read-only Supabase smoke checks passed for jobs, posts, departments, Cat Q&A pagination, confession lists, `sortBy=mostVoted`, and confession analytics.
+
+Known follow-up:
+
+- Reaction toggle behavior was validated at import/service level only; end-to-end add/remove/switch tests still need authenticated seeded data.
+- Personalized feed filtering should be manually checked with real profiles that have department and batch values.
+- Public route response shapes were kept compatible; frontend components can be simplified later to stop expecting nullable public `email` fields.
+
+### 2026-05-30 - Partially Solved Backend Refactor Cleanup
+
+Goal: finish the previously partially solved backend issues around password recovery, validation, upload errors, stored-content sanitization, realtime chat, and response consistency while keeping existing route URLs stable.
+
+Changed:
+
+- Added Supabase-backed password reset/change compatibility endpoints:
+  - `POST /api/auth/password/reset-request`
+  - `PUT /api/auth/password`
+- Added client API helpers plus minimal login/profile UI for password reset and password change.
+- Added shared response helpers, validation helpers, and plain-text sanitization utilities.
+- Added a global Express error handler and converted touched auth/upload/validation paths toward the standard response envelope.
+- Added standardized multer upload error handling for post images, cat post images, lost-and-found images, profile pictures, cover pictures, and academic PDFs.
+- Added validation and sanitization to touched post, comment, chat, job, profile, lost-and-found, cat post, Cat Q&A, academic resource, confession, and user/profile service paths.
+- Fixed UUID-era profile lookups that still parsed Supabase UUID user IDs as integers.
+- Reordered user routes so specific `/user/student-id` routes are not shadowed by `/user/:userId`.
+- Added Supabase Realtime subscriptions in the chat hook for active conversation messages and conversation updates.
+
+Verification:
+
+- Full `node --check` pass across `Codebase/server/src/**/*.js` passed.
+- Server app import check passed.
+- Client build passed with `npx.cmd vite build --outDir .codex-build-check --emptyOutDir true`; the normal `npm.cmd run build` reached transform successfully but could not write to the existing locked `dist` directory on Windows.
+- Temporary build output `.codex-build-check` was removed after verification.
+- Read-only Supabase smoke checks passed for jobs, posts, departments, Cat Q&A, and confessions.
+
+Known follow-up:
+
+- End-to-end password reset email delivery depends on Supabase Auth email settings and redirect URL configuration.
+- Realtime chat should be manually checked with two authenticated browser sessions.
+- Validation is now in shared helpers and touched flows; older untouched edge controllers can continue migrating to the helpers during future edits.
+- Client code still has some legacy `/uploads` and `/files` URL fallback references outside the active backend migration scope; review them when the frontend media layer is cleaned up.

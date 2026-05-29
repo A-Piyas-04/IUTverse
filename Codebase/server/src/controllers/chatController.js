@@ -1,4 +1,6 @@
 const chatService = require("../services/chatService");
+const response = require("../utils/responses");
+const { positiveInt, requiredText, uuid } = require("../utils/validation");
 
 // Start or get conversation with another user
 const startConversation = async (req, res) => {
@@ -6,14 +8,11 @@ const startConversation = async (req, res) => {
     const { otherUserId } = req.body;
     const userId = req.user.userId;
 
-    if (!otherUserId) {
-      return res.status(400).json({ message: "Other user ID is required" });
-    }
+    const otherUserResult = uuid(otherUserId, "Other user ID");
+    if (otherUserResult.error) return response.badRequest(res, otherUserResult.error);
 
     if (otherUserId === userId) {
-      return res
-        .status(400)
-        .json({ message: "Cannot start conversation with yourself" });
+      return response.badRequest(res, "Cannot start conversation with yourself");
     }
 
     const conversation = await chatService.getOrCreateConversation(
@@ -22,12 +21,14 @@ const startConversation = async (req, res) => {
     );
 
     res.status(200).json({
+      success: true,
       message: "Conversation ready",
       conversation,
+      data: conversation,
     });
   } catch (error) {
     console.error("Error starting conversation:", error);
-    res.status(500).json({ message: "Failed to start conversation" });
+    response.serverError(res, "Failed to start conversation", error.message);
   }
 };
 
@@ -37,23 +38,17 @@ const sendMessage = async (req, res) => {
     const { conversationId, receiverId, content } = req.body;
     const senderId = req.user.userId;
 
-    if (!conversationId || !content) {
-      return res.status(400).json({
-        message: "Conversation ID and content are required",
-      });
-    }
+    const conversationIdResult = positiveInt(conversationId, "Conversation ID");
+    if (conversationIdResult.error) return response.badRequest(res, conversationIdResult.error);
 
-    if (content.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Message content cannot be empty" });
-    }
+    const contentResult = requiredText(content, "Message content", { max: 4000 });
+    if (contentResult.error) return response.badRequest(res, contentResult.error);
 
     const message = await chatService.sendMessage(
-      conversationId,
+      conversationIdResult.value,
       senderId,
       receiverId,
-      content.trim()
+      contentResult.value
     );
 
     res.status(201).json({
@@ -63,9 +58,9 @@ const sendMessage = async (req, res) => {
   } catch (error) {
     console.error("Error sending message:", error);
     if (error.message === "Conversation not found or access denied") {
-      return res.status(403).json({ message: error.message });
+      return response.forbidden(res, error.message);
     }
-    res.status(500).json({ message: "Failed to send message" });
+    response.serverError(res, "Failed to send message", error.message);
   }
 };
 
@@ -77,12 +72,11 @@ const getMessages = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
 
-    if (!conversationId) {
-      return res.status(400).json({ message: "Conversation ID is required" });
-    }
+    const conversationIdResult = positiveInt(conversationId, "Conversation ID");
+    if (conversationIdResult.error) return response.badRequest(res, conversationIdResult.error);
 
     const messages = await chatService.getMessages(
-      parseInt(conversationId),
+      conversationIdResult.value,
       userId,
       page,
       limit
@@ -95,9 +89,9 @@ const getMessages = async (req, res) => {
   } catch (error) {
     console.error("Error getting messages:", error);
     if (error.message === "Conversation not found or access denied") {
-      return res.status(403).json({ message: error.message });
+      return response.forbidden(res, error.message);
     }
-    res.status(500).json({ message: "Failed to get messages" });
+    response.serverError(res, "Failed to get messages", error.message);
   }
 };
 
@@ -114,7 +108,7 @@ const getConversations = async (req, res) => {
     });
   } catch (error) {
     console.error("Error getting conversations:", error);
-    res.status(500).json({ message: "Failed to get conversations" });
+    response.serverError(res, "Failed to get conversations", error.message);
   }
 };
 
@@ -124,18 +118,17 @@ const markAsRead = async (req, res) => {
     const { conversationId } = req.params;
     const userId = req.user.userId;
 
-    if (!conversationId) {
-      return res.status(400).json({ message: "Conversation ID is required" });
-    }
+    const conversationIdResult = positiveInt(conversationId, "Conversation ID");
+    if (conversationIdResult.error) return response.badRequest(res, conversationIdResult.error);
 
-    await chatService.markMessagesAsRead(parseInt(conversationId), userId);
+    await chatService.markMessagesAsRead(conversationIdResult.value, userId);
 
     res.status(200).json({
       message: "Messages marked as read",
     });
   } catch (error) {
     console.error("Error marking messages as read:", error);
-    res.status(500).json({ message: "Failed to mark messages as read" });
+    response.serverError(res, "Failed to mark messages as read", error.message);
   }
 };
 

@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
   const { login, logout, isAuthenticated, user } = useAuth();
@@ -66,6 +67,30 @@ export default function LoginPage() {
     setMessage('');
     // Use auth context logout function
     logout();
+  };
+
+  const handlePasswordReset = async () => {
+    if (!validateIUTEmail(email)) {
+      setMessage('Enter your IUT email first, then request a password reset.');
+      return;
+    }
+
+    setResetLoading(true);
+    setMessage('');
+
+    try {
+      const result = await ApiService.requestPasswordReset(email);
+      if (result.success) {
+        setMessage('If that account exists, a password reset email has been sent.');
+      } else {
+        setMessage(result.error || 'Failed to request password reset.');
+      }
+    } catch (error) {
+      console.error('Password reset error:', error);
+      setMessage('Network error. Please try again.');
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   if (isAuthenticated) {
@@ -130,6 +155,16 @@ export default function LoginPage() {
           
           <div className="auth-link">
             Don't have a password yet? <a href="/signup">Get started here</a>
+          </div>
+          <div className="auth-link">
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={resetLoading || loading}
+              className="link-button"
+            >
+              {resetLoading ? 'Sending reset email...' : 'Forgot password?'}
+            </button>
           </div>
         </form>
       </div>

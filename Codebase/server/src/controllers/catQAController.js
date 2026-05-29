@@ -1,13 +1,16 @@
 const catQAService = require('../services/catQAService');
+const response = require("../utils/responses");
+const { positiveInt, requiredText } = require("../utils/validation");
 
 class CatQAController {
   // Get all questions with answers
   async getAllQuestions(req, res) {
     try {
-      const questions = await catQAService.getAllQuestions();
+      const result = await catQAService.getAllQuestions(req.query.page, req.query.limit);
       res.status(200).json({
         success: true,
-        data: questions,
+        data: result.questions,
+        pagination: result.pagination,
         message: 'Questions retrieved successfully'
       });
     } catch (error) {
@@ -25,15 +28,11 @@ class CatQAController {
       const { question } = req.body;
       const userId = req.user?.id || null; // Get from auth middleware if available
 
-      if (!question || question.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Question content is required'
-        });
-      }
+      const questionResult = requiredText(question, "Question content", { max: 1000 });
+      if (questionResult.error) return response.badRequest(res, questionResult.error);
 
       const newQuestion = await catQAService.createQuestion({
-        question,
+        question: questionResult.value,
         userId
       });
 
@@ -55,7 +54,10 @@ class CatQAController {
   async getQuestionById(req, res) {
     try {
       const { id } = req.params;
-      const question = await catQAService.getQuestionById(id);
+      const questionId = positiveInt(id, "Question ID");
+      if (questionId.error) return response.badRequest(res, questionId.error);
+
+      const question = await catQAService.getQuestionById(questionId.value);
       
       res.status(200).json({
         success: true,
@@ -79,16 +81,14 @@ class CatQAController {
       const { answer } = req.body;
       const userId = req.user?.id || null; // Get from auth middleware if available
 
-      if (!answer || answer.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Answer content is required'
-        });
-      }
+      const questionIdResult = positiveInt(questionId, "Question ID");
+      if (questionIdResult.error) return response.badRequest(res, questionIdResult.error);
+      const answerResult = requiredText(answer, "Answer content", { max: 2000 });
+      if (answerResult.error) return response.badRequest(res, answerResult.error);
 
       const newAnswer = await catQAService.addAnswer({
-        questionId,
-        answer,
+        questionId: questionIdResult.value,
+        answer: answerResult.value,
         userId
       });
 
@@ -112,8 +112,10 @@ class CatQAController {
     try {
       const { id } = req.params;
       const userId = req.user?.id || null;
+      const questionId = positiveInt(id, "Question ID");
+      if (questionId.error) return response.badRequest(res, questionId.error);
 
-      const result = await catQAService.deleteQuestion(id, userId);
+      const result = await catQAService.deleteQuestion(questionId.value, userId);
       
       res.status(200).json({
         success: true,
@@ -135,8 +137,10 @@ class CatQAController {
     try {
       const { answerId } = req.params;
       const userId = req.user?.id || null;
+      const id = positiveInt(answerId, "Answer ID");
+      if (id.error) return response.badRequest(res, id.error);
 
-      const result = await catQAService.deleteAnswer(answerId, userId);
+      const result = await catQAService.deleteAnswer(id.value, userId);
       
       res.status(200).json({
         success: true,

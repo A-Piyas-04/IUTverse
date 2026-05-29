@@ -30,6 +30,9 @@ export default function Profile() {
   const [studentIdError, setStudentIdError] = useState("");
   const [studentIdAvailable, setStudentIdAvailable] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ password: "", confirmPassword: "" });
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Check if this is the current user's profile or someone else's
   const isOwnProfile = !userId || userId === user?.id?.toString();
@@ -452,6 +455,38 @@ export default function Profile() {
       alert("An error occurred while updating profile. Please try again.");
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    if (passwordForm.password.length < 8) {
+      alert("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (passwordForm.password !== passwordForm.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const result = await ApiService.changePassword(passwordForm.password);
+      if (!result.success) {
+        alert(`Failed to update password: ${result.error || "Unknown error"}`);
+        return;
+      }
+
+      setPasswordForm({ password: "", confirmPassword: "" });
+      setShowPasswordForm(false);
+      alert("Password updated successfully.");
+    } catch (error) {
+      console.error("Error updating password:", error);
+      alert("An error occurred while updating password. Please try again.");
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -1446,26 +1481,74 @@ export default function Profile() {
               ) : isOwnProfile ? (
                 <div className="space-y-2">
                   {!showEditForm ? (
-                    <button
-                      type="button"
-                      onClick={handleEditProfile}
-                      className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mb-4 text-sm flex items-center justify-center gap-2"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleEditProfile}
+                        className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mb-2 text-sm flex items-center justify-center gap-2"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                      Edit Profile
-                    </button>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                        Edit Profile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordForm((value) => !value)}
+                        className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 font-medium transition-colors mb-4 text-sm"
+                      >
+                        Change Password
+                      </button>
+                    </>
+                  ) : null}
+
+                  {showPasswordForm && !showEditForm ? (
+                    <form onSubmit={handlePasswordSubmit} className="space-y-3 rounded-lg border border-gray-200 p-3 mb-4">
+                      <input
+                        type="password"
+                        value={passwordForm.password}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                        placeholder="New password"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        minLength={8}
+                        required
+                      />
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        placeholder="Confirm new password"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        minLength={8}
+                        required
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={passwordLoading}
+                          className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:bg-blue-300"
+                        >
+                          {passwordLoading ? "Updating..." : "Update Password"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordForm(false)}
+                          className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
                   ) : null}
 
                   {showEditForm ? (

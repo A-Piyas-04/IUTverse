@@ -1,14 +1,17 @@
 const userService = require("../services/userService");
 const storageService = require("../services/storageService");
+const response = require("../utils/responses");
+const { uuid } = require("../utils/validation");
 
 // GET /api/profile/:userId
 const getProfile = async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId, 10);
-    if (isNaN(userId))
-      return res.status(400).json({ message: "Invalid userId" });
+    const userIdResult = uuid(req.params.userId, "User ID");
+    if (userIdResult.error) return response.badRequest(res, userIdResult.error);
+
+    const userId = userIdResult.value;
     const profile = await userService.getProfile(userId);
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
+    if (!profile) return response.notFound(res, "Profile not found");
     res.json(profile);
   } catch (error) {
     res
@@ -89,9 +92,10 @@ const uploadProfilePicture = async (req, res) => {
 // GET /api/profile/picture/:userId
 const getProfilePicture = async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId, 10);
-    if (isNaN(userId))
-      return res.status(400).json({ message: "Invalid userId" });
+    const userIdResult = uuid(req.params.userId, "User ID");
+    if (userIdResult.error) return response.badRequest(res, userIdResult.error);
+
+    const userId = userIdResult.value;
 
     const profile = await userService.getProfile(userId);
     if (!profile || !(profile.profile_image_path || profile.profilePicture)) {
@@ -179,9 +183,10 @@ const uploadCoverPicture = async (req, res) => {
 // GET /api/profile/cover/:userId
 const getCoverPicture = async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId, 10);
-    if (isNaN(userId))
-      return res.status(400).json({ message: "Invalid userId" });
+    const userIdResult = uuid(req.params.userId, "User ID");
+    if (userIdResult.error) return response.badRequest(res, userIdResult.error);
+
+    const userId = userIdResult.value;
 
     const profile = await userService.getProfile(userId);
     if (!profile || !(profile.cover_image_path || profile.coverPicture)) {

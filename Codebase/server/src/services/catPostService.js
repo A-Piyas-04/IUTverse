@@ -6,6 +6,7 @@ const {
   publicUrl,
   uploadToBucket,
 } = require("../utils/supabaseData");
+const { sanitizePlainText } = require("../utils/validation");
 
 const mapPost = (post) => ({
   id: post.id,
@@ -44,7 +45,7 @@ class CatPostService {
       .from("cat_posts")
       .insert({
         user_id: userId,
-        caption,
+        caption: sanitizePlainText(caption, { max: 1000 }),
         image_path: image.path,
         image_bucket: image.bucket,
         image_mime_type: image.mimeType,
@@ -118,7 +119,7 @@ class CatPostService {
       .insert({
         user_id: userId,
         cat_post_id: Number(postId),
-        content,
+        content: sanitizePlainText(content, { max: 1000 }),
       })
       .select(`*, user:profiles!cat_post_comments_user_id_fkey(${profileSelect})`)
       .single();

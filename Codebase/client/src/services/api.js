@@ -160,6 +160,32 @@ class ApiService {
     });
   }
 
+  async requestPasswordReset(email) {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    }
+
+    return this.request("/auth/password/reset-request", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async changePassword(password) {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    }
+
+    return this.request("/auth/password", {
+      method: "PUT",
+      body: JSON.stringify({ password }),
+    });
+  }
+
   async getAllUsers() {
     return this.request("/auth/users", {
       method: "GET",

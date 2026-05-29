@@ -32,9 +32,10 @@ export const isAuthenticated = () => {
 };
 
 // Get all questions with answers
-export const getAllQuestions = async () => {
+export const getAllQuestions = async (page = 1, limit = 20) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/questions`, {
+    const params = new URLSearchParams({ page, limit });
+    const response = await fetch(`${API_BASE_URL}/questions?${params}`, {
       method: 'GET',
       headers: getPublicHeaders(),
     });
@@ -47,7 +48,8 @@ export const getAllQuestions = async () => {
 
     return {
       success: true,
-      questions: data.data || []
+      questions: data.data || [],
+      pagination: data.pagination || null
     };
   } catch (error) {
     console.error('Error fetching questions:', error);
