@@ -1,5 +1,7 @@
 const jobCommentService = require("../services/jobCommentService");
 const logger = require("../utils/logger");
+const response = require("../utils/responses");
+const { pagination, positiveInt, requiredText } = require("../utils/validation");
 
 const createComment = async (req, res) => {
   try {
@@ -12,12 +14,11 @@ const createComment = async (req, res) => {
       jobId,
     });
 
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({ message: "Comment content is required" });
-    }
+    const contentResult = requiredText(content, "Comment content", { max: 2000 });
+    if (contentResult.error) return response.badRequest(res, contentResult.error);
 
     const commentData = {
-      content: content.trim(),
+      content: contentResult.value,
       authorId: userId,
       jobId: Number(jobId),
     };
@@ -36,11 +37,18 @@ const createComment = async (req, res) => {
 const getCommentsByJobId = async (req, res) => {
   try {
     const { jobId } = req.params;
+    const id = positiveInt(jobId, "Job ID");
+    if (id.error) return response.badRequest(res, id.error);
+    const pageInfo = pagination(req.query.page, req.query.limit);
     logger.debug("[JobCommentController] Fetching comments for job", { jobId });
 
-    const comments = await jobCommentService.getCommentsByJobId(jobId);
-    logger.debug("[JobCommentController] Comments fetched", { jobId, count: comments.length });
-    res.json(comments);
+    const result = await jobCommentService.getCommentsByJobId(id.value, pageInfo);
+    logger.debug("[JobCommentController] Comments fetched", { jobId, count: result.comments.length });
+    res.json({
+      success: true,
+      data: result.comments,
+      pagination: result.pagination,
+    });
   } catch (error) {
     logger.error("[JobCommentController] Error fetching comments", error);
     res
@@ -61,12 +69,11 @@ const createReply = async (req, res) => {
       commentId,
     });
 
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({ message: "Reply content is required" });
-    }
+    const contentResult = requiredText(content, "Reply content", { max: 2000 });
+    if (contentResult.error) return response.badRequest(res, contentResult.error);
 
     const replyData = {
-      content: content.trim(),
+      content: contentResult.value,
       authorId: userId,
       jobId: Number(jobId),
     };
@@ -93,13 +100,12 @@ const updateComment = async (req, res) => {
       commentId,
     });
 
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({ message: "Comment content is required" });
-    }
+    const contentResult = requiredText(content, "Comment content", { max: 2000 });
+    if (contentResult.error) return response.badRequest(res, contentResult.error);
 
     const comment = await jobCommentService.updateComment(
       commentId,
-      content.trim(),
+      contentResult.value,
       userId
     );
     logger.info("[JobCommentController] Comment updated", { id: comment.id });

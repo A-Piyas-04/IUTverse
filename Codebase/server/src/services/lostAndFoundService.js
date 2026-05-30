@@ -35,12 +35,13 @@ const allowedUpdateFields = (data) => {
 };
 
 class LostAndFoundService {
-  async getAllPosts(filters = {}) {
+  async getAllPosts(filters = {}, { page = 1, limit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
     let query = supabase
       .from("lost_and_found_posts")
-      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`)
-      .order("created_at", { ascending: false });
+      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`, { count: "exact" });
 
     if (filters.type && filters.type !== "all") query = query.eq("type", filters.type);
     if (filters.status) query = query.eq("status", filters.status);
@@ -49,9 +50,19 @@ class LostAndFoundService {
       query = query.or(`title.ilike.${search},description.ilike.${search},location.ilike.${search}`);
     }
 
-    const { data, error } = await query;
+    const { data, count, error } = await query
+      .order("created_at", { ascending: false })
+      .range(from, to);
     if (error) throw error;
-    return data.map(mapPost);
+    return {
+      posts: data.map(mapPost),
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    };
   }
 
   async getPostById(postId) {

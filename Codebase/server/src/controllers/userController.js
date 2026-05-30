@@ -47,7 +47,7 @@ const getUserById = async (req, res) => {
     if (id.error) return response.badRequest(res, id.error);
 
     // Get user by ID
-    const user = await userService.getUserById(id.value);
+    const user = await userService.getPublicUserById(id.value);
 
     if (!user) {
       return res.status(404).json({

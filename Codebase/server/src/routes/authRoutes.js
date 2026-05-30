@@ -9,6 +9,7 @@ const {
   validateToken,
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
+const { requireAdmin } = require("../middleware/authorization");
 const { authLimiter } = require("../middleware/security");
 
 // Signup endpoint
@@ -25,6 +26,6 @@ router.put('/password', authenticateToken, authLimiter, changePassword);
 router.get('/validate', authenticateToken, validateToken);
 
 // Get all users endpoint
-router.get('/users', authenticateToken, getAllUsers);
+router.get('/users', authenticateToken, requireAdmin, getAllUsers);
 
 module.exports = router;

@@ -10,7 +10,7 @@ const getProfile = async (req, res) => {
     if (userIdResult.error) return response.badRequest(res, userIdResult.error);
 
     const userId = userIdResult.value;
-    const profile = await userService.getProfile(userId);
+    const profile = await userService.getPublicUserById(userId);
     if (!profile) return response.notFound(res, "Profile not found");
     res.json(profile);
   } catch (error) {

@@ -292,7 +292,9 @@ class ConfessionService {
     const { data: confessions, error: listError } = await supabase
       .from("confessions")
       .select("*")
-      .eq("status", "active");
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .range(0, 999);
     if (listError) throw listError;
 
     const tagCounts = new Map();

@@ -3,9 +3,11 @@ const logger = require("../utils/logger");
 
 const createConfession = async (req, res) => {
   try {
+    const hasPoll = Boolean(req.body?.poll);
+    const tagCount = Array.isArray(req.body?.tags) ? req.body.tags.length : 0;
     logger.debug("[ConfessionController] Creating confession", {
-      hasPoll: Boolean(req.body?.poll),
-      tagCount: Array.isArray(req.body?.tags) ? req.body.tags.length : 0,
+      hasPoll,
+      tagCount,
     });
     const confessionData = req.body;
 

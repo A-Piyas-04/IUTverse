@@ -127,21 +127,42 @@ class ChatService {
     return data.reverse().map(mapMessage);
   }
 
-  async getUserConversations(userId) {
+  async getUserConversations(userId, { page = 1, limit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
-    const { data: memberships, error } = await supabase
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    const { data: memberships, count, error } = await supabase
       .from("conversation_participants")
-      .select("conversation_id")
-      .eq("user_id", userId);
+      .select("conversation_id", { count: "exact" })
+      .eq("user_id", userId)
+      .range(from, to);
 
     if (error) throw error;
     const ids = memberships.map((membership) => membership.conversation_id);
-    if (!ids.length) return [];
+    if (!ids.length) {
+      return {
+        conversations: [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      };
+    }
 
     const conversations = await Promise.all(ids.map((id) => this.getConversationById(id, userId)));
-    return conversations
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    return {
+      conversations: conversations
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    };
   }
 
   async markMessagesAsRead(conversationId, userId) {

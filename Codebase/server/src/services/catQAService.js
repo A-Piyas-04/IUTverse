@@ -139,14 +139,15 @@ class CatQAService {
     return { message: "Answer deleted successfully" };
   }
 
-  async withAnswers(question) {
+  async withAnswers(question, { answerLimit = 50 } = {}) {
     const supabase = ensureSupabaseAdmin();
     const { data: answers, error } = await supabase
       .from("cat_answers")
       .select(`*, user:profiles!cat_answers_user_id_fkey(${profileSelect})`)
       .eq("question_id", question.id)
       .eq("status", "active")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(answerLimit);
 
     if (error) throw new Error(`Failed to fetch answers: ${error.message}`);
     return mapQuestion({ ...question, answers });

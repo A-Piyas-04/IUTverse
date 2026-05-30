@@ -2,6 +2,7 @@ const { validateIUTEmail } = require('../utils/authUtils');
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { requiredText } = require("../utils/validation");
+const { pageRange } = require("../utils/supabaseData");
 const {
   supabase,
   supabaseAdmin,
@@ -188,19 +189,36 @@ const getAllUsers = async (req, res) => {
       return res.status(500).json({ message: 'Supabase Admin is not configured' });
     }
 
+    const range = pageRange(req.query.page, req.query.limit);
+    const { count, error: countError } = await supabaseAdmin
+      .from('profiles')
+      .select('id', { count: 'exact', head: true });
+
+    if (countError) {
+      return response.serverError(res, "Failed to fetch users", countError.message);
+    }
+
     const { data: users, error } = await supabaseAdmin
       .from('profiles')
       .select('id, display_name, department_id, batch, student_id, role, created_at')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(range.from, range.to);
 
     if (error) {
-      return res.status(500).json({ message: error.message });
+      return response.serverError(res, "Failed to fetch users", error.message);
     }
 
-    res.json(users);
+    return response.success(res, users, null, {
+      pagination: {
+        page: range.page,
+        limit: range.limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / range.limit),
+      },
+    });
   } catch (error) {
     logger.error('Get users error:', error);
-    res.status(500).json({ message: 'Internal server error. Please try again.' });
+    response.serverError(res, 'Internal server error. Please try again.', error.message);
   }
 };
 

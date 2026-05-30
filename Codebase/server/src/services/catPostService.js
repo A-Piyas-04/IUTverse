@@ -170,23 +170,24 @@ class CatPostService {
     return { success: true };
   }
 
-  async withComments(post) {
+  async withComments(post, { commentLimit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
     const { data: comments, error } = await supabase
       .from("cat_post_comments")
       .select(`*, user:profiles!cat_post_comments_user_id_fkey(${profileSelect})`)
       .eq("cat_post_id", post.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(commentLimit);
 
     if (error) throw error;
 
-    const { data: likes, error: likesError } = await supabase
+    const { count: likeCount, error: likesError } = await supabase
       .from("cat_post_likes")
-      .select("id, user_id, cat_post_id, created_at")
+      .select("id", { count: "exact", head: true })
       .eq("cat_post_id", post.id);
 
     if (likesError) throw likesError;
-    return mapPost({ ...post, comments, likes });
+    return mapPost({ ...post, comments, likes: [], like_count: likeCount ?? post.like_count });
   }
 
   async recountLikes(postId) {

@@ -2,14 +2,14 @@ const lostAndFoundService = require('../services/lostAndFoundService');
 const multer = require('multer');
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
-const { enumValue, optionalText, positiveInt, requiredText } = require("../utils/validation");
+const { isAllowedImageMime } = require("../utils/fileValidation");
+const { enumValue, optionalText, pagination, positiveInt, requiredText } = require("../utils/validation");
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  // Accept only image files
-  if (file.mimetype.startsWith('image/')) {
+  if (isAllowedImageMime(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error('Only image files are allowed!'), false);
@@ -46,11 +46,13 @@ class LostAndFoundController {
         filters.status = status.value;
       }
       
-      const posts = await lostAndFoundService.getAllPosts(filters);
+      const pageInfo = pagination(req.query.page, req.query.limit);
+      const result = await lostAndFoundService.getAllPosts(filters, pageInfo);
       
       res.json({
         success: true,
-        data: posts
+        data: result.posts,
+        pagination: result.pagination,
       });
     } catch (error) {
       logger.error('Error in getAllPosts:', error);
