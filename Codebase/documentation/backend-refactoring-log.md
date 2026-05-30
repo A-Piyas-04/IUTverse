@@ -291,3 +291,24 @@ Known follow-up:
 - Existing old ad-hoc files under `Codebase/server/test` remain as manual/reference scripts; they are intentionally excluded from the default test command because some still reference removed Prisma or optional axios-era tooling.
 - `npm audit` still reports existing dependency vulnerabilities unrelated to this pass.
 - Frontend debug logging remains outside this backend-focused cleanup and can be handled in a separate frontend cleanup pass.
+
+### 2026-05-30 - Post Upload 400 Fix
+
+Goal: fix homepage post creation returning `400 Bad Request` when uploading an image post.
+
+Changed:
+
+- Updated regular post creation validation so the backend accepts either text content or an uploaded image.
+- Image-only posts now store an empty string for `posts.content`, preserving the existing non-null database column.
+- Updated the frontend post upload/update service to use the current Supabase session token for multipart requests.
+- Removed the manually set multipart `Content-Type` from post upload/update calls so the browser can attach the correct boundary.
+
+Verification:
+
+- `node --check Codebase/server/src/controllers/postController.js` passed.
+- `npm.cmd test` passed with 8 local backend unit tests.
+- Client Vite build passed using temporary `.codex-build-check` output, which was removed after verification.
+
+Known follow-up:
+
+- If a post upload still fails, inspect the backend JSON response body in the browser Network tab; remaining likely causes are file size over 5MB, non-image MIME type, missing auth session, or Supabase Storage/RLS configuration.

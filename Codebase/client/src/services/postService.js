@@ -125,11 +125,9 @@ export const postService = {
         "Sending post request with FormData:",
         Object.fromEntries(formData.entries())
       );
+      const token = await authUtils.getSupabaseToken();
       const response = await axios.post(`${API_URL}/posts`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${authUtils.getToken()}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       console.log("Create post response:", response.data);
@@ -155,11 +153,9 @@ export const postService = {
         formData.append("image", postData.image);
       }
 
+      const token = await authUtils.getSupabaseToken();
       const response = await axios.put(`${API_URL}/posts/${postId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${authUtils.getToken()}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       return response.data;
