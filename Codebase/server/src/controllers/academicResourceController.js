@@ -1,6 +1,7 @@
 const academicResourceService = require("../services/academicResourceService");
 const storageService = require("../services/storageService");
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { enumValueExact, optionalText, positiveInt, requiredText } = require("../utils/validation");
 
 const validTypes = ["QUESTION", "NOTE", "BOOK", "CLASS_LECTURE", "OTHER"];
@@ -49,7 +50,7 @@ const createAcademicResource = async (req, res) => {
       data: resource,
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error creating resource:", error);
+    logger.error("[AcademicResourceController] Error creating resource:", error);
     res.status(500).json({
       success: false,
       message: "Error creating academic resource",
@@ -81,7 +82,7 @@ const getAllAcademicResources = async (req, res) => {
       data: resources,
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error fetching resources:", error);
+    logger.error("[AcademicResourceController] Error fetching resources:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching academic resources",
@@ -109,7 +110,7 @@ const getAcademicResourceById = async (req, res) => {
       data: resource,
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error fetching resource by ID:", error);
+    logger.error("[AcademicResourceController] Error fetching resource by ID:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching academic resource",
@@ -127,7 +128,7 @@ const getAllDepartments = async (req, res) => {
       data: departments,
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error fetching departments:", error);
+    logger.error("[AcademicResourceController] Error fetching departments:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching departments",
@@ -149,7 +150,7 @@ const createDepartment = async (req, res) => {
       data: department,
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error creating department:", error);
+    logger.error("[AcademicResourceController] Error creating department:", error);
     res.status(error.code === "23505" ? 400 : 500).json({
       success: false,
       message: error.code === "23505" ? "Department name already exists" : "Error creating department",
@@ -208,7 +209,7 @@ const updateAcademicResource = async (req, res) => {
       data: resource,
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error updating resource:", error);
+    logger.error("[AcademicResourceController] Error updating resource:", error);
     const status = error.message.includes("Unauthorized") ? 403 : error.message.includes("not found") ? 404 : 500;
     res.status(status).json({
       success: false,
@@ -229,7 +230,7 @@ const deleteAcademicResource = async (req, res) => {
       message: "Academic resource deleted successfully",
     });
   } catch (error) {
-    console.error("[AcademicResourceController] Error deleting resource:", error);
+    logger.error("[AcademicResourceController] Error deleting resource:", error);
     const status = error.message.includes("Unauthorized") ? 403 : error.message.includes("not found") ? 404 : 500;
     res.status(status).json({
       success: false,

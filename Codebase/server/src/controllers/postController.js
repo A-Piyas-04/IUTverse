@@ -7,6 +7,7 @@ const {
   uploadToBucket,
 } = require("../utils/supabaseData");
 const { badRequest, forbidden, notFound, serverError } = require("../utils/responses");
+const logger = require("../utils/logger");
 const { optionalText, positiveInt, requiredText } = require("../utils/validation");
 
 const mapReaction = (reaction) => ({
@@ -167,7 +168,7 @@ exports.createPost = async (req, res) => {
 
     return res.status(201).json({ success: true, data: await hydratePost(post) });
   } catch (error) {
-    console.error("Error creating post:", error);
+    logger.error("Error creating post:", error);
     return serverError(res, "Failed to create post", error.message);
   }
 };
@@ -199,7 +200,7 @@ exports.getPosts = async (req, res) => {
 
     return respondWithPosts(res, query, page, limit);
   } catch (error) {
-    console.error("Error fetching posts:", error);
+    logger.error("Error fetching posts:", error);
     return serverError(res, "Failed to fetch posts", error.message);
   }
 };
@@ -219,7 +220,7 @@ exports.getPost = async (req, res) => {
     if (!post) return notFound(res, "Post not found");
     return res.status(200).json({ success: true, data: await hydratePost(post, 100) });
   } catch (error) {
-    console.error("Error fetching post:", error);
+    logger.error("Error fetching post:", error);
     return serverError(res, "Failed to fetch post", error.message);
   }
 };
@@ -270,7 +271,7 @@ exports.updatePost = async (req, res) => {
     if (req.body.category) await attachCategory(post.id, optionalText(req.body.category, { max: 80 }));
     return res.status(200).json({ success: true, data: await hydratePost(post) });
   } catch (error) {
-    console.error("Error updating post:", error);
+    logger.error("Error updating post:", error);
     return serverError(res, "Failed to update post", error.message);
   }
 };
@@ -299,7 +300,7 @@ exports.deletePost = async (req, res) => {
     if (error) throw error;
     return res.status(200).json({ success: true, message: "Post deleted successfully" });
   } catch (error) {
-    console.error("Error deleting post:", error);
+    logger.error("Error deleting post:", error);
     return serverError(res, "Failed to delete post", error.message);
   }
 };
@@ -356,7 +357,7 @@ exports.reactToPost = async (req, res) => {
       reactionCount: post?.reaction_count || 0,
     });
   } catch (error) {
-    console.error("Error handling post reaction:", error);
+    logger.error("Error handling post reaction:", error);
     return serverError(res, "Failed to process reaction", error.message);
   }
 };
@@ -415,7 +416,7 @@ exports.getUserFeed = async (req, res) => {
 
     return respondWithPosts(res, query, page, limit);
   } catch (error) {
-    console.error("Error fetching user feed:", error);
+    logger.error("Error fetching user feed:", error);
     return serverError(res, "Failed to fetch user feed", error.message);
   }
 };

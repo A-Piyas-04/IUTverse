@@ -296,8 +296,22 @@ class ApiService {
   }
 
   // Job endpoints
-  async getJobs() {
-    return this.request("/jobs", { method: "GET" });
+  async getJobs(params = {}) {
+    const search = new URLSearchParams();
+    if (params.page) search.set("page", params.page);
+    if (params.limit) search.set("limit", params.limit);
+    const suffix = search.toString() ? `?${search.toString()}` : "";
+    const response = await this.request(`/jobs${suffix}`, { method: "GET" });
+
+    if (response.success && response.data?.success === true && Array.isArray(response.data.data)) {
+      return {
+        success: true,
+        data: response.data.data,
+        pagination: response.data.pagination,
+      };
+    }
+
+    return response;
   }
 
   async createJob(jobData) {

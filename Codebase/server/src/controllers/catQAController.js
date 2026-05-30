@@ -1,5 +1,6 @@
 const catQAService = require('../services/catQAService');
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { positiveInt, requiredText } = require("../utils/validation");
 
 class CatQAController {
@@ -14,7 +15,7 @@ class CatQAController {
         message: 'Questions retrieved successfully'
       });
     } catch (error) {
-      console.error('Error fetching questions:', error);
+      logger.error('Error fetching questions:', error);
       res.status(500).json({
         success: false,
         message: error.message || 'Failed to fetch questions'
@@ -42,7 +43,7 @@ class CatQAController {
         message: 'Question created successfully'
       });
     } catch (error) {
-      console.error('Error creating question:', error);
+      logger.error('Error creating question:', error);
       res.status(500).json({
         success: false,
         message: error.message || 'Failed to create question'
@@ -65,7 +66,7 @@ class CatQAController {
         message: 'Question retrieved successfully'
       });
     } catch (error) {
-      console.error('Error fetching question:', error);
+      logger.error('Error fetching question:', error);
       const statusCode = error.message.includes('not found') ? 404 : 500;
       res.status(statusCode).json({
         success: false,
@@ -98,7 +99,7 @@ class CatQAController {
         message: 'Answer added successfully'
       });
     } catch (error) {
-      console.error('Error adding answer:', error);
+      logger.error('Error adding answer:', error);
       const statusCode = error.message.includes('not found') ? 404 : 500;
       res.status(statusCode).json({
         success: false,
@@ -122,7 +123,7 @@ class CatQAController {
         message: result.message
       });
     } catch (error) {
-      console.error('Error deleting question:', error);
+      logger.error('Error deleting question:', error);
       const statusCode = error.message.includes('not found') ? 404 : 
                         error.message.includes('Unauthorized') ? 403 : 500;
       res.status(statusCode).json({
@@ -147,7 +148,7 @@ class CatQAController {
         message: result.message
       });
     } catch (error) {
-      console.error('Error deleting answer:', error);
+      logger.error('Error deleting answer:', error);
       const statusCode = error.message.includes('not found') ? 404 : 
                         error.message.includes('Unauthorized') ? 403 : 500;
       res.status(statusCode).json({

@@ -1,5 +1,6 @@
 const catPostService = require('../services/catPostService');
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { pagination, positiveInt, requiredText } = require("../utils/validation");
 
 const createPost = async (req, res) => {
@@ -15,7 +16,7 @@ const createPost = async (req, res) => {
     const post = await catPostService.createPost(userId, captionResult.value, image);
     res.status(201).json({ success: true, data: post });
   } catch (error) {
-    console.error('Create post error:', error);
+    logger.error('Create post error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -29,7 +30,7 @@ const getAllPosts = async (req, res) => {
     const result = await catPostService.getAllPosts(safePage.page, safePage.limit);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error('Get posts error:', error);
+    logger.error('Get posts error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -42,7 +43,7 @@ const getPostById = async (req, res) => {
     const post = await catPostService.getPostById(postId.value);
     res.status(200).json({ success: true, data: post });
   } catch (error) {
-    console.error('Get post error:', error);
+    logger.error('Get post error:', error);
     if (error.message === 'Post not found') {
       res.status(404).json({ success: false, message: error.message });
     } else {
@@ -60,7 +61,7 @@ const toggleLike = async (req, res) => {
     const result = await catPostService.toggleLike(userId, postId.value);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error('Toggle like error:', error);
+    logger.error('Toggle like error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -78,7 +79,7 @@ const addComment = async (req, res) => {
     const comment = await catPostService.addComment(userId, postId.value, contentResult.value);
     res.status(201).json({ success: true, data: comment });
   } catch (error) {
-    console.error('Add comment error:', error);
+    logger.error('Add comment error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -92,7 +93,7 @@ const deletePost = async (req, res) => {
     const result = await catPostService.deletePost(userId, postId.value);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error('Delete post error:', error);
+    logger.error('Delete post error:', error);
     if (error.message === 'Post not found') {
       res.status(404).json({ success: false, message: error.message });
     } else if (error.message === 'Unauthorized to delete this post') {

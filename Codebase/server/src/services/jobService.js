@@ -41,16 +41,48 @@ class JobService {
     return mapJob(job);
   }
 
-  async getAllJobs() {
+  async getAllJobs({ page = 1, limit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { count, error: countError } = await supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .neq("status", "deleted");
+
+    if (countError) throw countError;
+
+    const total = count || 0;
+    if (from >= total) {
+      return {
+        jobs: [],
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
     const { data, error } = await supabase
       .from("jobs")
       .select(`*, postedBy:profiles!jobs_posted_by_id_fkey(${profileSelect})`)
       .neq("status", "deleted")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
-    return data.map(mapJob);
+    return {
+      jobs: data.map(mapJob),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async getJobById(id) {

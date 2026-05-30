@@ -1,5 +1,6 @@
 const userService = require("../services/userService");
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { requiredText, sanitizePlainText, uuid } = require("../utils/validation");
 
 const updateUserName = async (req, res) => {
@@ -30,7 +31,7 @@ const updateUserName = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error updating user name:", error);
+    logger.error("Error updating user name:", error);
     res.status(500).json({
       message: "Internal server error. Please try again.",
     });
@@ -59,7 +60,7 @@ const getUserById = async (req, res) => {
       data: user,
     });
   } catch (error) {
-    console.error("Error getting user by ID:", error);
+    logger.error("Error getting user by ID:", error);
     res.status(500).json({
       message: "An error occurred while fetching user",
       error: error.message,
@@ -94,7 +95,7 @@ const searchUsers = async (req, res) => {
       data: users,
     });
   } catch (error) {
-    console.error("Error searching users:", error);
+    logger.error("Error searching users:", error);
     res.status(500).json({
       message: "An error occurred while searching users",
       error: error.message,
@@ -165,7 +166,7 @@ const updateStudentId = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
-    console.error("Error updating student ID:", error);
+    logger.error("Error updating student ID:", error);
     if (error.message === "Student ID already exists") {
       return res.status(409).json({
         message: "This student ID is already taken by another user",
@@ -198,7 +199,7 @@ const getStudentId = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error getting student ID:", error);
+    logger.error("Error getting student ID:", error);
     res.status(500).json({
       message: "Internal server error. Please try again.",
     });
@@ -224,7 +225,7 @@ const deleteStudentId = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
-    console.error("Error deleting student ID:", error);
+    logger.error("Error deleting student ID:", error);
     res.status(500).json({
       message: "Internal server error. Please try again.",
     });
@@ -271,7 +272,7 @@ const checkStudentIdAvailability = async (req, res) => {
       studentId: trimmedStudentId,
     });
   } catch (error) {
-    console.error("Error checking student ID availability:", error);
+    logger.error("Error checking student ID availability:", error);
     res.status(500).json({
       message: "Internal server error. Please try again.",
       available: false,
@@ -309,7 +310,7 @@ const getUserByStudentId = async (req, res) => {
       data: user,
     });
   } catch (error) {
-    console.error("Error getting user by student ID:", error);
+    logger.error("Error getting user by student ID:", error);
     res.status(500).json({
       message: "Internal server error. Please try again.",
     });

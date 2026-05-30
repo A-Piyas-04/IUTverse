@@ -252,3 +252,42 @@ Known follow-up:
 - Real credential rotation must still be completed in Supabase, Gmail/Google, deployment providers, and any local collaborator environments.
 - Git history rewriting was documented but intentionally not performed automatically.
 - Production deployments must set `CORS_ORIGINS` to real frontend origins before launch.
+
+### 2026-05-30 - Open Issues #33-#55 Cleanup
+
+Goal: finish the remaining active items from original issues `#33-#55`: graceful shutdown, debug logging cleanup, package metadata/dev script fixes, local test infrastructure, unused dependency cleanup, and bounded job pagination.
+
+Changed:
+
+- Added a shared level-aware backend logger with `LOG_LEVEL` support and moved active backend logging through it.
+- Updated request logging to emit method, path, status, and duration only; request bodies and user-generated content are no longer logged by active backend controllers.
+- Added graceful `SIGINT`/`SIGTERM` handling in `server.js`, including HTTP server close and a 10-second forced-exit timeout.
+- Changed server package metadata from `main: index.js` to `main: server.js`.
+- Added `nodemon` as a dev dependency and changed `npm run dev` to use it; added `npm run dev:node` for plain Node.
+- Replaced the placeholder test script with a local Node test suite under `test/unit`.
+- Added unit coverage for validation/sanitization helpers, response envelopes, and the secret scanner self-test.
+- Removed unused `pg-promise`; kept `pg` because the Supabase migration runner still uses it.
+- Changed job listing to bounded pagination with `page=1`, `limit=20`, max `limit=100`.
+- Updated the jobs client helper to unwrap the new paginated backend envelope while preserving existing component usage.
+- Fixed an out-of-range Supabase pagination edge case so empty job pages return `200` with an empty array instead of `PGRST103`.
+
+Verification:
+
+- `npm.cmd install --save-dev nodemon` completed.
+- `npm.cmd uninstall pg-promise` completed.
+- `npm.cmd test` passed with 8 local unit tests.
+- `npm.cmd run security:scan-env` passed.
+- `node scripts/scanSecrets.js --self-test` passed.
+- Full `node --check` pass across `Codebase/server/src/**/*.js` and `server.js` passed.
+- Search confirmed active backend code no longer calls `console.log`, `console.warn`, or `console.error` outside the shared logger utility.
+- Search confirmed `pg-promise` is no longer present in server package files.
+- Server app import check passed.
+- Graceful shutdown smoke check passed by emitting `SIGTERM` and observing clean HTTP server close.
+- Read-only Supabase smoke checks passed for jobs, posts, departments, Cat Q&A, and confessions.
+- Local API smoke checks for `GET /api/jobs` and `GET /api/jobs?page=2&limit=5` returned `200`, pagination metadata, and no more than the requested limit.
+
+Known follow-up:
+
+- Existing old ad-hoc files under `Codebase/server/test` remain as manual/reference scripts; they are intentionally excluded from the default test command because some still reference removed Prisma or optional axios-era tooling.
+- `npm audit` still reports existing dependency vulnerabilities unrelated to this pass.
+- Frontend debug logging remains outside this backend-focused cleanup and can be handled in a separate frontend cleanup pass.
