@@ -1,6 +1,7 @@
 const lostAndFoundService = require('../services/lostAndFoundService');
 const multer = require('multer');
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { enumValue, optionalText, positiveInt, requiredText } = require("../utils/validation");
 
 // Configure multer for file uploads
@@ -52,7 +53,7 @@ class LostAndFoundController {
         data: posts
       });
     } catch (error) {
-      console.error('Error in getAllPosts:', error);
+      logger.error('Error in getAllPosts:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to fetch posts',
@@ -82,7 +83,7 @@ class LostAndFoundController {
         data: post
       });
     } catch (error) {
-      console.error('Error in getPostById:', error);
+      logger.error('Error in getPostById:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to fetch post',
@@ -125,7 +126,7 @@ class LostAndFoundController {
           data: post
         });
       } catch (serviceError) {
-        console.error('Controller - Error in lostAndFoundService.createPost:', serviceError);
+        logger.error('Controller - Error in lostAndFoundService.createPost:', serviceError);
         return res.status(500).json({
           success: false,
           message: 'Error creating post in service layer',
@@ -133,8 +134,8 @@ class LostAndFoundController {
         });
       }
     } catch (error) {
-      console.error('Controller - Unhandled error in createPost:', error);
-      console.error('Controller - Error stack:', error.stack);
+      logger.error('Controller - Unhandled error in createPost:', error);
+      logger.error('Controller - Error stack:', error.stack);
       
       // Check if headers have already been sent
       if (!res.headersSent) {
@@ -144,7 +145,7 @@ class LostAndFoundController {
           error: error.message
         });
       } else {
-        console.error('Controller - Headers already sent, cannot send error response');
+        logger.error('Controller - Headers already sent, cannot send error response');
       }
     }
   }
@@ -184,7 +185,7 @@ class LostAndFoundController {
         data: updatedPost
       });
     } catch (error) {
-      console.error('Error in updatePost:', error);
+      logger.error('Error in updatePost:', error);
       
       if (error.message === 'Post not found') {
         return res.status(404).json({
@@ -223,7 +224,7 @@ class LostAndFoundController {
         message: result.message
       });
     } catch (error) {
-      console.error('Error in deletePost:', error);
+      logger.error('Error in deletePost:', error);
       
       if (error.message === 'Post not found') {
         return res.status(404).json({
@@ -263,7 +264,7 @@ class LostAndFoundController {
         data: updatedPost
       });
     } catch (error) {
-      console.error('Error in markAsResolved:', error);
+      logger.error('Error in markAsResolved:', error);
       
       if (error.message === 'Post not found') {
         return res.status(404).json({
@@ -303,7 +304,7 @@ class LostAndFoundController {
         data: updatedPost
       });
     } catch (error) {
-      console.error('Error in markAsActive:', error);
+      logger.error('Error in markAsActive:', error);
       
       if (error.message === 'Post not found') {
         return res.status(404).json({

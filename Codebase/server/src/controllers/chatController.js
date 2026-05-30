@@ -1,5 +1,6 @@
 const chatService = require("../services/chatService");
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { positiveInt, requiredText, uuid } = require("../utils/validation");
 
 // Start or get conversation with another user
@@ -27,7 +28,7 @@ const startConversation = async (req, res) => {
       data: conversation,
     });
   } catch (error) {
-    console.error("Error starting conversation:", error);
+    logger.error("Error starting conversation:", error);
     response.serverError(res, "Failed to start conversation", error.message);
   }
 };
@@ -56,7 +57,7 @@ const sendMessage = async (req, res) => {
       data: message,
     });
   } catch (error) {
-    console.error("Error sending message:", error);
+    logger.error("Error sending message:", error);
     if (error.message === "Conversation not found or access denied") {
       return response.forbidden(res, error.message);
     }
@@ -87,7 +88,7 @@ const getMessages = async (req, res) => {
       data: messages,
     });
   } catch (error) {
-    console.error("Error getting messages:", error);
+    logger.error("Error getting messages:", error);
     if (error.message === "Conversation not found or access denied") {
       return response.forbidden(res, error.message);
     }
@@ -107,7 +108,7 @@ const getConversations = async (req, res) => {
       data: conversations,
     });
   } catch (error) {
-    console.error("Error getting conversations:", error);
+    logger.error("Error getting conversations:", error);
     response.serverError(res, "Failed to get conversations", error.message);
   }
 };
@@ -127,7 +128,7 @@ const markAsRead = async (req, res) => {
       message: "Messages marked as read",
     });
   } catch (error) {
-    console.error("Error marking messages as read:", error);
+    logger.error("Error marking messages as read:", error);
     response.serverError(res, "Failed to mark messages as read", error.message);
   }
 };

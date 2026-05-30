@@ -9,6 +9,7 @@ const {
   helmetMiddleware,
 } = require("./middleware/security");
 const { serverError } = require("./utils/responses");
+const logger = require("./utils/logger");
 
 const app = express();
 
@@ -29,7 +30,7 @@ app.use("/", routes);
 
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
-  console.error("Unhandled request error:", err);
+  logger.error("Unhandled request error", err);
   return serverError(res, "Unexpected server error", err.message);
 });
 

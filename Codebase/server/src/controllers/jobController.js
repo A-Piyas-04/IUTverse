@@ -1,6 +1,7 @@
 const jobService = require('../services/jobService');
 const response = require("../utils/responses");
-const { enumValueExact, optionalText, positiveInt, requiredText, sanitizePlainTextArray } = require("../utils/validation");
+const logger = require("../utils/logger");
+const { enumValueExact, optionalText, pagination, positiveInt, requiredText, sanitizePlainTextArray } = require("../utils/validation");
 
 const validJobTypes = ["Internship", "Freelance", "PartTime", "Volunteer"];
 
@@ -58,17 +59,18 @@ const createJob = async (req, res) => {
     const job = await jobService.createJob(jobData);
     res.status(201).json(job);
   } catch (error) {
-    console.error('[JobController] Error creating job:', error);
+    logger.error("[JobController] Error creating job", error);
     response.serverError(res, 'Error creating job', error.message);
   }
 };
 
 const getAllJobs = async (req, res) => {
   try {
-    const jobs = await jobService.getAllJobs();
-    res.json(jobs);
+    const pageInfo = pagination(req.query.page, req.query.limit);
+    const { jobs, pagination: paginationInfo } = await jobService.getAllJobs(pageInfo);
+    response.success(res, jobs, null, { pagination: paginationInfo });
   } catch (error) {
-    console.error('[JobController] Error fetching jobs:', error);
+    logger.error("[JobController] Error fetching jobs", error);
     response.serverError(res, 'Error fetching jobs', error.message);
   }
 };
@@ -82,7 +84,7 @@ const getJobById = async (req, res) => {
     if (!job) return response.notFound(res, 'Job not found');
     res.json(job);
   } catch (error) {
-    console.error('[JobController] Error fetching job:', error);
+    logger.error("[JobController] Error fetching job", error);
     response.serverError(res, 'Error fetching job', error.message);
   }
 };
@@ -98,7 +100,7 @@ const updateJob = async (req, res) => {
     const job = await jobService.updateJob(id.value, parsed.payload, req.user.userId);
     res.json(job);
   } catch (error) {
-    console.error('[JobController] Error updating job:', error);
+    logger.error("[JobController] Error updating job", error);
     if (error.message.includes("Unauthorized")) return response.forbidden(res, error.message);
     if (error.message.includes("not found")) return response.notFound(res, error.message);
     response.serverError(res, 'Error updating job', error.message);
@@ -117,7 +119,7 @@ const deleteJob = async (req, res) => {
       data: job,
     });
   } catch (error) {
-    console.error("[JobController] Error deleting job:", error);
+    logger.error("[JobController] Error deleting job", error);
     if (error.message.includes("Unauthorized")) return response.forbidden(res, error.message);
     if (error.message.includes("not found")) return response.notFound(res, error.message);
     response.serverError(res, "Error deleting job", error.message);

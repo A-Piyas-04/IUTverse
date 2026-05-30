@@ -5,6 +5,7 @@ const {
   profileSelect,
 } = require("../utils/supabaseData");
 const { badRequest, forbidden, notFound, serverError } = require("../utils/responses");
+const logger = require("../utils/logger");
 const { positiveInt, requiredText } = require("../utils/validation");
 
 const mapComment = (comment) => ({
@@ -47,7 +48,7 @@ exports.createComment = async (req, res) => {
     if (error) throw error;
     return res.status(201).json({ success: true, data: mapComment(data) });
   } catch (error) {
-    console.error("Error creating comment:", error);
+    logger.error("Error creating comment:", error);
     return serverError(res, "Failed to create comment", error.message);
   }
 };
@@ -74,7 +75,7 @@ exports.getPostComments = async (req, res) => {
       pagination: { page, limit, totalComments: count || 0, totalPages: Math.ceil((count || 0) / limit) },
     });
   } catch (error) {
-    console.error("Error fetching comments:", error);
+    logger.error("Error fetching comments:", error);
     return serverError(res, "Failed to fetch comments", error.message);
   }
 };
@@ -94,7 +95,7 @@ exports.getCommentReplies = async (req, res) => {
     if (error) throw error;
     return res.status(200).json({ success: true, data: data.map(mapComment) });
   } catch (error) {
-    console.error("Error fetching replies:", error);
+    logger.error("Error fetching replies:", error);
     return serverError(res, "Failed to fetch replies", error.message);
   }
 };
@@ -124,7 +125,7 @@ exports.updateComment = async (req, res) => {
     if (error) throw error;
     return res.status(200).json({ success: true, data: mapComment(data) });
   } catch (error) {
-    console.error("Error updating comment:", error);
+    logger.error("Error updating comment:", error);
     return serverError(res, "Failed to update comment", error.message);
   }
 };
@@ -145,7 +146,7 @@ exports.deleteComment = async (req, res) => {
     if (error) throw error;
     return res.status(200).json({ success: true, message: "Comment deleted successfully" });
   } catch (error) {
-    console.error("Error deleting comment:", error);
+    logger.error("Error deleting comment:", error);
     return serverError(res, "Failed to delete comment", error.message);
   }
 };

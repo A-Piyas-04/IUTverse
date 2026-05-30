@@ -1,4 +1,5 @@
 const jobCommentService = require("../services/jobCommentService");
+const logger = require("../utils/logger");
 
 const createComment = async (req, res) => {
   try {
@@ -6,10 +7,9 @@ const createComment = async (req, res) => {
     const { jobId } = req.params;
     const { content } = req.body;
 
-    console.log("[JobCommentController] Attempting to create comment:", {
+    logger.debug("[JobCommentController] Creating comment", {
       userId,
       jobId,
-      content: content?.substring(0, 50) + "...",
     });
 
     if (!content || content.trim().length === 0) {
@@ -23,13 +23,10 @@ const createComment = async (req, res) => {
     };
 
     const comment = await jobCommentService.createComment(commentData);
-    console.log(
-      "[JobCommentController] Comment created successfully:",
-      comment.id
-    );
+    logger.info("[JobCommentController] Comment created", { id: comment.id });
     res.status(201).json(comment);
   } catch (error) {
-    console.error("[JobCommentController] Error creating comment:", error);
+    logger.error("[JobCommentController] Error creating comment", error);
     res
       .status(500)
       .json({ message: "Error creating comment", error: error.message });
@@ -39,13 +36,13 @@ const createComment = async (req, res) => {
 const getCommentsByJobId = async (req, res) => {
   try {
     const { jobId } = req.params;
-    console.log("[JobCommentController] Fetching comments for job:", jobId);
+    logger.debug("[JobCommentController] Fetching comments for job", { jobId });
 
     const comments = await jobCommentService.getCommentsByJobId(jobId);
-    console.log("[JobCommentController] Found comments:", comments.length);
+    logger.debug("[JobCommentController] Comments fetched", { jobId, count: comments.length });
     res.json(comments);
   } catch (error) {
-    console.error("[JobCommentController] Error fetching comments:", error);
+    logger.error("[JobCommentController] Error fetching comments", error);
     res
       .status(500)
       .json({ message: "Error fetching comments", error: error.message });
@@ -58,11 +55,10 @@ const createReply = async (req, res) => {
     const { jobId, commentId } = req.params;
     const { content } = req.body;
 
-    console.log("[JobCommentController] Attempting to create reply:", {
+    logger.debug("[JobCommentController] Creating reply", {
       userId,
       jobId,
       commentId,
-      content: content?.substring(0, 50) + "...",
     });
 
     if (!content || content.trim().length === 0) {
@@ -76,10 +72,10 @@ const createReply = async (req, res) => {
     };
 
     const reply = await jobCommentService.createReply(commentId, replyData);
-    console.log("[JobCommentController] Reply created successfully:", reply.id);
+    logger.info("[JobCommentController] Reply created", { id: reply.id });
     res.status(201).json(reply);
   } catch (error) {
-    console.error("[JobCommentController] Error creating reply:", error);
+    logger.error("[JobCommentController] Error creating reply", error);
     res
       .status(500)
       .json({ message: "Error creating reply", error: error.message });
@@ -92,10 +88,9 @@ const updateComment = async (req, res) => {
     const { commentId } = req.params;
     const { content } = req.body;
 
-    console.log("[JobCommentController] Attempting to update comment:", {
+    logger.debug("[JobCommentController] Updating comment", {
       userId,
       commentId,
-      content: content?.substring(0, 50) + "...",
     });
 
     if (!content || content.trim().length === 0) {
@@ -107,13 +102,10 @@ const updateComment = async (req, res) => {
       content.trim(),
       userId
     );
-    console.log(
-      "[JobCommentController] Comment updated successfully:",
-      comment.id
-    );
+    logger.info("[JobCommentController] Comment updated", { id: comment.id });
     res.json(comment);
   } catch (error) {
-    console.error("[JobCommentController] Error updating comment:", error);
+    logger.error("[JobCommentController] Error updating comment", error);
     if (error.message === "Unauthorized to update this comment") {
       return res.status(403).json({ message: error.message });
     }
@@ -128,19 +120,16 @@ const deleteComment = async (req, res) => {
     const { userId } = req.user;
     const { commentId } = req.params;
 
-    console.log("[JobCommentController] Attempting to delete comment:", {
+    logger.debug("[JobCommentController] Deleting comment", {
       userId,
       commentId,
     });
 
     await jobCommentService.deleteComment(commentId, userId);
-    console.log(
-      "[JobCommentController] Comment deleted successfully:",
-      commentId
-    );
+    logger.info("[JobCommentController] Comment deleted", { id: commentId });
     res.json({ message: "Comment deleted successfully" });
   } catch (error) {
-    console.error("[JobCommentController] Error deleting comment:", error);
+    logger.error("[JobCommentController] Error deleting comment", error);
     if (error.message === "Unauthorized to delete this comment") {
       return res.status(403).json({ message: error.message });
     }
@@ -153,7 +142,7 @@ const deleteComment = async (req, res) => {
 const getCommentById = async (req, res) => {
   try {
     const { commentId } = req.params;
-    console.log("[JobCommentController] Fetching comment:", commentId);
+    logger.debug("[JobCommentController] Fetching comment", { commentId });
 
     const comment = await jobCommentService.getCommentById(commentId);
     if (!comment) {
@@ -162,7 +151,7 @@ const getCommentById = async (req, res) => {
 
     res.json(comment);
   } catch (error) {
-    console.error("[JobCommentController] Error fetching comment:", error);
+    logger.error("[JobCommentController] Error fetching comment", error);
     res
       .status(500)
       .json({ message: "Error fetching comment", error: error.message });

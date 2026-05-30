@@ -1,21 +1,19 @@
 const confessionService = require("../services/confessionService");
+const logger = require("../utils/logger");
 
 const createConfession = async (req, res) => {
   try {
-    console.log(
-      "[ConfessionController] Attempting to create confession:",
-      req.body
-    );
+    logger.debug("[ConfessionController] Creating confession", {
+      hasPoll: Boolean(req.body?.poll),
+      tagCount: Array.isArray(req.body?.tags) ? req.body.tags.length : 0,
+    });
     const confessionData = req.body;
 
     const confession = await confessionService.createConfession(confessionData);
-    console.log(
-      "[ConfessionController] Confession created successfully:",
-      confession
-    );
+    logger.info("[ConfessionController] Confession created", { id: confession?.id });
     res.status(201).json(confession);
   } catch (error) {
-    console.error("[ConfessionController] Error creating confession:", error);
+    logger.error("[ConfessionController] Error creating confession", error);
     res.status(500).json({
       message: "Error creating confession",
       error: error.message,
@@ -26,7 +24,7 @@ const createConfession = async (req, res) => {
 const getAllConfessions = async (req, res) => {
   try {
     const { page, limit, tag, sortBy = "recent" } = req.query;
-    console.log("[ConfessionController] Fetching confessions with params:", {
+    logger.debug("[ConfessionController] Fetching confessions", {
       page,
       limit,
       tag,
@@ -46,7 +44,7 @@ const getAllConfessions = async (req, res) => {
 
     res.json(confessions);
   } catch (error) {
-    console.error("[ConfessionController] Error fetching confessions:", error);
+    logger.error("[ConfessionController] Error fetching confessions", error);
     res.status(500).json({
       message: "Error fetching confessions",
       error: error.message,
@@ -57,7 +55,7 @@ const getAllConfessions = async (req, res) => {
 const getConfessionById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("[ConfessionController] Fetching confession with id:", id);
+    logger.debug("[ConfessionController] Fetching confession", { id });
 
     const confession = await confessionService.getConfessionById(id);
 
@@ -67,7 +65,7 @@ const getConfessionById = async (req, res) => {
 
     res.json(confession);
   } catch (error) {
-    console.error("[ConfessionController] Error fetching confession:", error);
+    logger.error("[ConfessionController] Error fetching confession", error);
     res.status(500).json({
       message: "Error fetching confession",
       error: error.message,
@@ -77,7 +75,7 @@ const getConfessionById = async (req, res) => {
 
 const getRandomConfession = async (req, res) => {
   try {
-    console.log("[ConfessionController] Fetching random confession");
+    logger.debug("[ConfessionController] Fetching random confession");
     const confession = await confessionService.getRandomConfession();
 
     if (!confession) {
@@ -86,10 +84,7 @@ const getRandomConfession = async (req, res) => {
 
     res.json(confession);
   } catch (error) {
-    console.error(
-      "[ConfessionController] Error fetching random confession:",
-      error
-    );
+    logger.error("[ConfessionController] Error fetching random confession", error);
     res.status(500).json({
       message: "Error fetching random confession",
       error: error.message,
@@ -103,7 +98,7 @@ const addReaction = async (req, res) => {
     const { reactionType } = req.body;
     const { userId } = req.user;
 
-    console.log("[ConfessionController] Adding reaction:", {
+    logger.debug("[ConfessionController] Adding reaction", {
       id,
       reactionType,
       userId,
@@ -115,7 +110,7 @@ const addReaction = async (req, res) => {
     const updatedConfession = await confessionService.getConfessionById(id);
     res.json(updatedConfession);
   } catch (error) {
-    console.error("[ConfessionController] Error adding reaction:", error);
+    logger.error("[ConfessionController] Error adding reaction", error);
 
     if (error.message.includes("already reacted")) {
       return res.status(409).json({
@@ -136,7 +131,7 @@ const removeReaction = async (req, res) => {
     const { id } = req.params;
     const { userId } = req.user;
 
-    console.log("[ConfessionController] Removing reaction:", {
+    logger.debug("[ConfessionController] Removing reaction", {
       id,
       userId,
     });
@@ -147,7 +142,7 @@ const removeReaction = async (req, res) => {
     const updatedConfession = await confessionService.getConfessionById(id);
     res.json(updatedConfession);
   } catch (error) {
-    console.error("[ConfessionController] Error removing reaction:", error);
+    logger.error("[ConfessionController] Error removing reaction", error);
     res.status(500).json({
       message: "Error removing reaction",
       error: error.message,
@@ -161,7 +156,7 @@ const voteOnPoll = async (req, res) => {
     const { optionId } = req.body;
     const { userId } = req.user;
 
-    console.log("[ConfessionController] Voting on poll:", {
+    logger.debug("[ConfessionController] Voting on poll", {
       id,
       pollId,
       optionId,
@@ -174,7 +169,7 @@ const voteOnPoll = async (req, res) => {
     const updatedConfession = await confessionService.getConfessionById(id);
     res.json(updatedConfession);
   } catch (error) {
-    console.error("[ConfessionController] Error voting on poll:", error);
+    logger.error("[ConfessionController] Error voting on poll", error);
 
     if (error.message.includes("already voted")) {
       return res.status(409).json({
@@ -195,7 +190,7 @@ const getUserReactions = async (req, res) => {
     const { id } = req.params;
     const { userId } = req.user;
 
-    console.log("[ConfessionController] Getting user reactions:", {
+    logger.debug("[ConfessionController] Getting user reactions", {
       id,
       userId,
     });
@@ -205,10 +200,7 @@ const getUserReactions = async (req, res) => {
 
     res.json({ reactionTypes });
   } catch (error) {
-    console.error(
-      "[ConfessionController] Error getting user reactions:",
-      error
-    );
+    logger.error("[ConfessionController] Error getting user reactions", error);
     res.status(500).json({
       message: "Error getting user reactions",
       error: error.message,
@@ -221,7 +213,7 @@ const checkUserVoted = async (req, res) => {
     const { pollId } = req.params;
     const { userId } = req.user;
 
-    console.log("[ConfessionController] Checking if user voted:", {
+    logger.debug("[ConfessionController] Checking if user voted", {
       pollId,
       userId,
     });
@@ -230,7 +222,7 @@ const checkUserVoted = async (req, res) => {
 
     res.json({ hasVoted });
   } catch (error) {
-    console.error("[ConfessionController] Error checking user vote:", error);
+    logger.error("[ConfessionController] Error checking user vote", error);
     res.status(500).json({
       message: "Error checking user vote",
       error: error.message,
@@ -240,13 +232,13 @@ const checkUserVoted = async (req, res) => {
 
 const getAnalytics = async (req, res) => {
   try {
-    console.log("[ConfessionController] Fetching confession analytics");
+    logger.debug("[ConfessionController] Fetching confession analytics");
 
     const analytics = await confessionService.getConfessionAnalytics();
 
     res.json(analytics);
   } catch (error) {
-    console.error("[ConfessionController] Error fetching analytics:", error);
+    logger.error("[ConfessionController] Error fetching analytics", error);
     res.status(500).json({
       message: "Error fetching analytics",
       error: error.message,

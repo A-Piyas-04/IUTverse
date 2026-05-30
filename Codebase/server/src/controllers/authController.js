@@ -1,5 +1,6 @@
 const { validateIUTEmail } = require('../utils/authUtils');
 const response = require("../utils/responses");
+const logger = require("../utils/logger");
 const { requiredText } = require("../utils/validation");
 const {
   supabase,
@@ -85,7 +86,7 @@ const signup = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Signup error:', error);
+    logger.error('Signup error:', error);
     res.status(error.statusCode || 500).json({ message: error.message || 'Internal server error. Please try again.' });
   }
 };
@@ -124,7 +125,7 @@ const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({ message: 'Internal server error. Please try again.' });
   }
 };
@@ -153,7 +154,7 @@ const requestPasswordReset = async (req, res) => {
       "If that IUT email exists, a password reset email has been sent."
     );
   } catch (error) {
-    console.error("Password reset request error:", error);
+    logger.error("Password reset request error:", error);
     return response.serverError(res, error.message || "Failed to request password reset");
   }
 };
@@ -176,7 +177,7 @@ const changePassword = async (req, res) => {
 
     return response.success(res, null, "Password updated successfully");
   } catch (error) {
-    console.error("Password change error:", error);
+    logger.error("Password change error:", error);
     return response.serverError(res, "Failed to update password", error.message);
   }
 };
@@ -198,7 +199,7 @@ const getAllUsers = async (req, res) => {
 
     res.json(users);
   } catch (error) {
-    console.error('Get users error:', error);
+    logger.error('Get users error:', error);
     res.status(500).json({ message: 'Internal server error. Please try again.' });
   }
 };
@@ -215,7 +216,7 @@ const validateToken = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Token validation error:', error);
+    logger.error('Token validation error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
