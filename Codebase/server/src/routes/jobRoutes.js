@@ -17,6 +17,7 @@ router.get("/jobs/comments/:commentId", jobCommentController.getCommentById);
 // Public - Job Applications (view count and list)
 router.get(
   "/jobs/:jobId/applications",
+  authenticateToken,
   jobApplicationController.getJobApplications
 );
 router.get(

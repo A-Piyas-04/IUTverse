@@ -1,5 +1,7 @@
 const jobApplicationService = require("../services/jobApplicationService");
 const logger = require("../utils/logger");
+const response = require("../utils/responses");
+const { pagination, positiveInt } = require("../utils/validation");
 
 const applyToJob = async (req, res) => {
   try {
@@ -57,22 +59,29 @@ const removeApplication = async (req, res) => {
 const getJobApplications = async (req, res) => {
   try {
     const { jobId } = req.params;
+    const id = positiveInt(jobId, "Job ID");
+    if (id.error) return response.badRequest(res, id.error);
+    const pageInfo = pagination(req.query.page, req.query.limit);
 
     logger.debug("[JobApplicationController] Fetching applications for job", { jobId });
 
-    const applications = await jobApplicationService.getJobApplications(jobId);
+    const result = await jobApplicationService.getJobApplications(
+      id.value,
+      req.user.userId,
+      req.user.role,
+      pageInfo
+    );
 
     res.json({
       success: true,
-      data: applications,
+      data: result.applications,
+      pagination: result.pagination,
     });
   } catch (error) {
     logger.error("[JobApplicationController] Error fetching applications", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching applications",
-      error: error.message,
-    });
+    if (error.message.includes("Unauthorized")) return response.forbidden(res, error.message);
+    if (error.message.includes("not found")) return response.notFound(res, error.message);
+    return response.serverError(res, "Error fetching applications", error.message);
   }
 };
 

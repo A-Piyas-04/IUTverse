@@ -3,6 +3,7 @@ const {
   mapProfile,
   profileSelect,
 } = require("../utils/supabaseData");
+const { sanitizePlainText } = require("../utils/validation");
 
 const mapComment = (comment) => ({
   id: comment.id,
@@ -22,7 +23,7 @@ class JobCommentService {
     const { data: comment, error } = await supabase
       .from("job_comments")
       .insert({
-        content: data.content,
+        content: sanitizePlainText(data.content, { max: 2000 }),
         job_id: Number(data.jobId),
         author_id: data.authorId,
         parent_comment_id: data.parentCommentId || null,
@@ -34,14 +35,17 @@ class JobCommentService {
     return mapComment(comment);
   }
 
-  async getCommentsByJobId(jobId) {
+  async getCommentsByJobId(jobId, { page = 1, limit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
-    const { data: comments, error } = await supabase
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    const { data: comments, count, error } = await supabase
       .from("job_comments")
-      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`, { count: "exact" })
       .eq("job_id", Number(jobId))
       .is("parent_comment_id", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
 
@@ -52,17 +56,26 @@ class JobCommentService {
         .from("job_comments")
         .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
         .in("parent_comment_id", ids)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(ids.length * 20);
       if (result.error) throw result.error;
       replies = result.data;
     }
 
-    return comments.map((comment) =>
-      mapComment({
-        ...comment,
-        replies: replies.filter((reply) => reply.parent_comment_id === comment.id),
-      })
-    );
+    return {
+      comments: comments.map((comment) =>
+        mapComment({
+          ...comment,
+          replies: replies.filter((reply) => reply.parent_comment_id === comment.id),
+        })
+      ),
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    };
   }
 
   async createReply(commentId, data) {
@@ -81,7 +94,7 @@ class JobCommentService {
 
     const { data, error } = await supabase
       .from("job_comments")
-      .update({ content })
+      .update({ content: sanitizePlainText(content, { max: 2000 }) })
       .eq("id", Number(commentId))
       .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
       .single();
@@ -135,7 +148,8 @@ class JobCommentService {
       .from("job_comments")
       .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
       .eq("parent_comment_id", Number(commentId))
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(50);
 
     if (repliesError) throw repliesError;
     return mapComment({ ...comment, replies });

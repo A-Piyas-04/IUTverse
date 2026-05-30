@@ -1,9 +1,10 @@
 const multer = require("multer");
+const { isAllowedPdfMime } = require("../utils/fileValidation");
 
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/pdf") {
+  if (isAllowedPdfMime(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error("Only PDF files are allowed!"), false);

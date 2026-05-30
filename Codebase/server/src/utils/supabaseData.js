@@ -11,9 +11,9 @@ const ensureSupabaseAdmin = () => {
   return supabaseAdmin;
 };
 
-const pageRange = (page = 1, limit = 20) => {
+const pageRange = (page = 1, limit = 20, maxLimit = 100) => {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
-  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), maxLimit);
   const from = (safePage - 1) * safeLimit;
   const to = from + safeLimit - 1;
   return { page: safePage, limit: safeLimit, from, to };
@@ -27,15 +27,8 @@ const mapProfile = (profile) => {
   return {
     id: profile.id,
     name: profile.display_name,
-    email: null,
-    department: profile.department?.name || null,
-    departmentId: profile.department?.id || profile.department_id || null,
-    batch: profile.batch,
-    studentId: profile.student_id,
-    role: profile.role,
     profile: {
       profilePicture: profile.profile_image_path,
-      coverPicture: profile.cover_image_path,
     },
   };
 };

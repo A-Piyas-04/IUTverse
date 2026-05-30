@@ -1,7 +1,7 @@
 const chatService = require("../services/chatService");
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
-const { positiveInt, requiredText, uuid } = require("../utils/validation");
+const { pagination, positiveInt, requiredText, uuid } = require("../utils/validation");
 
 // Start or get conversation with another user
 const startConversation = async (req, res) => {
@@ -100,12 +100,14 @@ const getMessages = async (req, res) => {
 const getConversations = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const pageInfo = pagination(req.query.page, req.query.limit, 50);
 
-    const conversations = await chatService.getUserConversations(userId);
+    const result = await chatService.getUserConversations(userId, pageInfo);
 
     res.status(200).json({
       message: "Conversations retrieved successfully",
-      data: conversations,
+      data: result.conversations,
+      pagination: result.pagination,
     });
   } catch (error) {
     logger.error("Error getting conversations:", error);

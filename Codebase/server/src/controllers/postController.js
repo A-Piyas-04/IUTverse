@@ -110,7 +110,8 @@ const getCategoryPostIds = async (category) => {
   const { data: links, error } = await supabase
     .from("post_category_links")
     .select("post_id, category:post_categories!inner(name)")
-    .eq("category.name", category);
+    .eq("category.name", category)
+    .limit(1000);
 
   if (error) throw error;
   return links.map((link) => link.post_id);

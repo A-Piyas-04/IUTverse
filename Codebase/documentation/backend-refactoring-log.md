@@ -157,6 +157,33 @@ For every future refactor:
 
 Add new entries below this line.
 
+### 2026-05-30 - Backend Audit Hardening And Regression Suite
+
+Goal: implement the backend audit/fix plan for the original 62 reported backend issues plus the newly found access-control, data-exposure, pagination, upload, dependency, and error-response gaps.
+
+Changed:
+
+- Added admin/role authorization middleware and made user enumeration plus department creation admin-only.
+- Restricted job applicant details to the job owner or moderator/admin while keeping application count public.
+- Tightened public profile mapping so shared public responses no longer include email, student ID, role, department, or batch.
+- Added bounded pagination to user enumeration, lost-and-found, academic resources, job applicant lists, job comments, chat conversations, category post lookup, Cat Q&A answers, cat post comment/like hydration, and confession analytics.
+- Added file signature validation for image/PDF uploads, rejected MIME/signature mismatches, removed original filename usage from storage paths, and derived stored extensions/content types from verified bytes.
+- Improved global error handling for oversized JSON and malformed JSON with stable `413`/`400` response envelopes, and stripped internal `5xx` details in production responses.
+- Updated vulnerable dependencies with `npm audit fix` and upgraded `nodemailer` to `^8.0.10`.
+- Added `test/unit/backend-audit.test.js` with regression tests for `BUG-001` through `BUG-062` plus new hardening checks.
+
+Verification:
+
+- `npm.cmd test` passed with 75 backend tests.
+- Full `node --check` pass across `Codebase/server/src/**/*.js` and `server.js` passed.
+- `npm.cmd run security:scan-env` passed.
+- `npm.cmd audit --omit=dev` passed with 0 vulnerabilities.
+
+Known follow-up:
+
+- RLS behavior and Supabase Storage bucket policies should still be validated against a live Supabase project with anon/authenticated clients.
+- Frontend components may need small response-shape adjustments where newly paginated backend endpoints now return `data` plus `pagination`.
+
 ### 2026-05-30 - Near-Finished Backend Refactor Cleanup
 
 Goal: finish the small cleanup work left from the solved or mostly solved Supabase backend refactor items, without revisiting fully solved migration/security work.

@@ -2,7 +2,7 @@ const academicResourceService = require("../services/academicResourceService");
 const storageService = require("../services/storageService");
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
-const { enumValueExact, optionalText, positiveInt, requiredText } = require("../utils/validation");
+const { enumValueExact, optionalText, pagination, positiveInt, requiredText } = require("../utils/validation");
 
 const validTypes = ["QUESTION", "NOTE", "BOOK", "CLASS_LECTURE", "OTHER"];
 
@@ -75,11 +75,13 @@ const getAllAcademicResources = async (req, res) => {
     }
     if (courseCode) filters.courseCode = optionalText(courseCode, { max: 60 });
 
-    const resources = await academicResourceService.getAllAcademicResources(filters);
+    const pageInfo = pagination(req.query.page, req.query.limit);
+    const result = await academicResourceService.getAllAcademicResources(filters, pageInfo);
     res.json({
       success: true,
       message: "Academic resources fetched successfully",
-      data: resources,
+      data: result.resources,
+      pagination: result.pagination,
     });
   } catch (error) {
     logger.error("[AcademicResourceController] Error fetching resources:", error);

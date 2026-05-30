@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const academicResourceController = require("../controllers/academicResourceController");
 const { authenticateToken } = require("../middleware/auth");
+const { requireAdmin } = require("../middleware/authorization");
 const uploadPdf = require("../middleware/uploadPdf");
 const { pdfUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
@@ -13,6 +14,7 @@ router.get("/departments", academicResourceController.getAllDepartments);
 router.post(
   "/departments",
   authenticateToken,
+  requireAdmin,
   createLimiter,
   academicResourceController.createDepartment
 );

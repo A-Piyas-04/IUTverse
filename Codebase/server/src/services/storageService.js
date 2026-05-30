@@ -1,8 +1,8 @@
-const path = require("path");
 const {
   supabaseAdmin,
   isSupabaseAdminConfigured,
 } = require("../config/supabase");
+const { validateUploadedFile } = require("../utils/fileValidation");
 
 const ensureStorage = () => {
   if (!isSupabaseAdminConfigured) {
@@ -10,32 +10,27 @@ const ensureStorage = () => {
   }
 };
 
-const safeExtension = (fileName = "", mimeType = "") => {
-  const ext = path.extname(fileName).toLowerCase();
-  if (ext && /^[a-z0-9.]+$/.test(ext)) return ext;
+const safeSegment = (value, fallback = "upload") =>
+  String(value || fallback)
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120) || fallback;
 
-  if (mimeType === "image/jpeg") return ".jpg";
-  if (mimeType === "image/png") return ".png";
-  if (mimeType === "image/webp") return ".webp";
-  if (mimeType === "image/gif") return ".gif";
-  if (mimeType === "application/pdf") return ".pdf";
-  return "";
-};
-
-const buildObjectPath = (userId, file, prefix = "upload") => {
-  const extension = safeExtension(file.originalname, file.mimetype);
+const buildObjectPath = (userId, prefix = "upload", extension = "") => {
   const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-  return `${userId}/${prefix}-${unique}${extension}`;
+  return `${safeSegment(userId, "anonymous")}/${safeSegment(prefix)}-${unique}${extension}`;
 };
 
 const uploadObject = async ({ bucket, userId, file, prefix }) => {
   ensureStorage();
 
-  const objectPath = buildObjectPath(userId, file, prefix);
+  const fileType = validateUploadedFile(file, { bucket });
+  const objectPath = buildObjectPath(userId, prefix, fileType.extension);
   const { error } = await supabaseAdmin.storage
     .from(bucket)
     .upload(objectPath, file.buffer, {
-      contentType: file.mimetype,
+      contentType: fileType.mimeType,
       upsert: false,
     });
 
@@ -44,7 +39,7 @@ const uploadObject = async ({ bucket, userId, file, prefix }) => {
   return {
     bucket,
     path: objectPath,
-    mimeType: file.mimetype,
+    mimeType: fileType.mimeType,
     size: file.size,
   };
 };
@@ -66,6 +61,7 @@ const publicUrl = (bucket, objectPath) => {
 };
 
 module.exports = {
+  buildObjectPath,
   uploadObject,
   removeObject,
   publicUrl,

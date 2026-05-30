@@ -44,6 +44,22 @@ const toLegacyUser = (profile, authUser = null) => {
   };
 };
 
+const toPublicUser = (profile) => {
+  if (!profile) return null;
+
+  return {
+    id: profile.id,
+    name: profile.display_name,
+    createdAt: profile.created_at,
+    profile: {
+      bio: profile.bio,
+      profilePicture: profile.profile_image_path,
+      coverPicture: profile.cover_image_path,
+      interests: profile.interests || [],
+    },
+  };
+};
+
 const profileSelect = `
   id,
   legacy_user_id,
@@ -231,6 +247,11 @@ class UserService {
   async getUserById(userId) {
     const profile = await this.getProfile(userId);
     return toLegacyUser(profile);
+  }
+
+  async getPublicUserById(userId) {
+    const profile = await this.getProfile(userId);
+    return toPublicUser(profile);
   }
 
   async searchUsers(query, excludeUserId, limit = 20) {

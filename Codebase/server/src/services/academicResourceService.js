@@ -55,21 +55,32 @@ const createAcademicResource = async (resourceData) => {
   return mapResource(data);
 };
 
-const getAllAcademicResources = async (filters = {}) => {
+const getAllAcademicResources = async (filters = {}, { page = 1, limit = 20 } = {}) => {
   const supabase = ensureSupabaseAdmin();
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
   let query = supabase
     .from("academic_resources")
-    .select(resourceSelect)
-    .neq("status", "deleted")
-    .order("created_at", { ascending: false });
+    .select(resourceSelect, { count: "exact" })
+    .neq("status", "deleted");
 
   if (filters.departmentId) query = query.eq("department_id", Number(filters.departmentId));
   if (filters.type) query = query.eq("type", filters.type);
   if (filters.courseCode) query = query.ilike("course_code", `%${filters.courseCode}%`);
 
-  const { data, error } = await query;
+  const { data, count, error } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
   if (error) throw error;
-  return data.map(mapResource);
+  return {
+    resources: data.map(mapResource),
+    pagination: {
+      page,
+      limit,
+      total: count || 0,
+      totalPages: Math.ceil((count || 0) / limit),
+    },
+  };
 };
 
 const getAcademicResourceById = async (id) => {

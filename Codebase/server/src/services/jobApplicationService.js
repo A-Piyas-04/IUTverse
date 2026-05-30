@@ -3,6 +3,7 @@ const {
   mapProfile,
   profileSelect,
 } = require("../utils/supabaseData");
+const { canModerate } = require("../middleware/authorization");
 
 const mapApplication = (application) => ({
   id: application.id,
@@ -49,16 +50,39 @@ class JobApplicationService {
     return { message: "Application removed successfully" };
   }
 
-  async getJobApplications(jobId) {
+  async getJobApplications(jobId, requesterId, requesterRole = "user", { page = 1, limit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
-    const { data, error } = await supabase
+    const { data: job, error: jobError } = await supabase
+      .from("jobs")
+      .select("id, posted_by_id")
+      .eq("id", Number(jobId))
+      .maybeSingle();
+
+    if (jobError) throw jobError;
+    if (!job) throw new Error("Job not found");
+    if (job.posted_by_id !== requesterId && !canModerate({ role: requesterRole })) {
+      throw new Error("Unauthorized to view job applications");
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    const { data, count, error } = await supabase
       .from("job_applications")
-      .select(`*, applicant:profiles!job_applications_applicant_id_fkey(${profileSelect})`)
+      .select(`*, applicant:profiles!job_applications_applicant_id_fkey(${profileSelect})`, { count: "exact" })
       .eq("job_id", Number(jobId))
-      .order("applied_at", { ascending: false });
+      .order("applied_at", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
-    return data.map(mapApplication);
+    return {
+      applications: data.map(mapApplication),
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    };
   }
 
   async getUserApplicationStatus(jobId, userId) {

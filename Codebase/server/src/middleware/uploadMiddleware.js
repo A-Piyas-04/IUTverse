@@ -1,11 +1,12 @@
 const multer = require("multer");
+const { isAllowedImageMime } = require("../utils/fileValidation");
 
 // Configure storage
 const storage = multer.memoryStorage();
 
 // File filter to only allow image uploads
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
+  if (isAllowedImageMime(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error("Only image files are allowed!"), false);
