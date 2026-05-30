@@ -135,8 +135,11 @@ const respondWithPosts = async (res, query, page, limit, emptyTotal = 0) => {
 
 exports.createPost = async (req, res) => {
   try {
-    const contentResult = requiredText(req.body.content, "Post content", { max: 5000 });
-    if (contentResult.error) return badRequest(res, contentResult.error);
+    const hasImage = Boolean(req.file);
+    const content = optionalText(req.body.content, { max: 5000 });
+    if (!content && !hasImage) {
+      return badRequest(res, "Post content or image is required");
+    }
 
     const category = optionalText(req.body.category, { max: 80 });
     const isAnonymous = req.body.isAnonymous;
@@ -153,7 +156,7 @@ exports.createPost = async (req, res) => {
       .from("posts")
       .insert({
         author_id: userId,
-        content: contentResult.value,
+        content: content || "",
         is_anonymous: isAnonymous === "true" || isAnonymous === true,
         image_path: image.path,
         image_bucket: image.bucket,
