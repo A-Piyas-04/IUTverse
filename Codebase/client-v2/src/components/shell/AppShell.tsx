@@ -12,9 +12,9 @@ import styles from "./Shell.module.css";
 
 const groups = [
   { label: "Main", items: [{ to: "/", text: "Home", icon: Home, end: true }, { to: "/community", text: "Community", icon: UsersRound }] },
-  { label: "Campus", items: [{ to: "/lost-and-found", text: "LostAndFound", icon: MapPin }, { to: "/events", text: "EventHub", icon: CalendarDays }, { to: "/cat-corner", text: "CatCorner", icon: Cat }, { to: "/confessions", text: "Confessions", icon: Feather }] },
   { label: "Learn & Work", items: [{ to: "/academic", text: "Academics", icon: BookOpen }, { to: "/jobs", text: "Jobs", icon: BriefcaseBusiness }] },
   { label: "Account", items: [{ to: "/messages", text: "Messages", icon: MessageSquare }, { to: "/profile", text: "Profile", icon: CircleUserRound }, { to: "/about", text: "About Us", icon: Info }] },
+  { label: "Campus", items: [{ to: "/lost-and-found", text: "LostAndFound", icon: MapPin }, { to: "/events", text: "EventHub", icon: CalendarDays }, { to: "/cat-corner", text: "CatCorner", icon: Cat }, { to: "/confessions", text: "Confessions", icon: Feather }] },
 ];
 
 const navClass = ({ isActive }: { isActive: boolean }) => `${styles.navLink} ${isActive ? styles.navActive : ""}`;
@@ -36,8 +36,8 @@ export function AppShell() {
       <NavLink className={styles.brand} to="/"><span className={styles.brandMark}>I</span><span>IUTverse</span></NavLink>
       <label className={styles.search}><Search size={18} /><span className="sr-only">Search IUTverse</span><input type="search" placeholder="Search campus content" onKeyDown={event => { if (event.key === "Enter") navigate(`/community?q=${encodeURIComponent(event.currentTarget.value)}`); }} /></label>
       <div className={styles.topActions}>
+        <Button className={styles.topTheme} variant="ghost" iconOnly aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`} aria-pressed={theme === "dark"} onClick={toggleTheme}>{theme === "light" ? <Moon /> : <Sun />}</Button>
         <Button variant="primary" onClick={() => navigate("/community?compose=1")}><Plus size={18} />Post</Button>
-        <Button className={styles.mobileTheme} variant="ghost" iconOnly aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`} aria-pressed={theme === "dark"} onClick={toggleTheme}>{theme === "light" ? <Moon /> : <Sun />}</Button>
         <Button className={styles.menuButton} variant="secondary" iconOnly aria-label="Open navigation" onClick={() => setOpen(true)}><Menu /></Button>
       </div>
     </header>
@@ -51,9 +51,6 @@ export function AppShell() {
         </div>)}
           {isAdmin && <NavLink to="/admin/moderation" className={navClass}><ShieldCheck size={21} />Moderation</NavLink>}
         </nav>
-        <button type="button" className={styles.themeToggle} onClick={toggleTheme} aria-pressed={theme === "dark"} aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
-          {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}<span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
-        </button>
         <div className={styles.sidebarProfile}><Avatar name={user?.displayName} size={40} /><div><strong>{user?.displayName || "IUT member"}</strong><span>{user?.email}</span></div></div>
         <Button variant="ghost" onClick={() => void signOut()}><LogOut size={17} />Logout</Button>
       </aside>
