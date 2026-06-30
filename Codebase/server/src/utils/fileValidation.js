@@ -45,6 +45,7 @@ const signatures = [
 
 const allowedForBucket = (bucket) => {
   if (bucket === "academic-resources") return pdfMimeTypes;
+  if (bucket === "chat-attachments") return new Set([...imageMimeTypes, ...pdfMimeTypes]);
   return imageMimeTypes;
 };
 

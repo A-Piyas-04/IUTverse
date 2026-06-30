@@ -1,0 +1,32 @@
+.button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: var(--pill); padding: 0 17px; font-weight: 700; cursor: pointer; transition: 180ms var(--ease); }
+.button:hover:not(:disabled) { transform: translateY(-1px); }
+.button:disabled { opacity: .48; cursor: not-allowed; }
+.primary { background: var(--accent); color: var(--on-accent); }
+.primary:hover:not(:disabled) { background: var(--accent-hover); }
+.secondary { border-color: var(--border); background: var(--surface-2); color: var(--fg); }
+.secondary:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface-3); }
+.danger { background: transparent; border-color: color-mix(in srgb, var(--danger), transparent 35%); color: var(--danger); }
+.ghost { background: transparent; color: var(--muted-2); }
+.icon { width: 44px; padding: 0; border-color: var(--border); background: transparent; }
+.field { display: grid; gap: 7px; color: var(--muted-2); font-size: 14px; font-weight: 600; }
+.input, .textarea, .select { width: 100%; min-height: 46px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: var(--fg); padding: 11px 13px; outline: none; transition: 180ms var(--ease); }
+.textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+.input:focus, .textarea:focus, .select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 78%); }
+.error { color: var(--danger); font-size: 13px; font-weight: 500; }
+.card { border: 1px solid var(--border); border-radius: var(--radius); background: color-mix(in srgb, var(--surface), transparent 2%); overflow: hidden; }
+.cardPad { padding: 18px; }
+.chip { min-height: 36px; border: 1px solid var(--border); border-radius: var(--pill); background: transparent; color: var(--muted-2); padding: 7px 13px; cursor: pointer; font-weight: 650; }
+.chip:hover, .chipActive { color: var(--fg); border-color: var(--accent); background: var(--accent-soft); }
+.avatar { flex: 0 0 auto; display: inline-grid; place-items: center; overflow: hidden; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--campus)); color: var(--on-accent); font-weight: 800; }
+.empty { display: grid; place-items: center; text-align: center; min-height: 220px; padding: 36px; color: var(--muted-2); }
+.empty svg { color: var(--muted); margin-bottom: 14px; }
+.skeleton { border-radius: 10px; background: linear-gradient(100deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 300% 100%; animation: shimmer 1.5s infinite; }
+.toastRegion { position: fixed; z-index: 100; right: 18px; bottom: 18px; display: grid; gap: 8px; width: min(360px, calc(100vw - 36px)); }
+.toast { border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface-2); box-shadow: var(--shadow); padding: 13px 15px; }
+.dialogBackdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: var(--backdrop); backdrop-filter: blur(8px); }
+.dialog { width: min(620px, 100%); max-height: min(800px, calc(100vh - 40px)); overflow: auto; border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+.dialogHeader { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); background: var(--dialog-chrome); backdrop-filter: blur(12px); }
+.dialogHeader h2 { margin: 0; font-size: 20px; }
+.dialogBody { padding: 18px; }
+.dialogActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+@keyframes shimmer { to { background-position: -300% 0; } }

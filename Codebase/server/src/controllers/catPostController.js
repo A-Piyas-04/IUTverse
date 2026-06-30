@@ -7,13 +7,13 @@ const createPost = async (req, res) => {
   try {
     // Get userId from authenticated user, or null for anonymous posts
     const userId = req.user ? req.user.id : null;
-    const { caption } = req.body;
+    const { caption, category, location } = req.body;
     const image = req.file;
 
     const captionResult = requiredText(caption, "Caption", { max: 1000 });
     if (captionResult.error) return response.badRequest(res, captionResult.error);
     
-    const post = await catPostService.createPost(userId, captionResult.value, image);
+    const post = await catPostService.createPost(userId, captionResult.value, image, { category, location });
     res.status(201).json({ success: true, data: post });
   } catch (error) {
     logger.error('Create post error:', error);
@@ -27,7 +27,7 @@ const getAllPosts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const safePage = pagination(page, limit, 100);
     
-    const result = await catPostService.getAllPosts(safePage.page, safePage.limit);
+    const result = await catPostService.getAllPosts(safePage.page, safePage.limit, req.query.category);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     logger.error('Get posts error:', error);

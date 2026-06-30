@@ -16,6 +16,8 @@ const mapMessage = (message) => ({
   sentAt: message.sent_at,
   isRead: Boolean(message.read_at),
   readAt: message.read_at,
+  attachmentUrl: message.attachment_path ? `/api/chat/attachments/${message.id}` : null,
+  attachmentName: message.attachment_name,
   sender: mapProfile(message.sender),
 });
 
@@ -43,6 +45,7 @@ const mapConversation = (conversation, currentUserId = null) => {
     participants,
     otherUser: otherParticipant?.user || null,
     lastMessage,
+    unreadCount: conversation.unreadCount || 0,
   };
 };
 
@@ -81,7 +84,7 @@ class ChatService {
     return this.getConversationByDirectKey(key);
   }
 
-  async sendMessage(conversationId, senderId, _receiverId, content) {
+  async sendMessage(conversationId, senderId, _receiverId, content, attachment = null) {
     const supabase = ensureSupabaseAdmin();
     const canAccess = await this.isParticipant(conversationId, senderId);
     if (!canAccess) throw new Error("Conversation not found or access denied");
@@ -92,6 +95,11 @@ class ChatService {
         conversation_id: Number(conversationId),
         sender_id: senderId,
         content: sanitizePlainText(content, { max: 4000 }),
+        attachment_path: attachment?.path || null,
+        attachment_bucket: attachment?.bucket || null,
+        attachment_name: attachment?.name ? sanitizePlainText(attachment.name, { max: 240 }) : null,
+        attachment_mime_type: attachment?.mimeType || null,
+        attachment_size_bytes: attachment?.size || null,
       })
       .select(`*, sender:profiles!chat_messages_sender_id_fkey(${profileSelect})`)
       .single();
@@ -129,13 +137,11 @@ class ChatService {
 
   async getUserConversations(userId, { page = 1, limit = 20 } = {}) {
     const supabase = ensureSupabaseAdmin();
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
     const { data: memberships, count, error } = await supabase
       .from("conversation_participants")
       .select("conversation_id", { count: "exact" })
       .eq("user_id", userId)
-      .range(from, to);
+      .limit(500);
 
     if (error) throw error;
     const ids = memberships.map((membership) => membership.conversation_id);
@@ -151,11 +157,13 @@ class ChatService {
       };
     }
 
-    const conversations = await Promise.all(ids.map((id) => this.getConversationById(id, userId)));
+    const allConversations = (await Promise.all(ids.map((id) => this.getConversationById(id, userId))))
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    const from = (page - 1) * limit;
+    const conversations = allConversations.slice(from, from + limit);
     return {
-      conversations: conversations
-        .filter(Boolean)
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
+      conversations,
       pagination: {
         page,
         limit,
@@ -179,6 +187,15 @@ class ChatService {
 
     if (error) throw error;
     return { success: true };
+  }
+
+  async getAttachment(messageId, userId) {
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase.from("chat_messages").select("id,conversation_id,attachment_bucket,attachment_path,attachment_name").eq("id", Number(messageId)).maybeSingle();
+    if (error) throw error;
+    if (!data?.attachment_path) throw new Error("Attachment not found");
+    if (!(await this.isParticipant(data.conversation_id, userId))) throw new Error("Conversation not found or access denied");
+    return data;
   }
 
   async isParticipant(conversationId, userId) {
@@ -232,7 +249,18 @@ class ChatService {
       .limit(1);
 
     if (messagesError) throw messagesError;
-    return mapConversation({ ...conversation, participants, messages }, currentUserId);
+    let unreadCount = 0;
+    if (currentUserId) {
+      const { count, error: unreadError } = await supabase
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", conversation.id)
+        .neq("sender_id", currentUserId)
+        .is("read_at", null);
+      if (unreadError) throw unreadError;
+      unreadCount = count || 0;
+    }
+    return mapConversation({ ...conversation, participants, messages, unreadCount }, currentUserId);
   }
 }
 

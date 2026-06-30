@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f2f6ef" />
+    <meta name="description" content="IUTverse — a dedicated social platform for the IUT community." />
+    <title>IUTverse</title>
+    <script>
+      (() => {
+        let theme = "light";
+        try {
+          const saved = localStorage.getItem("iutverse-theme");
+          if (saved === "light" || saved === "dark") theme = saved;
+        } catch (_) { /* Light remains the accessible first-visit default. */ }
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]').content = theme === "light" ? "#f2f6ef" : "#000000";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

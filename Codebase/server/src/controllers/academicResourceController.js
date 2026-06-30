@@ -4,11 +4,11 @@ const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { enumValueExact, optionalText, pagination, positiveInt, requiredText } = require("../utils/validation");
 
-const validTypes = ["QUESTION", "NOTE", "BOOK", "CLASS_LECTURE", "OTHER"];
+const validTypes = ["QUESTION", "NOTE", "BOOK", "CLASS_LECTURE", "OTHER", "PDF", "SLIDES", "LAB_MANUAL", "QUESTION_SOLUTION", "LINK", "VIDEO", "DATASET"];
 
 const createAcademicResource = async (req, res) => {
   try {
-    const { title, type, departmentId, externalLink, courseCode } = req.body;
+    const { title, type, departmentId, externalLink, courseCode, description, tags } = req.body;
 
     const titleResult = requiredText(title, "Title", { max: 160 });
     if (titleResult.error) return response.badRequest(res, titleResult.error);
@@ -27,6 +27,8 @@ const createAcademicResource = async (req, res) => {
       departmentId: departmentResult.value,
       externalLink: optionalText(externalLink, { max: 500 }),
       courseCode: optionalText(courseCode, { max: 60 }),
+      description: optionalText(description, { max: 3000 }),
+      tags: Array.isArray(tags) ? tags : String(tags || "").split(",").filter(Boolean),
       uploadedById: req.user.userId,
     };
 
@@ -61,7 +63,7 @@ const createAcademicResource = async (req, res) => {
 
 const getAllAcademicResources = async (req, res) => {
   try {
-    const { departmentId, type, courseCode } = req.query;
+    const { departmentId, type, courseCode, search } = req.query;
     const filters = {};
     if (departmentId) {
       const id = positiveInt(departmentId, "Department ID");
@@ -74,6 +76,7 @@ const getAllAcademicResources = async (req, res) => {
       filters.type = typeResult.value;
     }
     if (courseCode) filters.courseCode = optionalText(courseCode, { max: 60 });
+    if (search) filters.search = optionalText(search, { max: 200 });
 
     const pageInfo = pagination(req.query.page, req.query.limit);
     const result = await academicResourceService.getAllAcademicResources(filters, pageInfo);
@@ -163,7 +166,7 @@ const createDepartment = async (req, res) => {
 
 const updateAcademicResource = async (req, res) => {
   try {
-    const { title, type, departmentId, externalLink, courseCode } = req.body;
+    const { title, type, departmentId, externalLink, courseCode, description, tags } = req.body;
     const updateData = {};
     if (title !== undefined) {
       const titleResult = requiredText(title, "Title", { max: 160 });
@@ -182,6 +185,8 @@ const updateAcademicResource = async (req, res) => {
     }
     if (externalLink !== undefined) updateData.externalLink = optionalText(externalLink, { max: 500 });
     if (courseCode !== undefined) updateData.courseCode = optionalText(courseCode, { max: 60 });
+    if (description !== undefined) updateData.description = optionalText(description, { max: 3000 });
+    if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : String(tags).split(",").filter(Boolean);
 
     if (req.file) {
       const uploaded = await storageService.uploadObject({

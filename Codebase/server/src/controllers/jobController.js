@@ -3,7 +3,7 @@ const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { enumValueExact, optionalText, pagination, positiveInt, requiredText, sanitizePlainTextArray } = require("../utils/validation");
 
-const validJobTypes = ["Internship", "Freelance", "PartTime", "Volunteer"];
+const validJobTypes = ["Internship", "Job", "Research", "Project", "ClubRole", "Competition", "Freelance", "PartTime", "Volunteer"];
 
 const normalizeJobType = (value) => {
   const text = String(value || "").trim();
@@ -41,6 +41,10 @@ const jobPayload = (body, { partial = false } = {}) => {
     payload.compensation = optionalText(body.compensation, { max: 200 });
   }
   if (body.deadline !== undefined) payload.deadline = body.deadline || null;
+  if (body.organization !== undefined) payload.organization = optionalText(body.organization, { max: 200 });
+  if (body.format !== undefined) payload.format = optionalText(body.format, { max: 40 });
+  if (body.department !== undefined) payload.department = optionalText(body.department, { max: 120 });
+  if (body.skills !== undefined) payload.skills = Array.isArray(body.skills) ? sanitizePlainTextArray(body.skills, { max: 100 }) : sanitizePlainTextArray(String(body.skills).split(","), { max: 100 });
   if (body.status !== undefined && partial) {
     const status = enumValueExact(body.status, ["ACTIVE", "ARCHIVED", "DELETED"], "Status");
     payload.status = status.error ? String(body.status).toLowerCase() : status.value.toLowerCase();
@@ -67,7 +71,11 @@ const createJob = async (req, res) => {
 const getAllJobs = async (req, res) => {
   try {
     const pageInfo = pagination(req.query.page, req.query.limit);
-    const { jobs, pagination: paginationInfo } = await jobService.getAllJobs(pageInfo);
+    const { jobs, pagination: paginationInfo } = await jobService.getAllJobs({
+      ...pageInfo,
+      type: optionalText(req.query.type, { max: 40 }),
+      search: optionalText(req.query.search, { max: 200 }),
+    });
     response.success(res, jobs, null, { pagination: paginationInfo });
   } catch (error) {
     logger.error("[JobController] Error fetching jobs", error);

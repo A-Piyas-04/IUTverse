@@ -31,9 +31,18 @@ const mapComment = (comment) => ({
   _count: { replies: comment.replies?.length || 0 },
 });
 
-const mapPost = (post) => ({
+const emptyReactionSummary = () => ({ like: 0, funny: 0, relatable: 0, angry: 0, insightful: 0, helpful: 0, wholesome: 0 });
+
+const mapPost = (post, currentUserId = null) => {
+  const reactions = (post.reactions || []).map(mapReaction);
+  const reactionSummary = reactions.reduce((summary, reaction) => {
+    if (Object.prototype.hasOwnProperty.call(summary, reaction.reactionType)) summary[reaction.reactionType] += 1;
+    return summary;
+  }, emptyReactionSummary());
+  return ({
   id: post.id,
   userId: post.author_id,
+  authorId: post.author_id,
   content: post.content,
   category: post.categories?.[0]?.category?.name || null,
   isAnonymous: post.is_anonymous,
@@ -42,20 +51,24 @@ const mapPost = (post) => ({
   image: post.image_path,
   imageUrl: publicUrl(post.image_bucket, post.image_path),
   likesCount: post.reaction_count,
+  reactionCount: Number(post.reaction_count) || reactions.length,
+  reactionSummary,
+  currentReaction: reactions.find((reaction) => reaction.userId === currentUserId)?.reactionType || null,
   commentCount: post.comment_count,
   user: mapProfile(post.user),
   tags: (post.categories || []).map((link) => ({ tag: link.category })),
-  reactions: (post.reactions || []).map(mapReaction),
+  reactions,
   comments: (post.comments || []).map(mapComment),
   _count: {
     comments: post.comment_count,
     reactions: post.reaction_count,
   },
-});
+  });
+};
 
 const allowedPostReactions = new Set(["like", "funny", "relatable", "angry", "insightful", "helpful", "wholesome"]);
 
-const hydratePost = async (post, commentLimit = 3) => {
+const hydratePost = async (post, commentLimit = 3, currentUserId = null) => {
   const supabase = ensureSupabaseAdmin();
   const [categories, reactions, comments] = await Promise.all([
     supabase
@@ -84,7 +97,7 @@ const hydratePost = async (post, commentLimit = 3) => {
     categories: categories.data,
     reactions: reactions.data,
     comments: comments.data,
-  });
+  }, currentUserId);
 };
 
 const attachCategory = async (postId, categoryName) => {
@@ -117,11 +130,11 @@ const getCategoryPostIds = async (category) => {
   return links.map((link) => link.post_id);
 };
 
-const respondWithPosts = async (res, query, page, limit, emptyTotal = 0) => {
+const respondWithPosts = async (res, query, page, limit, emptyTotal = 0, currentUserId = null) => {
   const { data, count, error } = await query;
   if (error) throw error;
 
-  const posts = await Promise.all((data || []).map((post) => hydratePost(post)));
+  const posts = await Promise.all((data || []).map((post) => hydratePost(post, 3, currentUserId)));
   return res.status(200).json({
     success: true,
     data: posts,
@@ -170,7 +183,7 @@ exports.createPost = async (req, res) => {
     if (error) throw error;
     await attachCategory(post.id, category);
 
-    return res.status(201).json({ success: true, data: await hydratePost(post) });
+    return res.status(201).json({ success: true, data: await hydratePost(post, 3, userId) });
   } catch (error) {
     logger.error("Error creating post:", error);
     return serverError(res, "Failed to create post", error.message);
@@ -202,7 +215,7 @@ exports.getPosts = async (req, res) => {
       .range(from, to);
     if (idsFilter) query = query.in("id", idsFilter);
 
-    return respondWithPosts(res, query, page, limit);
+    return respondWithPosts(res, query, page, limit, 0, req.user?.id || null);
   } catch (error) {
     logger.error("Error fetching posts:", error);
     return serverError(res, "Failed to fetch posts", error.message);
@@ -222,7 +235,7 @@ exports.getPost = async (req, res) => {
       .maybeSingle();
     if (error) throw error;
     if (!post) return notFound(res, "Post not found");
-    return res.status(200).json({ success: true, data: await hydratePost(post, 100) });
+    return res.status(200).json({ success: true, data: await hydratePost(post, 100, req.user?.id || null) });
   } catch (error) {
     logger.error("Error fetching post:", error);
     return serverError(res, "Failed to fetch post", error.message);
@@ -273,7 +286,7 @@ exports.updatePost = async (req, res) => {
 
     if (error) throw error;
     if (req.body.category) await attachCategory(post.id, optionalText(req.body.category, { max: 80 }));
-    return res.status(200).json({ success: true, data: await hydratePost(post) });
+    return res.status(200).json({ success: true, data: await hydratePost(post, 3, userId) });
   } catch (error) {
     logger.error("Error updating post:", error);
     return serverError(res, "Failed to update post", error.message);
@@ -418,7 +431,7 @@ exports.getUserFeed = async (req, res) => {
       .range(from, to);
     if (categoryIds) query = query.in("id", categoryIds);
 
-    return respondWithPosts(res, query, page, limit);
+    return respondWithPosts(res, query, page, limit, 0, userId);
   } catch (error) {
     logger.error("Error fetching user feed:", error);
     return serverError(res, "Failed to fetch user feed", error.message);

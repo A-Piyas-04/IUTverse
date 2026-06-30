@@ -14,7 +14,7 @@ router.post("/conversations", createLimiter, chatController.startConversation);
 router.get("/conversations", chatController.getConversations);
 
 // Send a message
-router.post("/messages", createLimiter, chatController.sendMessage);
+router.post("/messages", createLimiter, chatController.attachmentUpload.single("attachment"), chatController.sendMessage);
 
 // Get messages in a conversation
 router.get(
@@ -24,5 +24,6 @@ router.get(
 
 // Mark messages as read
 router.put("/conversations/:conversationId/read", chatController.markAsRead);
+router.get("/attachments/:messageId", chatController.getAttachment);
 
 module.exports = router;

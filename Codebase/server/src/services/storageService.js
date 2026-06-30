@@ -60,9 +60,18 @@ const publicUrl = (bucket, objectPath) => {
   return data.publicUrl;
 };
 
+const signedUrl = async (bucket, objectPath, expiresIn = 300) => {
+  ensureStorage();
+  if (!bucket || !objectPath) return null;
+  const { data, error } = await supabaseAdmin.storage.from(bucket).createSignedUrl(objectPath, expiresIn);
+  if (error) throw error;
+  return data.signedUrl;
+};
+
 module.exports = {
   buildObjectPath,
   uploadObject,
   removeObject,
   publicUrl,
+  signedUrl,
 };

@@ -20,6 +20,13 @@ const mapPost = (post) => ({
   imageSizeBytes: post.image_size_bytes,
   location: post.location,
   contact: post.contact,
+  category: post.category,
+  occurredAt: post.occurred_at,
+  contactPreference: post.contact_preference,
+  contactNote: post.contact_note,
+  returnLocation: post.return_location,
+  availability: post.availability,
+  privacyAccepted: post.privacy_accepted,
   status: post.status,
   createdAt: post.created_at,
   updatedAt: post.updated_at,
@@ -28,8 +35,9 @@ const mapPost = (post) => ({
 
 const allowedUpdateFields = (data) => {
   const payload = {};
-  for (const field of ["type", "title", "description", "location", "contact", "status"]) {
-    if (data[field] !== undefined) payload[field] = sanitizePlainText(data[field], { max: 3000 });
+  const fieldMap = { type:"type", title:"title", description:"description", location:"location", contact:"contact", status:"status", category:"category", occurredAt:"occurred_at", contactPreference:"contact_preference", contactNote:"contact_note", returnLocation:"return_location", availability:"availability", privacyAccepted:"privacy_accepted" };
+  for (const [field, column] of Object.entries(fieldMap)) {
+    if (data[field] !== undefined) payload[column] = typeof data[field] === "string" ? sanitizePlainText(data[field], { max: 3000 }) : data[field];
   }
   return payload;
 };
@@ -95,6 +103,13 @@ class LostAndFoundService {
         description: sanitizePlainText(postData.description, { max: 3000 }),
         location: sanitizePlainText(postData.location, { max: 200 }),
         contact: sanitizePlainText(postData.contact, { max: 200 }),
+        category: postData.category,
+        occurred_at: postData.occurredAt,
+        contact_preference: postData.contactPreference || "message",
+        contact_note: postData.contactNote,
+        return_location: postData.returnLocation,
+        availability: postData.availability,
+        privacy_accepted: Boolean(postData.privacyAccepted),
         image_path: image.path,
         image_bucket: image.bucket,
         image_mime_type: image.mimeType,

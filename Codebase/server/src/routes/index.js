@@ -10,6 +10,7 @@ const catPostRoutes = require("./catPostRoutes");
 const catQARoutes = require("./catQARoutes");
 const chatRoutes = require("./chatRoutes");
 const academicResourceRoutes = require("./academicResourceRoutes");
+const v2Routes = require("./v2Routes");
 
 // Root route
 router.get("/", (req, res) => {
@@ -43,5 +44,8 @@ router.use("/api/chat", chatRoutes);
 
 // Academic Resource routes
 router.use("/api/academic", academicResourceRoutes);
+
+// Additive frontend V2 capabilities. Existing contracts remain available above.
+router.use("/api", v2Routes);
 
 module.exports = router;
