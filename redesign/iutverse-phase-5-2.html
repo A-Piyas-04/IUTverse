@@ -1,0 +1,42 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IUTverse Phase 5 · Messages and Profile</title>
+  <style>
+    :root{--bg:#000000;--fg:#ffffff;--accent:#1d9bf0;--font-body:"Segoe UI Emoji","Segoe UI",Arial,system-ui,sans-serif}
+    *,*::before,*::after{box-sizing:border-box}
+    html,body,iframe{width:100%;height:100%;margin:0}
+    body{min-width:320px;overflow:hidden;background:var(--bg);color:var(--fg);font-family:var(--font-body)}
+    iframe{display:block;border:0;background:var(--bg)}
+    .fallback{padding:24px}
+    .fallback a{color:var(--accent)}
+  </style>
+  <script src="theme-init.js"></script>
+  <link rel="stylesheet" href="layout-theme.css">
+</head>
+<body>
+  <iframe id="phaseFrame" src="messages.html" title="IUTverse Phase 5 Messages and Profile experience"></iframe>
+  <noscript>
+    <p class="fallback">
+      Open <a href="messages.html">Messages</a>,
+      <a href="profile.html">Profile Overview</a>, or
+      <a href="edit-profile.html">Edit Profile</a>.
+    </p>
+  </noscript>
+  <script>
+    const requested = new URLSearchParams(location.search).get('screen');
+    const routes = {
+      messages: 'messages.html',
+      profile: 'profile.html',
+      edit: 'edit-profile.html'
+    };
+    if (routes[requested]) {
+      document.getElementById('phaseFrame').src = routes[requested];
+    }
+  </script>
+  <script src="navigation.js"></script>
+</body>
+</html>
