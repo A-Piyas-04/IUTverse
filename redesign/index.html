@@ -1,0 +1,1801 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home · IUTverse</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #0f1419;
+      --surface-2: #16181c;
+      --surface-3: #202327;
+      --surface-muted: #eff3f4;
+      --fg: #ffffff;
+      --text-secondary: #9e9eff;
+      --text-tertiary: #71767b;
+      --muted: #8b98a5;
+      --muted-strong: #b1bbc4;
+      --border-default: #000000;
+      --border: #2f3336;
+      --border-strong: #4b4e52;
+      --accent: #1d9bf0;
+      --accent-hover: #1a8cd8;
+      --accent-soft: #0c2738;
+      --campus: #2fbf8f;
+      --campus-soft: #102a23;
+      --success: #00ba7c;
+      --warning: #f4c430;
+      --danger: #f4212e;
+      --focus: #8ecdf8;
+      --font-display: "Segoe UI Emoji", "Segoe UI", Arial, system-ui, sans-serif;
+      --font-body: "Segoe UI Emoji", "Segoe UI", Arial, system-ui, sans-serif;
+      --font-bangla: "Noto Sans Bengali", "Segoe UI", sans-serif;
+      --fs-xs: 11px;
+      --fs-sm: 13.33px;
+      --fs-md: 14px;
+      --fs-lg: 15px;
+      --fs-xl: 20px;
+      --fs-2xl: 22.5px;
+      --fs-3xl: 30px;
+      --space-1: 2px;
+      --space-2: 4px;
+      --space-3: 8px;
+      --space-4: 12px;
+      --space-5: 16px;
+      --space-6: 20px;
+      --space-7: 32px;
+      --radius-xs: 16px;
+      --radius-pill: 9999px;
+      --motion: 200ms;
+      --ease: cubic-bezier(.2, 0, 0, 1);
+      --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { color-scheme: dark; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--fs-lg);
+      font-weight: 400;
+      line-height: normal;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: clip;
+    }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button, select { cursor: pointer; }
+    button { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; text-decoration: none; }
+    svg { display: block; }
+    img { display: block; max-width: 100%; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; }
+    p { text-wrap: pretty; }
+    [hidden] { display: none !important; }
+    :where(a, button, input, textarea, select):focus-visible {
+      outline: 0;
+      box-shadow: var(--focus-ring);
+    }
+    :where(button, input, textarea, select):disabled {
+      cursor: not-allowed;
+      opacity: .48;
+    }
+    :where(button, a):not(:disabled):active { filter: brightness(.88); }
+    .skip-link {
+      position: fixed;
+      z-index: 1000;
+      top: var(--space-3);
+      left: var(--space-3);
+      transform: translateY(-150%);
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      background: var(--fg);
+      color: var(--bg);
+      font-weight: 700;
+      transition: transform var(--motion) var(--ease);
+    }
+    .skip-link:focus { transform: translateY(0); }
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+    .icon { width: 23px; height: 23px; flex: 0 0 auto; }
+    .icon-sm { width: 18px; height: 18px; flex: 0 0 auto; }
+    .icon-xs { width: 16px; height: 16px; flex: 0 0 auto; }
+
+    .app-shell {
+      width: min(100%, 1232px);
+      min-height: 100dvh;
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: 240px minmax(0, 600px) 320px;
+      column-gap: 24px;
+      align-items: start;
+    }
+    .left-rail {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: var(--space-3) var(--space-5) var(--space-4) 0;
+    }
+    .brand-link {
+      width: fit-content;
+      height: 52px;
+      padding: 0 var(--space-4);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      border-radius: var(--radius-pill);
+      color: var(--fg);
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -.025em;
+      transition: background var(--motion) var(--ease);
+    }
+    .brand-link:hover { background: var(--surface-2); }
+    .brand-mark { width: 31px; height: 31px; }
+    .rail-nav { width: 100%; margin-top: var(--space-2); }
+    .nav-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-1); }
+    .nav-link {
+      width: fit-content;
+      min-height: 52px;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-5);
+      padding: 0 var(--space-4);
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--fg);
+      font-size: var(--fs-xl);
+      transition: background var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .nav-link:hover { background: var(--surface-2); }
+    .nav-link:active { transform: scale(.98); }
+    .nav-link[aria-current="page"] { font-weight: 700; }
+    .nav-link[aria-current="page"] .icon { stroke-width: 2.5; }
+    .nav-link .nav-dot {
+      width: 6px;
+      height: 6px;
+      margin-left: -10px;
+      border-radius: 50%;
+      background: var(--campus);
+    }
+    .rail-post-button {
+      width: calc(100% - 16px);
+      min-height: 52px;
+      margin: var(--space-5) var(--space-3) 0;
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: var(--fg);
+      color: var(--bg);
+      font-size: 17px;
+      font-weight: 700;
+      transition: background var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .rail-post-button:hover { background: var(--surface-muted); }
+    .rail-post-button:active { transform: scale(.97); }
+    .rail-profile {
+      width: 100%;
+      min-height: 64px;
+      margin-top: auto;
+      padding: var(--space-3);
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 20px;
+      gap: var(--space-3);
+      align-items: center;
+      text-align: left;
+      transition: background var(--motion) var(--ease);
+    }
+    .rail-profile:hover { background: var(--surface-2); }
+    .profile-copy { min-width: 0; }
+    .profile-copy strong, .profile-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-copy strong { font-size: var(--fs-lg); }
+    .profile-copy span { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-sm); }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--surface-3);
+      color: var(--fg);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      letter-spacing: .02em;
+      overflow: hidden;
+    }
+    .avatar.green { background: var(--campus-soft); color: var(--campus); }
+    .avatar.blue { background: var(--accent-soft); color: var(--focus); }
+    .avatar.anonymous { background: var(--surface-3); color: var(--muted-strong); }
+    .avatar.official { box-shadow: inset 0 0 0 1px var(--campus); }
+
+    .timeline {
+      min-width: 0;
+      min-height: 100dvh;
+      border-inline: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .feed-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .feed-heading {
+      min-height: 58px;
+      padding: 10px var(--space-5) var(--space-3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+    .feed-heading h1 { font-size: var(--fs-xl); line-height: 1.15; letter-spacing: -.015em; }
+    .feed-heading p { margin-top: var(--space-1); color: var(--text-tertiary); font-size: var(--fs-xs); }
+    .header-action {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--fg);
+      transition: background var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .header-action:hover { background: var(--surface-2); }
+    .header-action:active { transform: scale(.94); }
+    .feed-tabs {
+      min-height: 53px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .feed-tab {
+      position: relative;
+      min-width: 0;
+      min-height: 53px;
+      padding: 0 var(--space-2);
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      transition: background var(--motion) var(--ease), color var(--motion) var(--ease);
+    }
+    .feed-tab:hover { background: var(--surface-2); color: var(--fg); }
+    .feed-tab[aria-selected="true"] { color: var(--fg); font-weight: 700; }
+    .feed-tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 54px;
+      height: 4px;
+      transform: translateX(-50%);
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+    }
+
+    .composer {
+      padding: var(--space-4) var(--space-5) var(--space-3);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: var(--space-4);
+      transition: background var(--motion) var(--ease);
+    }
+    .composer:focus-within { background: var(--surface); }
+    .composer-main { min-width: 0; }
+    .composer-label {
+      display: block;
+      margin-bottom: var(--space-2);
+      color: var(--muted);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .composer-textarea {
+      width: 100%;
+      min-height: 54px;
+      max-height: 180px;
+      padding: var(--space-2) 0;
+      border: 0;
+      resize: vertical;
+      background: transparent;
+      color: var(--fg);
+      font-size: var(--fs-xl);
+      line-height: 1.35;
+    }
+    .composer-textarea::placeholder { color: var(--muted); opacity: 1; }
+    .composer-textarea:focus { outline: 0; box-shadow: none; }
+    .composer-helper { color: var(--muted); font-size: var(--fs-xs); line-height: 1.35; }
+    .composer-divider { border: 0; border-top: 1px solid var(--border); margin: var(--space-3) 0; }
+    .composer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+    .composer-tools { min-width: 0; display: flex; align-items: center; gap: var(--space-1); }
+    .composer-tool, .select-tool {
+      min-width: 36px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: 0 var(--space-3);
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--muted-strong);
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      transition: background var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .composer-tool:hover, .select-tool:hover { background: var(--accent-soft); }
+    .composer-tool:active, .select-tool:active { transform: scale(.96); }
+    .composer-tool[aria-pressed="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+    .select-tool { position: relative; }
+    .select-tool select {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .composer-tool .tool-label, .select-tool .tool-label { display: none; }
+    .post-button {
+      min-width: 76px;
+      min-height: 44px;
+      padding: 0 var(--space-5);
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+      color: var(--fg);
+      font-weight: 700;
+      transition: background var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .post-button:hover { background: var(--accent-hover); }
+    .post-button:active { transform: scale(.96); }
+    .privacy-hint, .attachment-note {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      border-radius: var(--space-3);
+      background: var(--accent-soft);
+      color: var(--muted-strong);
+      font-size: var(--fs-sm);
+      line-height: 1.4;
+    }
+    .privacy-hint strong { color: var(--fg); }
+    .poll-builder {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      display: grid;
+      gap: var(--space-3);
+    }
+    .poll-builder label { display: grid; gap: var(--space-2); color: var(--muted); font-size: var(--fs-xs); font-weight: 600; }
+    .poll-builder input,
+    .poll-builder select {
+      min-height: 44px;
+      width: 100%;
+      padding: 0 var(--space-4);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--space-3);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 16px;
+    }
+    .composer-status {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      border: 1px solid var(--danger);
+      border-radius: var(--space-3);
+      color: var(--fg);
+      font-size: var(--fs-sm);
+      line-height: 1.4;
+    }
+    .inline-retry {
+      min-height: 44px;
+      margin-top: var(--space-2);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .profile-strip {
+      min-height: 76px;
+      padding: var(--space-3) var(--space-5);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      align-items: center;
+      background: var(--surface);
+    }
+    .profile-strip .strip-icon { color: var(--campus); }
+    .profile-strip h2 { font-size: var(--fs-lg); }
+    .profile-strip p { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-sm); line-height: 1.35; }
+    .strip-actions { display: flex; align-items: center; gap: var(--space-2); }
+    .text-button {
+      min-height: 44px;
+      padding: 0 var(--space-3);
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--muted-strong);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      transition: background var(--motion) var(--ease), color var(--motion) var(--ease);
+    }
+    .text-button:hover { background: var(--surface-2); color: var(--fg); }
+    .text-button.primary { color: var(--fg); }
+
+    .feed-list { min-height: 240px; }
+    .post {
+      position: relative;
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: var(--space-4);
+      transition: background var(--motion) var(--ease);
+    }
+    .post:hover { background: var(--surface); }
+    .post-content { min-width: 0; }
+    .post-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+    .post-identity {
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      column-gap: var(--space-2);
+      row-gap: var(--space-1);
+      font-size: var(--fs-lg);
+      line-height: 1.25;
+    }
+    .post-identity strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .verified {
+      width: 15px;
+      height: 15px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--campus);
+      color: var(--bg);
+      font-size: 9px;
+      font-weight: 900;
+    }
+    .post-meta { color: var(--text-tertiary); font-size: var(--fs-sm); }
+    .post:hover .post-meta { color: var(--muted); }
+    .more-button {
+      width: 44px;
+      height: 44px;
+      margin: -8px -8px 0 0;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted);
+      transition: background var(--motion) var(--ease), color var(--motion) var(--ease);
+    }
+    .more-button:hover { background: var(--accent-soft); color: var(--accent); }
+    .category-chip {
+      width: fit-content;
+      min-height: 26px;
+      margin-top: var(--space-2);
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      color: var(--muted-strong);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .category-chip.status { border-color: var(--success); color: var(--success); }
+    .post-body {
+      margin-top: var(--space-3);
+      font-size: var(--fs-lg);
+      line-height: 1.42;
+      white-space: pre-wrap;
+    }
+    .anonymous-note {
+      margin-top: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--muted);
+      font-size: var(--fs-xs);
+    }
+    .resource-preview {
+      margin-top: var(--space-4);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      background: var(--surface);
+    }
+    .resource-visual {
+      aspect-ratio: 2.4 / 1;
+      padding: var(--space-5);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      display: grid;
+      align-content: end;
+      gap: var(--space-2);
+    }
+    .code-line { height: 6px; border-radius: var(--radius-pill); background: var(--border-strong); }
+    .code-line.blue { width: 68%; background: var(--muted-strong); }
+    .code-line.green { width: 46%; background: var(--campus); }
+    .code-line.short { width: 32%; }
+    .resource-copy { padding: var(--space-4); }
+    .resource-copy strong { display: block; font-size: var(--fs-md); }
+    .resource-copy span { display: block; margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-sm); }
+    .inline-cta {
+      min-height: 44px;
+      margin-top: var(--space-3);
+      padding: 0 var(--space-4);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--fg);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      transition: border-color var(--motion) var(--ease), background var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .inline-cta:hover { border-color: var(--fg); background: var(--surface-2); }
+    .inline-cta:active { transform: scale(.97); }
+    .bangla-snippet {
+      margin-top: var(--space-3);
+      padding-left: var(--space-3);
+      border-left: 2px solid var(--border-strong);
+      color: var(--muted-strong);
+      font-family: var(--font-bangla);
+      font-size: var(--fs-md);
+      line-height: 1.55;
+    }
+    .post-actions {
+      margin: var(--space-3) 0 -8px -8px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: var(--space-1);
+    }
+    .post-action {
+      min-width: 0;
+      min-height: 44px;
+      padding: 0 var(--space-2);
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--space-2);
+      font-size: var(--fs-sm);
+      transition: background var(--motion) var(--ease), color var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .post-action:hover { background: var(--accent-soft); color: var(--accent); }
+    .post-action:active { transform: scale(.94); }
+    .post-action[aria-pressed="true"] { color: var(--accent); font-weight: 700; }
+    .post-action.save[aria-pressed="true"] { color: var(--campus); }
+    .action-count { font-variant-numeric: tabular-nums; }
+    .reaction-picker {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      background: var(--surface-2);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-2);
+    }
+    .reaction-option {
+      min-height: 44px;
+      padding: 0 var(--space-3);
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--fs-sm);
+      text-align: left;
+      transition: background var(--motion) var(--ease), border-color var(--motion) var(--ease);
+    }
+    .reaction-option:hover { background: var(--surface-3); }
+    .reaction-option[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+    .reaction-option .reaction-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+    .reaction-option .reaction-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .reply-form {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-3);
+      align-items: end;
+    }
+    .reply-form label { display: grid; gap: var(--space-2); color: var(--muted); font-size: var(--fs-xs); font-weight: 600; }
+    .reply-form input {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 var(--space-4);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 16px;
+    }
+
+    .skeleton-post {
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: var(--space-4);
+    }
+    .skeleton {
+      border-radius: var(--radius-pill);
+      background: var(--surface-3);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    .skeleton.avatar-shape { width: 40px; height: 40px; border-radius: 50%; }
+    .skeleton-stack { display: grid; gap: var(--space-3); }
+    .skeleton.line { height: 12px; }
+    .skeleton.line.short { width: 42%; }
+    .skeleton.line.medium { width: 76%; }
+    .state-panel {
+      min-height: 280px;
+      padding: var(--space-7);
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+    .state-copy { max-width: 360px; }
+    .state-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto var(--space-4);
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--muted-strong);
+    }
+    .state-panel h2 { font-size: var(--fs-2xl); }
+    .state-panel p { margin-top: var(--space-3); color: var(--muted); font-size: var(--fs-md); line-height: 1.45; }
+    .state-actions { margin-top: var(--space-5); display: flex; justify-content: center; gap: var(--space-2); flex-wrap: wrap; }
+    .state-primary, .state-secondary {
+      min-height: 44px;
+      padding: 0 var(--space-5);
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+    }
+    .state-primary { border: 0; background: var(--fg); color: var(--bg); }
+    .state-primary:hover { background: var(--surface-muted); }
+    .state-secondary { border: 1px solid var(--border-strong); background: transparent; color: var(--fg); }
+    .state-secondary:hover { background: var(--surface-2); }
+
+    .right-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      padding: var(--space-3) 0 var(--space-6);
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .search-block { margin-bottom: var(--space-5); }
+    .search-block label {
+      display: block;
+      margin: 0 0 var(--space-2) var(--space-4);
+      color: var(--muted);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .search-shell {
+      min-height: 46px;
+      padding: 0 var(--space-4);
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      background: var(--surface-3);
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: var(--space-3);
+      align-items: center;
+      color: var(--muted);
+      transition: background var(--motion) var(--ease), border-color var(--motion) var(--ease);
+    }
+    .search-shell:focus-within { border-color: var(--accent); background: var(--bg); color: var(--accent); }
+    .search-shell input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--fg); font-size: 16px; }
+    .search-shell input::placeholder { color: var(--muted); opacity: 1; }
+    .side-panel {
+      margin-bottom: var(--space-5);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      background: var(--surface);
+    }
+    .side-panel h2 { padding: var(--space-4) var(--space-5) var(--space-3); font-size: var(--fs-xl); }
+    .pulse-item, .suggestion-row {
+      width: 100%;
+      min-height: 72px;
+      padding: var(--space-3) var(--space-5);
+      border: 0;
+      border-top: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      text-align: left;
+      transition: background var(--motion) var(--ease);
+    }
+    .pulse-item:hover, .suggestion-row:hover { background: var(--surface-2); }
+    .pulse-item span { display: block; color: var(--muted); font-size: var(--fs-xs); }
+    .pulse-item strong { display: block; margin-top: var(--space-2); font-size: var(--fs-md); line-height: 1.3; }
+    .pulse-item small { display: block; margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-xs); }
+    .side-action {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 var(--space-5);
+      border: 0;
+      border-top: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      font-size: var(--fs-md);
+      font-weight: 600;
+      text-align: left;
+      transition: background var(--motion) var(--ease), color var(--motion) var(--ease);
+    }
+    .side-action:hover { background: var(--surface-2); color: var(--accent); }
+    .suggestion-row {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      align-items: center;
+    }
+    .suggestion-row .person { min-width: 0; }
+    .suggestion-row .person strong, .suggestion-row .person span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .suggestion-row .person strong { font-size: var(--fs-md); }
+    .suggestion-row .person span { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-xs); }
+    .message-button {
+      min-height: 44px;
+      padding: 0 var(--space-4);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--fg);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      transition: background var(--motion) var(--ease), border-color var(--motion) var(--ease), transform var(--motion) var(--ease);
+    }
+    .message-button:hover { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+    .message-button:active { transform: scale(.96); }
+    .sidebar-footer { padding: 0 var(--space-4); color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
+
+    .mobile-topbar, .bottom-nav { display: none; }
+    dialog {
+      width: min(92vw, 420px);
+      padding: 0;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xs);
+      background: var(--surface);
+      color: var(--fg);
+      box-shadow: 0 24px 80px color-mix(in srgb, var(--bg) 72%, transparent);
+    }
+    dialog::backdrop { background: color-mix(in srgb, var(--bg) 76%, transparent); }
+    .dialog-head {
+      min-height: 56px;
+      padding: 0 var(--space-4);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+    .dialog-head h2 { font-size: var(--fs-xl); }
+    .dialog-close {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--fg);
+    }
+    .dialog-close:hover { background: var(--surface-3); }
+    .dialog-body { padding: var(--space-4); }
+    .dialog-menu { list-style: none; margin: 0; padding: 0; }
+    .dialog-menu button, .dialog-menu a {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 var(--space-4);
+      border: 0;
+      border-radius: var(--space-3);
+      background: transparent;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      text-align: left;
+      font-weight: 600;
+    }
+    .dialog-menu button:hover, .dialog-menu a:hover { background: var(--surface-3); }
+    .drawer-context { display: grid; gap: var(--space-4); }
+    .drawer-context .side-panel { margin: 0; }
+    .toast {
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      bottom: var(--space-6);
+      max-width: min(90vw, 440px);
+      min-height: 44px;
+      padding: var(--space-3) var(--space-5);
+      transform: translate(-50%, 160%);
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--fs-md);
+      font-weight: 700;
+      text-align: center;
+      transition: transform var(--motion) var(--ease);
+    }
+    .toast.show { transform: translate(-50%, 0); }
+    .post-menu {
+      position: absolute;
+      z-index: 20;
+      top: 44px;
+      right: var(--space-4);
+      width: 220px;
+      padding: var(--space-2);
+      border: 1px solid var(--border);
+      border-radius: var(--space-3);
+      background: var(--surface-2);
+      box-shadow: 0 12px 32px color-mix(in srgb, var(--bg) 70%, transparent);
+    }
+    .post-menu button {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 var(--space-3);
+      border: 0;
+      border-radius: var(--space-2);
+      background: transparent;
+      color: var(--fg);
+      text-align: left;
+    }
+    .post-menu button:hover { background: var(--surface-3); }
+
+    @keyframes pulse { 0%, 100% { opacity: .46; } 50% { opacity: 1; } }
+
+    @media (max-width: 1199px) {
+      .app-shell {
+        width: min(100%, 752px);
+        grid-template-columns: 88px minmax(0, 600px);
+        column-gap: 24px;
+      }
+      .right-sidebar { display: none; }
+      .left-rail { align-items: center; padding-right: 0; }
+      .brand-link { width: 52px; padding: 0; justify-content: center; }
+      .brand-link .wordmark { display: none; }
+      .rail-nav { display: grid; justify-items: center; }
+      .nav-link { width: 52px; padding: 0; justify-content: center; }
+      .nav-label, .nav-dot, .profile-copy, .rail-profile .icon-xs { display: none; }
+      .rail-post-button { width: 52px; height: 52px; margin-inline: 0; font-size: 0; }
+      .rail-post-button::before { content: "+"; font-size: 28px; font-weight: 400; }
+      .rail-profile { width: 56px; grid-template-columns: 40px; justify-content: center; }
+      .context-compact { display: inline-flex !important; }
+    }
+    @media (min-width: 1200px) { .context-compact { display: none !important; } }
+
+    @media (max-width: 899px) {
+      .app-shell { width: min(100%, 600px); display: block; }
+      .left-rail { display: none; }
+      .mobile-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        min-height: 54px;
+        padding: 0 var(--space-3);
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .mobile-brand { display: flex; align-items: center; gap: var(--space-2); font-weight: 800; letter-spacing: -.02em; }
+      .mobile-brand .brand-mark { width: 27px; height: 27px; }
+      .mobile-actions { display: flex; align-items: center; gap: var(--space-1); }
+      .timeline { min-height: calc(100dvh - 54px); border-top: 0; }
+      .feed-header { top: 54px; }
+      dialog.drawer {
+        width: min(92vw, 440px);
+        max-height: 86dvh;
+        margin: auto 0 0 auto;
+        border-radius: var(--radius-xs) 0 0 0;
+      }
+    }
+    @media (max-width: 599px) {
+      body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+      .app-shell { width: 100%; }
+      .timeline { border-inline: 0; }
+      .feed-heading { min-height: 52px; padding-inline: var(--space-4); }
+      .feed-heading p { display: none; }
+      .feed-tabs { overflow-x: auto; scrollbar-width: none; }
+      .feed-tabs::-webkit-scrollbar { display: none; }
+      .feed-tab { min-width: 84px; }
+      .feed-tab[aria-selected="true"]::after { width: 44px; }
+      .composer { padding-inline: var(--space-4); grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-3); }
+      .composer > .avatar { width: 36px; height: 36px; }
+      .composer-textarea { font-size: 18px; }
+      .composer-helper { display: none; }
+      .composer-footer { align-items: flex-end; }
+      .composer-tools { flex-wrap: wrap; }
+      .composer-tool, .select-tool { padding-inline: var(--space-2); }
+      .profile-strip { grid-template-columns: 24px 1fr; padding-inline: var(--space-4); }
+      .strip-actions { grid-column: 2; justify-content: flex-start; margin-top: -4px; }
+      .post { padding-inline: var(--space-4); grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-3); }
+      .post > .avatar { width: 36px; height: 36px; }
+      .post-identity { font-size: var(--fs-md); }
+      .post-meta { width: 100%; }
+      .post-actions { margin-left: -6px; }
+      .post-action { padding-inline: 6px; justify-content: center; }
+      .post-action .action-word { display: none; }
+      .reaction-picker { grid-template-columns: 1fr; }
+      .reply-form { grid-template-columns: 1fr; }
+      .state-panel { min-height: 240px; padding: var(--space-6); }
+      .bottom-nav {
+        position: fixed;
+        z-index: 70;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: calc(64px + env(safe-area-inset-bottom));
+        padding: 0 var(--space-2) env(safe-area-inset-bottom);
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .bottom-link {
+        min-width: 0;
+        min-height: 56px;
+        padding: 4px 2px;
+        border-radius: var(--space-3);
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: var(--space-1);
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .bottom-link[aria-current="page"] { color: var(--fg); font-weight: 700; }
+      .bottom-link span { line-height: 1.05; text-align: center; }
+      .toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+    }
+    @media (max-width: 359px) {
+      .feed-tab { min-width: 80px; font-size: var(--fs-sm); }
+      .composer-tools { gap: 0; }
+      .post { padding-inline: var(--space-3); }
+      .post-body { font-size: var(--fs-md); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+  <script src="theme-init.js"></script>
+  <link rel="stylesheet" href="layout-theme.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to Home feed</a>
+
+  <header class="mobile-topbar" aria-label="Mobile application header">
+    <button class="header-action" id="mobileMenuButton" type="button" aria-label="Open navigation">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h12M4 17h16"/></svg>
+    </button>
+    <a class="mobile-brand" href="#" aria-label="IUTverse Home">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M6 7h9c6 0 11 4 11 9s-5 9-11 9H6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><circle cx="7" cy="7" r="3" fill="var(--campus)"/><circle cx="25" cy="16" r="3" fill="var(--campus)"/><circle cx="7" cy="25" r="3" fill="var(--campus)"/></svg>
+      <span>IUTverse</span>
+    </a>
+    <div class="mobile-actions">
+      <button class="header-action" id="mobileContextButton" type="button" aria-label="Open search and campus context">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+      </button>
+      <button class="header-action" id="mobileProfileButton" type="button" aria-label="Open profile menu"><span class="avatar green">NF</span></button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="left-rail" aria-label="Primary navigation">
+      <a class="brand-link" href="#" aria-label="IUTverse Home">
+        <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M6 7h9c6 0 11 4 11 9s-5 9-11 9H6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><circle cx="7" cy="7" r="3" fill="var(--campus)"/><circle cx="25" cy="16" r="3" fill="var(--campus)"/><circle cx="7" cy="25" r="3" fill="var(--campus)"/></svg>
+        <span class="wordmark">IUTverse</span>
+      </a>
+      <nav class="rail-nav" aria-label="Global">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#" aria-current="page"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span class="nav-label">Home</span><span class="nav-dot" aria-hidden="true"></span></a></li>
+          <li><a class="nav-link" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 20c.4-4 2.3-6 5.5-6s5.1 2 5.5 6M14 15c3.6-.3 5.7 1.4 6.2 5"/></svg><span class="nav-label">Community</span></a></li>
+          <li><a class="nav-link" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l8-5 8 5v12M2 21h20M8 13h2M14 13h2M8 17h2M14 17h2"/></svg><span class="nav-label">Campus</span></a></li>
+          <li><a class="nav-link" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 8 9-5 9 5-9 5zM6 11v6c3 2.7 9 2.7 12 0v-6"/></svg><span class="nav-label">Learn &amp; Work</span></a></li>
+          <li><a class="nav-link" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v12H9l-5 4z"/></svg><span class="nav-label">Messages</span></a></li>
+          <li><a class="nav-link" href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c.6-5 3.3-7 8-7s7.4 2 8 7"/></svg><span class="nav-label">Profile</span></a></li>
+          <li class="context-compact"><button class="nav-link" id="compactContextButton" type="button" aria-label="Open search and campus context"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><span class="nav-label">Explore</span></button></li>
+        </ul>
+      </nav>
+      <button class="rail-post-button" id="railPostButton" type="button">Post</button>
+      <button class="rail-profile" id="railProfileButton" type="button" aria-label="Open Nuren Fahmid profile menu">
+        <span class="avatar green">NF</span>
+        <span class="profile-copy"><strong>Nuren Fahmid</strong><span>@nuren · CSE 22</span></span>
+        <svg class="icon-xs" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </button>
+    </aside>
+
+    <main class="timeline" id="main-content">
+      <header class="feed-header">
+        <div class="feed-heading">
+          <div><h1>Home</h1><p>Your campus, meaningfully connected.</p></div>
+          <button class="header-action" id="refreshFeedButton" type="button" aria-label="Refresh Home feed">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 9A7 7 0 0 1 18 6l2 2M17.9 15A7 7 0 0 1 6 18l-2-2"/></svg>
+          </button>
+        </div>
+        <nav class="feed-tabs" role="tablist" aria-label="Home feed contexts">
+          <button class="feed-tab" type="button" role="tab" aria-selected="true" data-tab="all">For you</button>
+          <button class="feed-tab" type="button" role="tab" aria-selected="false" data-tab="department">Department</button>
+          <button class="feed-tab" type="button" role="tab" aria-selected="false" data-tab="batch">Batch</button>
+          <button class="feed-tab" type="button" role="tab" aria-selected="false" data-tab="resource">Resources</button>
+        </nav>
+      </header>
+
+      <section class="composer" data-od-id="post-composer" aria-labelledby="composerSectionTitle">
+        <span class="avatar green" aria-hidden="true">NF</span>
+        <form class="composer-main" id="composerForm">
+          <label class="composer-label" id="composerSectionTitle" for="postText">Post text</label>
+          <textarea class="composer-textarea" id="postText" maxlength="800" placeholder="What’s happening at IUT?" required></textarea>
+          <p class="composer-helper">Share a resource, ask a question, or start a campus conversation.</p>
+          <div class="privacy-hint" id="privacyHint" hidden><strong>Posting anonymously.</strong> Anonymous posts hide your profile from readers.</div>
+          <p class="attachment-note" id="attachmentNote" hidden></p>
+          <div class="poll-builder" id="pollBuilder" hidden>
+            <label for="pollOptionOne">Poll option 1<input id="pollOptionOne" maxlength="80" placeholder="First option"></label>
+            <label for="pollOptionTwo">Poll option 2<input id="pollOptionTwo" maxlength="80" placeholder="Second option"></label>
+          </div>
+          <div class="composer-status" id="composerError" role="alert" hidden>We couldn’t publish your post. Your draft is safe.<br><button class="inline-retry" id="retryPostButton" type="button">Try again</button></div>
+          <hr class="composer-divider">
+          <div class="composer-footer">
+            <div class="composer-tools" aria-label="Post options">
+              <input id="imageInput" type="file" accept="image/*" hidden>
+              <button class="composer-tool" id="imageButton" type="button" aria-label="Add image"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m4 18 5-5 3 3 2-2 6 5"/></svg><span class="tool-label">Image</span></button>
+              <label class="select-tool" aria-label="Choose category"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span class="tool-label">Category</span><select id="postCategory"><option value="Discussion">Discussion</option><option value="Resource">Resource</option><option value="Question">Question</option><option value="Lost & Found">Lost &amp; Found</option><option value="Confession">Confession</option></select></label>
+              <button class="composer-tool" id="anonymousButton" type="button" aria-pressed="false" aria-label="Post anonymously"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9c0-4 2-6 6-6s6 2 6 6v3c0 5-2 8-6 9-4-1-6-4-6-9z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg><span class="tool-label">Anonymous</span></button>
+              <button class="composer-tool" id="pollButton" type="button" aria-pressed="false" aria-label="Add poll"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20V9M12 20V4M19 20v-7"/></svg><span class="tool-label">Poll</span></button>
+            </div>
+            <button class="post-button" id="postButton" type="submit" disabled>Post</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="profile-strip" id="profilePrompt" data-od-id="profile-completion" aria-labelledby="profilePromptTitle">
+        <svg class="icon strip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20c.5-4 2.8-6 7-6s6.5 2 7 6"/><path d="M18 4v4M16 6h4"/></svg>
+        <div><h2 id="profilePromptTitle">Personalize your Home</h2><p>Add your department, batch and interests to improve your feed.</p></div>
+        <div class="strip-actions"><button class="text-button primary" id="completeProfileButton" type="button">Complete profile</button><button class="text-button" id="dismissProfileButton" type="button">Not now</button></div>
+      </section>
+
+      <section class="feed-list" id="loadingState" data-od-id="feed-loading" aria-label="Loading personalized campus feed" aria-busy="true">
+        <div class="skeleton-post"><span class="skeleton avatar-shape"></span><div class="skeleton-stack"><span class="skeleton line short"></span><span class="skeleton line"></span><span class="skeleton line medium"></span></div></div>
+        <div class="skeleton-post"><span class="skeleton avatar-shape"></span><div class="skeleton-stack"><span class="skeleton line short"></span><span class="skeleton line"></span><span class="skeleton line medium"></span></div></div>
+        <div class="skeleton-post"><span class="skeleton avatar-shape"></span><div class="skeleton-stack"><span class="skeleton line short"></span><span class="skeleton line"></span><span class="skeleton line medium"></span></div></div>
+      </section>
+      <section class="feed-list" id="feedList" data-od-id="personalized-feed" aria-label="Personalized campus timeline" hidden></section>
+      <section class="state-panel" id="emptyFeedState" data-od-id="feed-empty" aria-labelledby="emptyFeedTitle" hidden>
+        <div class="state-copy"><div class="state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v12H9l-5 4z"/><path d="M8 10h8M8 14h5"/></svg></div><h2 id="emptyFeedTitle">Make Home yours</h2><p>Add your department, batch and interests to see more relevant campus posts.</p><div class="state-actions"><button class="state-primary" id="emptyCompleteProfileButton" type="button">Complete profile</button><button class="state-secondary" id="emptyDismissButton" type="button">Not now</button></div></div>
+      </section>
+      <section class="state-panel" id="searchEmptyState" data-od-id="search-empty" aria-labelledby="searchEmptyTitle" hidden>
+        <div class="state-copy"><div class="state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></div><h2 id="searchEmptyTitle">No campus posts found</h2><p>Try another name, category, course, or campus topic.</p><div class="state-actions"><button class="state-secondary" id="clearSearchButton" type="button">Clear search</button></div></div>
+      </section>
+      <section class="state-panel" id="feedErrorState" data-od-id="feed-error" aria-labelledby="feedErrorTitle" hidden>
+        <div class="state-copy"><div class="state-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></svg></div><h2 id="feedErrorTitle">We couldn’t load your feed.</h2><p>Your draft and feed preferences are still safe.</p><div class="state-actions"><button class="state-primary" id="retryFeedButton" type="button">Try again</button></div></div>
+      </section>
+    </main>
+
+    <aside class="right-sidebar" aria-label="Campus context">
+      <div class="search-block">
+        <label for="campusSearch">Search campus content</label>
+        <div class="search-shell"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input id="campusSearch" data-campus-search type="search" placeholder="Search IUTverse" autocomplete="off"></div>
+      </div>
+      <section class="side-panel" data-od-id="campus-pulse" aria-labelledby="campusPulseTitle">
+        <h2 id="campusPulseTitle">Campus pulse</h2>
+        <button class="pulse-item" type="button" data-search-query="CSE resources"><span>Resources · CSE</span><strong>2 new CSE resources shared</strong><small>Software Engineering and Algorithms</small></button>
+        <button class="pulse-item" type="button" data-search-query="black water bottle"><span>Lost &amp; Found · Library</span><strong>Black water bottle found near library</strong><small>Reported at 6:20 PM</small></button>
+        <button class="pulse-item" type="button" data-search-query="software testing"><span>Discussion · CSE</span><strong>Software Testing discussion active</strong><small>Students are planning a revision group</small></button>
+        <button class="pulse-item" type="button" data-search-query="opportunity"><span>Learn &amp; Work</span><strong>3 new opportunity comments</strong><small>Internships and research roles</small></button>
+      </section>
+      <section class="side-panel" data-od-id="suggested-actions" aria-labelledby="suggestedActionsTitle">
+        <h2 id="suggestedActionsTitle">Suggested actions</h2>
+        <button class="side-action" type="button" data-compose-action="Resource"><span>Share a resource</span><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
+        <button class="side-action" type="button" data-compose-action="Lost & Found"><span>Report a lost item</span><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
+        <button class="side-action" type="button" data-compose-action="Discussion"><span>Start a conversation</span><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
+      </section>
+      <section class="side-panel" data-od-id="people-to-message" aria-labelledby="peopleTitle">
+        <h2 id="peopleTitle">Who to message</h2>
+        <div class="suggestion-row"><span class="avatar blue">SA</span><span class="person"><strong>Sadman Arefin</strong><span>CSE 21</span></span><button class="message-button" type="button" data-message-person="Sadman Arefin">Message</button></div>
+        <div class="suggestion-row"><span class="avatar green">TN</span><span class="person"><strong>Tasnia Noor</strong><span>EEE 22</span></span><button class="message-button" type="button" data-message-person="Tasnia Noor">Message</button></div>
+        <div class="suggestion-row"><span class="avatar">MR</span><span class="person"><strong>Mahin Rahman</strong><span>MCE 21</span></span><button class="message-button" type="button" data-message-person="Mahin Rahman">Message</button></div>
+      </section>
+      <p class="sidebar-footer">Private to verified IUT members · Community guidelines · Privacy</p>
+    </aside>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Mobile primary navigation">
+    <a class="bottom-link" href="#" aria-current="page"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+    <a class="bottom-link" href="#"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 20c.4-4 2.3-6 5.5-6s5.1 2 5.5 6M14 15c3.6-.3 5.7 1.4 6.2 5"/></svg><span>Community</span></a>
+    <a class="bottom-link" href="#"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l8-5 8 5v12M2 21h20"/></svg><span>Campus</span></a>
+    <a class="bottom-link" href="#"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 8 9-5 9 5-9 5zM6 11v6c3 2.7 9 2.7 12 0v-6"/></svg><span>Learn &amp; Work</span></a>
+    <a class="bottom-link" href="#"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v12H9l-5 4z"/></svg><span>Messages</span></a>
+  </nav>
+
+  <dialog id="navigationDialog" class="drawer" aria-labelledby="navigationDialogTitle">
+    <div class="dialog-head"><h2 id="navigationDialogTitle">IUTverse</h2><button class="dialog-close" type="button" data-close-dialog aria-label="Close navigation"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <nav class="dialog-body" aria-label="Drawer navigation">
+      <ul class="dialog-menu">
+        <li><a href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Home</a></li>
+        <li><a href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 20c.4-4 2.3-6 5.5-6s5.1 2 5.5 6M14 15c3.6-.3 5.7 1.4 6.2 5"/></svg>Community</a></li>
+        <li><a href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l8-5 8 5v12M2 21h20"/></svg>Campus</a></li>
+        <li><a href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 8 9-5 9 5-9 5zM6 11v6c3 2.7 9 2.7 12 0v-6"/></svg>Learn &amp; Work</a></li>
+        <li><a href="#"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v12H9l-5 4z"/></svg>Messages</a></li>
+      </ul>
+    </nav>
+  </dialog>
+
+  <dialog id="contextDialog" class="drawer" aria-labelledby="contextDialogTitle">
+    <div class="dialog-head"><h2 id="contextDialogTitle">Search &amp; campus context</h2><button class="dialog-close" type="button" data-close-dialog aria-label="Close campus context"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div class="dialog-body drawer-context">
+      <div class="search-block"><label for="drawerSearch">Search campus content</label><div class="search-shell"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input id="drawerSearch" data-campus-search type="search" placeholder="Search IUTverse" autocomplete="off"></div></div>
+      <section class="side-panel" data-od-id="drawer-campus-pulse" aria-labelledby="drawerPulseTitle"><h2 id="drawerPulseTitle">Campus pulse</h2><button class="pulse-item" type="button" data-search-query="CSE resources"><span>Resources · CSE</span><strong>2 new CSE resources shared</strong></button><button class="pulse-item" type="button" data-search-query="black water bottle"><span>Lost &amp; Found</span><strong>Black water bottle found near library</strong></button><button class="pulse-item" type="button" data-search-query="software testing"><span>Discussion · CSE</span><strong>Software Testing discussion active</strong></button></section>
+      <section class="side-panel" data-od-id="drawer-actions" aria-labelledby="drawerActionsTitle"><h2 id="drawerActionsTitle">Suggested actions</h2><button class="side-action" type="button" data-compose-action="Resource"><span>Share a resource</span><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button><button class="side-action" type="button" data-compose-action="Lost & Found"><span>Report a lost item</span><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button><button class="side-action" type="button" data-compose-action="Discussion"><span>Start a conversation</span><svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button></section>
+    </div>
+  </dialog>
+
+  <dialog id="profileDialog" aria-labelledby="profileDialogTitle">
+    <div class="dialog-head"><h2 id="profileDialogTitle">Nuren Fahmid</h2><button class="dialog-close" type="button" data-close-dialog aria-label="Close profile menu"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div class="dialog-body"><ul class="dialog-menu"><li><button type="button"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c.6-5 3.3-7 8-7s7.4 2 8 7"/></svg>View profile</button></li><li><button type="button" id="dialogCompleteProfileButton"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4l11-11-4-4L4 16zM13 7l4 4"/></svg>Complete profile</button></li><li><button type="button"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1-2-4-2 1.1A8 8 0 0 0 15 6l-.3-2h-5L9.5 6a8 8 0 0 0-1.8 1.1L5.5 6 3 10l2 1a7 7 0 0 0 0 2l-2 1 2.5 4 2.2-1.1A8 8 0 0 0 9.5 18l.2 2h5l.3-2a8 8 0 0 0 1.9-1.1L19 18l2-4-2-1a7 7 0 0 0 0-1z"/></svg>Settings and privacy</button></li></ul></div>
+  </dialog>
+
+  <dialog id="completeProfileDialog" aria-labelledby="completeProfileDialogTitle">
+    <form id="completeProfileForm" method="dialog">
+      <div class="dialog-head"><h2 id="completeProfileDialogTitle">Personalize your Home</h2><button class="dialog-close" type="button" data-close-dialog aria-label="Close profile form"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="dialog-body">
+        <div class="poll-builder">
+          <label for="departmentField">Department<select id="departmentField" required><option value="">Choose department</option><option selected>CSE</option><option>EEE</option><option>MCE</option><option>CEE</option><option>BTM</option></select></label>
+          <label for="batchField">Batch<input id="batchField" inputmode="numeric" value="22" required></label>
+          <label for="interestsField">Interests<input id="interestsField" value="Software testing, campus resources" required></label>
+        </div>
+        <div class="state-actions"><button class="state-secondary" type="button" data-close-dialog>Cancel</button><button class="state-primary" type="submit">Save profile</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="sr-only" id="liveStatus" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var icons = {
+        reply: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15a4 4 0 0 1-4 4H9l-5 3V7a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4z"/></svg>',
+        share: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg>',
+        react: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8z"/></svg>',
+        save: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+        open: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4h6v6M20 4 11 13"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>',
+        more: '<svg class="icon-sm" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
+        lock: '<svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+        found: '<svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>'
+      };
+
+      var reactions = [
+        { name: "Appreciate", symbol: "♥" },
+        { name: "Useful", symbol: "↗" },
+        { name: "Insightful", symbol: "✦" },
+        { name: "Support", symbol: "＋" },
+        { name: "Celebrate", symbol: "★" },
+        { name: "Curious", symbol: "?" },
+        { name: "Relate", symbol: "≈" }
+      ];
+
+      var posts = [
+        {
+          id: "resource",
+          author: "Rafi Ahmed",
+          initials: "RA",
+          avatarTone: "blue",
+          verified: true,
+          meta: "CSE 21",
+          time: "Today, 8:15 PM · Dhaka",
+          datetime: "2026-06-28T20:15:00+06:00",
+          category: "Resource",
+          text: "Uploaded my SWE 4603 software testing notes with examples for branch coverage and condition coverage.",
+          cta: "Open resource",
+          replies: 7,
+          shares: 12,
+          saved: false,
+          selectedReaction: "Useful",
+          reactionCounts: { Appreciate: 8, Useful: 26, Insightful: 14, Support: 3, Celebrate: 6, Curious: 2, Relate: 4 },
+          resource: true
+        },
+        {
+          id: "discussion",
+          author: "Nuren Fahmid",
+          initials: "NF",
+          avatarTone: "green",
+          verified: false,
+          meta: "CSE 22",
+          time: "Today, 7:40 PM · Dhaka",
+          datetime: "2026-06-28T19:40:00+06:00",
+          category: "Discussion",
+          text: "Anyone revising minimax and alpha-beta pruning tonight? Thinking of making a small group session after dinner.",
+          cta: "Join discussion",
+          replies: 11,
+          shares: 3,
+          saved: false,
+          selectedReaction: "",
+          reactionCounts: { Appreciate: 4, Useful: 9, Insightful: 3, Support: 8, Celebrate: 1, Curious: 12, Relate: 6 },
+          bangla: "ডিনারের পর ৯টায় বসতে পারি—রুম ঠিক করি?"
+        },
+        {
+          id: "found",
+          author: "Campus Lost & Found",
+          initials: "LF",
+          avatarTone: "official",
+          verified: true,
+          meta: "Near library stairs",
+          time: "Today, 6:20 PM · Dhaka",
+          datetime: "2026-06-28T18:20:00+06:00",
+          category: "Found",
+          text: "Found: black water bottle near the library stairs. Owner can message with a description.",
+          cta: "View item",
+          replies: 4,
+          shares: 8,
+          saved: true,
+          selectedReaction: "Support",
+          reactionCounts: { Appreciate: 7, Useful: 18, Insightful: 1, Support: 10, Celebrate: 2, Curious: 3, Relate: 2 },
+          found: true
+        },
+        {
+          id: "confession",
+          author: "Anonymous",
+          initials: "A",
+          avatarTone: "anonymous",
+          verified: false,
+          meta: "Confession",
+          time: "Today, 5:55 PM · Dhaka",
+          datetime: "2026-06-28T17:55:00+06:00",
+          category: "Confession",
+          text: "Sometimes I feel like everyone else has figured university life out except me.",
+          cta: "Open",
+          replies: 19,
+          shares: 2,
+          saved: false,
+          selectedReaction: "Relate",
+          reactionCounts: { Appreciate: 14, Useful: 2, Insightful: 5, Support: 31, Celebrate: 0, Curious: 3, Relate: 44 },
+          anonymous: true
+        }
+      ];
+
+      var state = {
+        tab: "all",
+        query: "",
+        posting: false,
+        anonymous: false,
+        poll: false,
+        pendingDraft: null
+      };
+
+      var feedList = document.getElementById("feedList");
+      var loadingState = document.getElementById("loadingState");
+      var emptyFeedState = document.getElementById("emptyFeedState");
+      var searchEmptyState = document.getElementById("searchEmptyState");
+      var feedErrorState = document.getElementById("feedErrorState");
+      var composerForm = document.getElementById("composerForm");
+      var postText = document.getElementById("postText");
+      var postButton = document.getElementById("postButton");
+      var toast = document.getElementById("toast");
+      var liveStatus = document.getElementById("liveStatus");
+      var toastTimer;
+
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+        });
+      }
+
+      function announce(message) {
+        liveStatus.textContent = "";
+        window.setTimeout(function () { liveStatus.textContent = message; }, 20);
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(function () { toast.classList.remove("show"); }, 2400);
+      }
+
+      function totalReactions(post) {
+        return Object.keys(post.reactionCounts).reduce(function (sum, key) { return sum + post.reactionCounts[key]; }, 0);
+      }
+
+      function reactionOptions(post) {
+        return reactions.map(function (reaction) {
+          var selected = post.selectedReaction === reaction.name;
+          return '<button class="reaction-option" type="button" data-reaction="' + escapeHTML(reaction.name) + '" aria-pressed="' + selected + '" aria-label="' + escapeHTML(reaction.name) + ', ' + post.reactionCounts[reaction.name] + ' reactions' + (selected ? ", selected" : "") + '"><span aria-hidden="true">' + reaction.symbol + '</span><span class="reaction-name">' + escapeHTML(reaction.name) + '</span><span class="reaction-count">' + post.reactionCounts[reaction.name] + '</span></button>';
+        }).join("");
+      }
+
+      function postExtra(post) {
+        var markup = "";
+        if (post.resource) {
+          markup += '<div class="resource-preview" aria-label="Resource preview"><div class="resource-visual" aria-hidden="true"><span class="code-line blue"></span><span class="code-line"></span><span class="code-line green"></span><span class="code-line short"></span></div><div class="resource-copy"><strong>SWE 4603 · Software Testing Notes</strong><span>PDF · Branch and condition coverage examples</span></div></div>';
+        }
+        if (post.bangla) {
+          markup += '<p class="bangla-snippet" lang="bn">' + escapeHTML(post.bangla) + '</p>';
+        }
+        if (post.anonymous) {
+          markup += '<p class="anonymous-note">' + icons.lock + '<span>Identity hidden from readers.</span></p>';
+        }
+        return markup;
+      }
+
+      function postMarkup(post) {
+        var total = totalReactions(post);
+        var chipIcon = post.found ? icons.found : "";
+        return '<article class="post" data-post-id="' + post.id + '" aria-labelledby="post-author-' + post.id + '">' +
+          '<span class="avatar ' + escapeHTML(post.avatarTone) + '" aria-hidden="true">' + escapeHTML(post.initials) + '</span>' +
+          '<div class="post-content">' +
+            '<div class="post-top"><div class="post-identity"><strong id="post-author-' + post.id + '">' + escapeHTML(post.author) + '</strong>' + (post.verified ? '<span class="verified" aria-label="Verified campus account">✓</span>' : '') + '<span class="post-meta">' + escapeHTML(post.meta) + ' · <time datetime="' + post.datetime + '">' + escapeHTML(post.time) + '</time></span></div><button class="more-button" type="button" data-more aria-expanded="false" aria-label="More actions for ' + escapeHTML(post.author) + '">' + icons.more + '</button></div>' +
+            '<span class="category-chip ' + (post.found ? "status" : "") + '">' + chipIcon + escapeHTML(post.category) + '</span>' +
+            '<p class="post-body">' + escapeHTML(post.text) + '</p>' +
+            postExtra(post) +
+            '<button class="inline-cta" type="button" data-open-action="' + escapeHTML(post.cta) + '">' + escapeHTML(post.cta) + '</button>' +
+            '<div class="post-actions" aria-label="Actions for ' + escapeHTML(post.author) + '">' +
+              '<button class="post-action" type="button" data-reply aria-expanded="false" aria-label="Reply, ' + post.replies + ' replies">' + icons.reply + '<span class="action-word">Reply</span><span class="action-count">' + post.replies + '</span></button>' +
+              '<button class="post-action" type="button" data-share aria-pressed="false" aria-label="Repost or share, ' + post.shares + ' shares">' + icons.share + '<span class="action-word">Share</span><span class="action-count">' + post.shares + '</span></button>' +
+              '<button class="post-action" type="button" data-react aria-expanded="false" aria-label="' + (post.selectedReaction ? escapeHTML(post.selectedReaction) + " selected, " : "React, ") + total + ' total reactions">' + icons.react + '<span class="action-word">' + (post.selectedReaction ? escapeHTML(post.selectedReaction) : "React") + '</span><span class="action-count">' + total + '</span></button>' +
+              '<button class="post-action save" type="button" data-save aria-pressed="' + post.saved + '" aria-label="' + (post.saved ? "Remove from saved posts" : "Save post") + '">' + icons.save + '<span class="action-word">' + (post.saved ? "Saved" : "Save") + '</span></button>' +
+              '<button class="post-action" type="button" data-open-action="' + escapeHTML(post.cta) + '" aria-label="' + escapeHTML(post.cta) + '">' + icons.open + '<span class="action-word">Open</span></button>' +
+            '</div>' +
+            '<div class="reaction-picker" data-reaction-picker hidden aria-label="Choose one of seven reactions">' + reactionOptions(post) + '</div>' +
+            '<form class="reply-form" data-reply-form hidden><label for="reply-' + post.id + '">Reply to ' + escapeHTML(post.author) + '<input id="reply-' + post.id + '" maxlength="300" placeholder="Write a thoughtful reply" required></label><button class="post-button" type="submit">Reply</button></form>' +
+            '<div class="post-menu" data-post-menu hidden><button type="button" data-menu-action="Copy link">Copy link</button><button type="button" data-menu-action="Mute this conversation">Mute this conversation</button><button type="button" data-menu-action="Report post">Report post</button></div>' +
+          '</div>' +
+        '</article>';
+      }
+
+      function filteredPosts() {
+        return posts.filter(function (post) {
+          var tabMatch = state.tab === "all" ||
+            (state.tab === "resource" && post.category === "Resource") ||
+            (state.tab === "department" && ["Resource", "Discussion"].indexOf(post.category) >= 0) ||
+            (state.tab === "batch" && post.meta.indexOf("22") >= 0);
+          var haystack = [post.author, post.meta, post.category, post.text, post.bangla || ""].join(" ").toLowerCase();
+          return tabMatch && (!state.query || haystack.indexOf(state.query.toLowerCase()) >= 0);
+        });
+      }
+
+      function hideFeedStates() {
+        loadingState.hidden = true;
+        feedList.hidden = true;
+        emptyFeedState.hidden = true;
+        searchEmptyState.hidden = true;
+        feedErrorState.hidden = true;
+      }
+
+      function renderFeed(focusSelector) {
+        hideFeedStates();
+        var visiblePosts = filteredPosts();
+        if (!visiblePosts.length) {
+          searchEmptyState.hidden = !state.query;
+          emptyFeedState.hidden = Boolean(state.query);
+        } else {
+          feedList.innerHTML = visiblePosts.map(postMarkup).join("");
+          feedList.hidden = false;
+        }
+        if (focusSelector) {
+          window.requestAnimationFrame(function () {
+            var target = document.querySelector(focusSelector);
+            if (target) { target.focus(); }
+          });
+        }
+      }
+
+      function showFeedLoading() {
+        hideFeedStates();
+        loadingState.hidden = false;
+        loadingState.setAttribute("aria-busy", "true");
+        window.setTimeout(function () {
+          loadingState.setAttribute("aria-busy", "false");
+          if (!navigator.onLine) {
+            hideFeedStates();
+            feedErrorState.hidden = false;
+          } else {
+            renderFeed();
+          }
+        }, 420);
+      }
+
+      function findPost(element) {
+        var article = element.closest("[data-post-id]");
+        if (!article) { return null; }
+        return posts.find(function (post) { return post.id === article.getAttribute("data-post-id"); });
+      }
+
+      function setComposerError(message) {
+        var error = document.getElementById("composerError");
+        error.childNodes[0].nodeValue = message + " ";
+        error.hidden = false;
+        announce(message);
+      }
+
+      function focusComposer(category) {
+        if (category) {
+          var categorySelect = document.getElementById("postCategory");
+          Array.prototype.some.call(categorySelect.options, function (option) {
+            if (option.value === category) { categorySelect.value = category; return true; }
+            return false;
+          });
+        }
+        var contextDialog = document.getElementById("contextDialog");
+        if (contextDialog.open) { contextDialog.close(); }
+        postText.focus();
+      }
+
+      document.querySelectorAll(".feed-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          document.querySelectorAll(".feed-tab").forEach(function (item) {
+            item.setAttribute("aria-selected", String(item === tab));
+          });
+          state.tab = tab.getAttribute("data-tab");
+          renderFeed('[data-tab="' + state.tab + '"]');
+          announce(tab.textContent.trim() + " feed selected.");
+        });
+      });
+
+      document.querySelectorAll("[data-campus-search]").forEach(function (input) {
+        input.addEventListener("input", function () {
+          state.query = input.value.trim();
+          document.querySelectorAll("[data-campus-search]").forEach(function (other) {
+            if (other !== input) { other.value = input.value; }
+          });
+          renderFeed();
+        });
+      });
+
+      document.querySelectorAll("[data-search-query]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          state.query = button.getAttribute("data-search-query");
+          document.querySelectorAll("[data-campus-search]").forEach(function (input) { input.value = state.query; });
+          renderFeed();
+          var contextDialog = document.getElementById("contextDialog");
+          if (contextDialog.open) { contextDialog.close(); }
+          announce("Showing campus posts for " + state.query + ".");
+        });
+      });
+
+      document.getElementById("clearSearchButton").addEventListener("click", function () {
+        state.query = "";
+        document.querySelectorAll("[data-campus-search]").forEach(function (input) { input.value = ""; });
+        renderFeed();
+        document.getElementById("campusSearch").focus();
+      });
+
+      postText.addEventListener("input", function () {
+        postButton.disabled = !postText.value.trim() || state.posting;
+        postText.style.height = "auto";
+        postText.style.height = Math.min(postText.scrollHeight, 180) + "px";
+      });
+
+      document.getElementById("imageButton").addEventListener("click", function () {
+        document.getElementById("imageInput").click();
+      });
+      document.getElementById("imageInput").addEventListener("change", function () {
+        var file = this.files && this.files[0];
+        if (!file) { return; }
+        if (file.size > 5 * 1024 * 1024) {
+          this.value = "";
+          setComposerError("That image is over 5 MB. Choose a smaller file and try again.");
+          return;
+        }
+        var note = document.getElementById("attachmentNote");
+        note.textContent = file.name + " ready to upload.";
+        note.hidden = false;
+        announce("Image added. " + file.name + " is ready to upload.");
+      });
+
+      document.getElementById("anonymousButton").addEventListener("click", function () {
+        state.anonymous = !state.anonymous;
+        this.setAttribute("aria-pressed", String(state.anonymous));
+        document.getElementById("privacyHint").hidden = !state.anonymous;
+        announce(state.anonymous ? "Anonymous posting enabled. Your profile will be hidden from readers." : "Anonymous posting disabled.");
+      });
+
+      document.getElementById("pollButton").addEventListener("click", function () {
+        state.poll = !state.poll;
+        this.setAttribute("aria-pressed", String(state.poll));
+        document.getElementById("pollBuilder").hidden = !state.poll;
+        if (state.poll) { document.getElementById("pollOptionOne").focus(); }
+        announce(state.poll ? "Poll options added." : "Poll removed.");
+      });
+
+      composerForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!postText.value.trim() || state.posting) { return; }
+        state.pendingDraft = postText.value.trim();
+        if (!navigator.onLine) {
+          setComposerError("We couldn’t publish your post. Your draft is safe.");
+          return;
+        }
+        state.posting = true;
+        postButton.disabled = true;
+        postButton.setAttribute("aria-busy", "true");
+        postButton.textContent = "Posting…";
+        document.getElementById("composerError").hidden = true;
+        announce("Posting your campus update.");
+        window.setTimeout(function () {
+          var newPost = {
+            id: "new-" + Date.now(),
+            author: state.anonymous ? "Anonymous" : "Nuren Fahmid",
+            initials: state.anonymous ? "A" : "NF",
+            avatarTone: state.anonymous ? "anonymous" : "green",
+            verified: false,
+            meta: state.anonymous ? "Community post" : "CSE 22",
+            time: "Just now · Dhaka",
+            datetime: new Date().toISOString(),
+            category: document.getElementById("postCategory").value,
+            text: state.pendingDraft,
+            cta: "Open",
+            replies: 0,
+            shares: 0,
+            saved: false,
+            selectedReaction: "",
+            reactionCounts: { Appreciate: 0, Useful: 0, Insightful: 0, Support: 0, Celebrate: 0, Curious: 0, Relate: 0 },
+            anonymous: state.anonymous
+          };
+          posts.unshift(newPost);
+          state.posting = false;
+          state.pendingDraft = null;
+          postText.value = "";
+          postText.style.height = "";
+          postButton.textContent = "Post";
+          postButton.setAttribute("aria-busy", "false");
+          postButton.disabled = true;
+          state.anonymous = false;
+          state.poll = false;
+          document.getElementById("anonymousButton").setAttribute("aria-pressed", "false");
+          document.getElementById("pollButton").setAttribute("aria-pressed", "false");
+          document.getElementById("privacyHint").hidden = true;
+          document.getElementById("pollBuilder").hidden = true;
+          document.getElementById("attachmentNote").hidden = true;
+          state.tab = "all";
+          state.query = "";
+          document.querySelectorAll("[data-campus-search]").forEach(function (input) { input.value = ""; });
+          document.querySelectorAll(".feed-tab").forEach(function (tab) { tab.setAttribute("aria-selected", String(tab.getAttribute("data-tab") === "all")); });
+          renderFeed('[data-post-id="' + newPost.id + '"] [data-more]');
+          announce("Your post is live in the campus feed.");
+        }, 700);
+      });
+
+      document.getElementById("retryPostButton").addEventListener("click", function () {
+        document.getElementById("composerError").hidden = true;
+        if (state.pendingDraft) { postText.value = state.pendingDraft; }
+        postText.focus();
+        announce("Your draft is ready to try again.");
+      });
+
+      feedList.addEventListener("click", function (event) {
+        var button = event.target.closest("button");
+        if (!button) { return; }
+        var post = findPost(button);
+        if (!post) { return; }
+        var article = button.closest("[data-post-id]");
+
+        if (button.hasAttribute("data-react")) {
+          var picker = article.querySelector("[data-reaction-picker]");
+          var open = picker.hidden;
+          picker.hidden = !open;
+          button.setAttribute("aria-expanded", String(open));
+          if (open) { picker.querySelector("button").focus(); }
+          return;
+        }
+        if (button.hasAttribute("data-reaction")) {
+          var reactionName = button.getAttribute("data-reaction");
+          if (post.selectedReaction === reactionName) {
+            post.reactionCounts[reactionName] = Math.max(0, post.reactionCounts[reactionName] - 1);
+            post.selectedReaction = "";
+            announce(reactionName + " reaction removed.");
+          } else {
+            if (post.selectedReaction) { post.reactionCounts[post.selectedReaction] = Math.max(0, post.reactionCounts[post.selectedReaction] - 1); }
+            post.selectedReaction = reactionName;
+            post.reactionCounts[reactionName] += 1;
+            announce(reactionName + " reaction selected. " + post.reactionCounts[reactionName] + " total.");
+          }
+          renderFeed('[data-post-id="' + post.id + '"] [data-react]');
+          return;
+        }
+        if (button.hasAttribute("data-reply")) {
+          var replyForm = article.querySelector("[data-reply-form]");
+          var replyOpen = replyForm.hidden;
+          replyForm.hidden = !replyOpen;
+          button.setAttribute("aria-expanded", String(replyOpen));
+          if (replyOpen) { replyForm.querySelector("input").focus(); }
+          return;
+        }
+        if (button.hasAttribute("data-share")) {
+          var shared = button.getAttribute("aria-pressed") !== "true";
+          button.setAttribute("aria-pressed", String(shared));
+          post.shares += shared ? 1 : -1;
+          button.querySelector(".action-count").textContent = post.shares;
+          announce(shared ? "Post shared with your campus circle." : "Share removed.");
+          return;
+        }
+        if (button.hasAttribute("data-save")) {
+          post.saved = !post.saved;
+          button.setAttribute("aria-pressed", String(post.saved));
+          button.setAttribute("aria-label", post.saved ? "Remove from saved posts" : "Save post");
+          var label = button.querySelector(".action-word");
+          if (label) { label.textContent = post.saved ? "Saved" : "Save"; }
+          announce(post.saved ? "Post saved." : "Post removed from saved items.");
+          return;
+        }
+        if (button.hasAttribute("data-open-action")) {
+          announce(button.getAttribute("data-open-action") + " opened.");
+          return;
+        }
+        if (button.hasAttribute("data-more")) {
+          var menu = article.querySelector("[data-post-menu]");
+          var menuOpen = menu.hidden;
+          document.querySelectorAll("[data-post-menu]").forEach(function (other) { if (other !== menu) { other.hidden = true; } });
+          menu.hidden = !menuOpen;
+          button.setAttribute("aria-expanded", String(menuOpen));
+          if (menuOpen) { menu.querySelector("button").focus(); }
+          return;
+        }
+        if (button.hasAttribute("data-menu-action")) {
+          article.querySelector("[data-post-menu]").hidden = true;
+          article.querySelector("[data-more]").setAttribute("aria-expanded", "false");
+          announce(button.getAttribute("data-menu-action") + ".");
+        }
+      });
+
+      feedList.addEventListener("submit", function (event) {
+        var form = event.target.closest("[data-reply-form]");
+        if (!form) { return; }
+        event.preventDefault();
+        var post = findPost(form);
+        var input = form.querySelector("input");
+        if (!input.value.trim()) { return; }
+        post.replies += 1;
+        var postId = post.id;
+        renderFeed('[data-post-id="' + postId + '"] [data-reply]');
+        announce("Reply posted to " + post.author + ".");
+      });
+
+      document.querySelectorAll("[data-compose-action]").forEach(function (button) {
+        button.addEventListener("click", function () { focusComposer(button.getAttribute("data-compose-action")); });
+      });
+      document.getElementById("railPostButton").addEventListener("click", function () { focusComposer(); });
+
+      document.querySelectorAll("[data-message-person]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var person = button.getAttribute("data-message-person");
+          button.disabled = true;
+          button.setAttribute("aria-busy", "true");
+          button.textContent = "Opening…";
+          window.setTimeout(function () {
+            button.disabled = false;
+            button.setAttribute("aria-busy", "false");
+            button.textContent = "Message";
+            announce("Conversation with " + person + " is ready.");
+          }, 500);
+        });
+      });
+
+      function openDialog(id) {
+        var dialog = document.getElementById(id);
+        if (dialog && !dialog.open) { dialog.showModal(); }
+      }
+      document.getElementById("mobileMenuButton").addEventListener("click", function () { openDialog("navigationDialog"); });
+      document.getElementById("mobileContextButton").addEventListener("click", function () { openDialog("contextDialog"); });
+      document.getElementById("compactContextButton").addEventListener("click", function () { openDialog("contextDialog"); });
+      document.getElementById("railProfileButton").addEventListener("click", function () { openDialog("profileDialog"); });
+      document.getElementById("mobileProfileButton").addEventListener("click", function () { openDialog("profileDialog"); });
+      document.querySelectorAll("[data-close-dialog]").forEach(function (button) {
+        button.addEventListener("click", function () { button.closest("dialog").close(); });
+      });
+
+      function openCompleteProfile() {
+        var profileDialog = document.getElementById("profileDialog");
+        if (profileDialog.open) { profileDialog.close(); }
+        openDialog("completeProfileDialog");
+      }
+      document.getElementById("completeProfileButton").addEventListener("click", openCompleteProfile);
+      document.getElementById("emptyCompleteProfileButton").addEventListener("click", openCompleteProfile);
+      document.getElementById("dialogCompleteProfileButton").addEventListener("click", openCompleteProfile);
+      document.getElementById("dismissProfileButton").addEventListener("click", function () {
+        document.getElementById("profilePrompt").hidden = true;
+        announce("Profile reminder dismissed.");
+      });
+      document.getElementById("emptyDismissButton").addEventListener("click", function () {
+        state.tab = "all";
+        renderFeed();
+      });
+      document.getElementById("completeProfileForm").addEventListener("submit", function () {
+        document.getElementById("profilePrompt").hidden = true;
+        announce("Profile saved. Your Home feed will become more relevant.");
+      });
+
+      document.getElementById("refreshFeedButton").addEventListener("click", function () {
+        showFeedLoading();
+        announce("Refreshing your Home feed.");
+      });
+      document.getElementById("retryFeedButton").addEventListener("click", function () {
+        showFeedLoading();
+        announce("Trying to load your feed again.");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          document.querySelectorAll("[data-post-menu]").forEach(function (menu) { menu.hidden = true; });
+          document.querySelectorAll("[data-reaction-picker]").forEach(function (picker) { picker.hidden = true; });
+        }
+      });
+
+      showFeedLoading();
+    }());
+  </script>
+  <script src="navigation.js"></script>
+</body>
+</html>
