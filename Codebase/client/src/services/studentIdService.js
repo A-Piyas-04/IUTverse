@@ -6,7 +6,7 @@
 class StudentIdService {
   constructor() {
     // Get base URL from environment or use default
-    this.baseUrl = process.env.REACT_APP_API_URL || "http://localhost:3001";
+    this.baseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "";
   }
 
   // Get JWT token from localStorage

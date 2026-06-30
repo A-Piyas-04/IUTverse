@@ -18,11 +18,13 @@ const toLegacyUser = (profile, authUser = null) => {
     legacyUserId: profile.legacy_user_id,
     email: authUser?.email || null,
     name: profile.display_name,
+    handle: profile.handle,
     department: profile.department?.name || null,
     departmentId: profile.department_id,
     batch: profile.batch,
     studentId: profile.student_id,
     role: profile.role,
+    privacy: profile.privacy || {},
     createdAt: profile.created_at,
     profile: {
       bio: profile.bio,
@@ -50,12 +52,16 @@ const toPublicUser = (profile) => {
   return {
     id: profile.id,
     name: profile.display_name,
+    handle: profile.handle,
+    department: profile.department?.name || null,
+    batch: profile.batch,
     createdAt: profile.created_at,
     profile: {
       bio: profile.bio,
       profilePicture: profile.profile_image_path,
       coverPicture: profile.cover_image_path,
       interests: profile.interests || [],
+      badges: profile.badges || [],
     },
   };
 };
@@ -64,10 +70,12 @@ const profileSelect = `
   id,
   legacy_user_id,
   display_name,
+  handle,
   department_id,
   batch,
   student_id,
   role,
+  privacy,
   bio,
   interests,
   badges,
@@ -109,6 +117,8 @@ const profilePayload = (profileData) => {
     studentId: "student_id",
     name: "display_name",
     displayName: "display_name",
+    handle: "handle",
+    privacy: "privacy",
   };
 
   return Object.entries(profileData || {}).reduce((payload, [key, value]) => {

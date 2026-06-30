@@ -12,6 +12,8 @@ const mapPost = (post) => ({
   id: post.id,
   userId: post.user_id,
   caption: post.caption,
+  category: post.category,
+  location: post.location,
   image: post.image_path,
   imageUrl: publicUrl(post.image_bucket, post.image_path),
   imageBucket: post.image_bucket,
@@ -32,7 +34,7 @@ const mapPost = (post) => ({
 });
 
 class CatPostService {
-  async createPost(userId, caption, imageFile) {
+  async createPost(userId, caption, imageFile, details = {}) {
     const supabase = ensureSupabaseAdmin();
     const image = await uploadToBucket({
       bucket: "cat-posts",
@@ -46,6 +48,8 @@ class CatPostService {
       .insert({
         user_id: userId,
         caption: sanitizePlainText(caption, { max: 1000 }),
+        category: sanitizePlainText(details.category || "Update", { max: 60 }),
+        location: details.location ? sanitizePlainText(details.location, { max: 200 }) : null,
         image_path: image.path,
         image_bucket: image.bucket,
         image_mime_type: image.mimeType,
@@ -58,13 +62,15 @@ class CatPostService {
     return mapPost(data);
   }
 
-  async getAllPosts(page = 1, limit = 10) {
+  async getAllPosts(page = 1, limit = 10, category = null) {
     const supabase = ensureSupabaseAdmin();
     const range = pageRange(page, limit);
-    const { data, count, error } = await supabase
+    let query = supabase
       .from("cat_posts")
       .select(`*, user:profiles!cat_posts_user_id_fkey(${profileSelect})`, { count: "exact" })
-      .eq("status", "active")
+      .eq("status", "active");
+    if (category && category !== "All") query = query.eq("category", sanitizePlainText(category, { max: 60 }));
+    const { data, count, error } = await query
       .order("created_at", { ascending: false })
       .range(range.from, range.to);
 

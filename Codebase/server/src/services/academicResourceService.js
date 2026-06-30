@@ -18,11 +18,17 @@ const mapResource = (resource) => ({
   type: resource.type,
   departmentId: resource.department_id,
   department: resource.department ? mapDepartment(resource.department) : null,
-  fileUrl: resource.file_path,
+  filePath: resource.file_path,
+  fileUrl: resource.file_path ? `/api/academic/resources/${resource.id}/file` : null,
+  fileDownloadUrl: resource.file_path ? `/api/academic/resources/${resource.id}/file` : null,
   filePublicUrl: publicUrl(resource.file_bucket, resource.file_path),
   fileBucket: resource.file_bucket,
   externalLink: resource.external_link,
   courseCode: resource.course_code,
+  description: resource.description,
+  tags: resource.tags || [],
+  helpfulCount: resource.helpful_count || 0,
+  commentCount: resource.comment_count || 0,
   uploadedById: resource.uploaded_by_id,
   uploadedBy: mapProfile(resource.uploadedBy),
   status: resource.status,
@@ -46,6 +52,8 @@ const createAcademicResource = async (resourceData) => {
       file_size_bytes: resourceData.fileSizeBytes || null,
       external_link: optionalText(resourceData.externalLink, { max: 500 }),
       course_code: optionalText(resourceData.courseCode, { max: 60 }),
+      description: optionalText(resourceData.description, { max: 3000 }),
+      tags: resourceData.tags || [],
       uploaded_by_id: resourceData.uploadedById,
     })
     .select(resourceSelect)
@@ -67,6 +75,7 @@ const getAllAcademicResources = async (filters = {}, { page = 1, limit = 20 } = 
   if (filters.departmentId) query = query.eq("department_id", Number(filters.departmentId));
   if (filters.type) query = query.eq("type", filters.type);
   if (filters.courseCode) query = query.ilike("course_code", `%${filters.courseCode}%`);
+  if (filters.search) query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,course_code.ilike.%${filters.search}%`);
 
   const { data, count, error } = await query
     .order("created_at", { ascending: false })
@@ -131,6 +140,8 @@ const updateAcademicResource = async (id, updateData, userId) => {
   if (updateData.departmentId !== undefined) payload.department_id = updateData.departmentId;
   if (updateData.externalLink !== undefined) payload.external_link = optionalText(updateData.externalLink, { max: 500 });
   if (updateData.courseCode !== undefined) payload.course_code = optionalText(updateData.courseCode, { max: 60 });
+  if (updateData.description !== undefined) payload.description = optionalText(updateData.description, { max: 3000 });
+  if (updateData.tags !== undefined) payload.tags = updateData.tags;
   if (updateData.filePath !== undefined) payload.file_path = updateData.filePath;
   if (updateData.fileBucket !== undefined) payload.file_bucket = updateData.fileBucket;
   if (updateData.fileMimeType !== undefined) payload.file_mime_type = updateData.fileMimeType;

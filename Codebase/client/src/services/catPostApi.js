@@ -5,14 +5,6 @@ const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
-// Helper function to create headers with auth
-const getAuthHeaders = () => {
-  const token = getAuthToken();
-  return {
-    'Authorization': token ? `Bearer ${token}` : '',
-  };
-};
-
 // Create new cat post
 export const createCatPost = async (formData) => {
   const token = getAuthToken();

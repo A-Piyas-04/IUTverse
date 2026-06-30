@@ -19,7 +19,7 @@ const pageRange = (page = 1, limit = 20, maxLimit = 100) => {
   return { page: safePage, limit: safeLimit, from, to };
 };
 
-const profileSelect = "id, display_name, batch, student_id, role, profile_image_path, cover_image_path, department:departments(id, name)";
+const profileSelect = "id, display_name, handle, batch, student_id, role, profile_image_path, cover_image_path, department:departments(id, name)";
 
 const mapProfile = (profile) => {
   if (!profile) return null;

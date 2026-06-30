@@ -58,4 +58,9 @@ const authenticateToken = async (req, res, next) => {
   });
 };
 
-module.exports = { authenticateToken };
+const optionalAuth = (req, res, next) => {
+  if (!req.headers.authorization) return next();
+  return authenticateToken(req, res, next);
+};
+
+module.exports = { authenticateToken, optionalAuth };

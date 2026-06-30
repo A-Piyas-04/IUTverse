@@ -1,0 +1,23 @@
+const express = require("express");
+const controller = require("../controllers/v2Controller");
+const { authenticateToken, optionalAuth } = require("../middleware/auth");
+const { createLimiter } = require("../middleware/security");
+const upload = require("../middleware/upload");
+
+const router = express.Router();
+router.post("/saved-items/:kind/:id", authenticateToken, createLimiter, controller.savedCreate);
+router.get("/saved-items/:kind/:id", authenticateToken, controller.savedStatus);
+router.delete("/saved-items/:kind/:id", authenticateToken, controller.savedDelete);
+router.post("/reports", authenticateToken, createLimiter, controller.reportCreate);
+router.get("/reports", authenticateToken, controller.reportsList);
+router.patch("/reports/:id", authenticateToken, createLimiter, controller.reportUpdate);
+router.get("/events", optionalAuth, controller.listEvents);
+router.post("/events", authenticateToken, createLimiter, upload.single("image"), controller.createEvent);
+router.put("/events/:id", authenticateToken, createLimiter, upload.single("image"), controller.updateEvent);
+router.delete("/events/:id", authenticateToken, createLimiter, controller.deleteEvent);
+router.put("/events/:id/rsvp", authenticateToken, createLimiter, controller.updateRsvp);
+router.post("/academic/resources/:id/helpful", authenticateToken, createLimiter, controller.toggleHelpful);
+router.get("/academic/resources/:id/file", authenticateToken, controller.resourceFile);
+router.get("/campus/weather", controller.weather);
+router.post("/issue-reports", authenticateToken, createLimiter, controller.createIssueReport);
+module.exports = router;

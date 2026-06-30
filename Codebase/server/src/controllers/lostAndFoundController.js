@@ -108,7 +108,7 @@ class LostAndFoundController {
       if (description.error) return response.badRequest(res, description.error);
       const location = requiredText(postData.location, "Location", { max: 200 });
       if (location.error) return response.badRequest(res, location.error);
-      const contact = requiredText(postData.contact, "Contact", { max: 200 });
+      const contact = requiredText(postData.contact || postData.contactNote || "IUTverse messages", "Contact", { max: 200 });
       if (contact.error) return response.badRequest(res, contact.error);
 
       const safePostData = {
@@ -117,6 +117,13 @@ class LostAndFoundController {
         description: description.value,
         location: location.value,
         contact: contact.value,
+        category: optionalText(postData.category, { max: 120 }),
+        occurredAt: postData.occurredAt && !Number.isNaN(Date.parse(postData.occurredAt)) ? new Date(postData.occurredAt).toISOString() : null,
+        contactPreference: optionalText(postData.contactPreference, { max: 40 }) || "message",
+        contactNote: optionalText(postData.contactNote, { max: 200 }),
+        returnLocation: optionalText(postData.returnLocation, { max: 200 }),
+        availability: optionalText(postData.availability, { max: 300 }),
+        privacyAccepted: String(postData.privacyAccepted).toLowerCase() === "true",
       };
       
       try {
@@ -178,6 +185,11 @@ class LostAndFoundController {
           updateData[field] = text.value;
         }
       }
+      for (const [field, max] of [["category", 120], ["contactPreference", 40], ["contactNote", 200], ["returnLocation", 200], ["availability", 300]]) {
+        if (req.body[field] !== undefined) updateData[field] = optionalText(req.body[field], { max });
+      }
+      if (req.body.occurredAt !== undefined) updateData.occurredAt = req.body.occurredAt ? new Date(req.body.occurredAt).toISOString() : null;
+      if (req.body.privacyAccepted !== undefined) updateData.privacyAccepted = String(req.body.privacyAccepted).toLowerCase() === "true";
 
       const updatedPost = await lostAndFoundService.updatePost(postIdResult.value, userId, updateData, req.file);
       

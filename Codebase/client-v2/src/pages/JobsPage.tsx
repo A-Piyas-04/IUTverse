@@ -1,0 +1,30 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { BriefcaseBusiness, CalendarClock, MapPin, MessageCircle, Plus, UsersRound } from "lucide-react";
+import { apiPage, apiRequest, jsonBody } from "@/lib/api";
+import type { Job } from "@/lib/types";
+import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
+import { PageFrame } from "@/components/shell/AppShell";
+import { EntityActions } from "@/features/shared/EntityActions";
+import { dateLabel, queryString } from "./pageUtils";
+import styles from "./Pages.module.css";
+
+const jobTypes = ["All Jobs", "Internship", "Job", "Research", "Project", "ClubRole", "Competition", "Freelance", "PartTime", "Volunteer"];
+
+export function JobsPage() {
+  const [type, setType] = useState("All Jobs"); const [search, setSearch] = useState(""); const [createOpen, setCreateOpen] = useState(false);
+  const jobs = useQuery({ queryKey: ["jobs", type, search], queryFn: ({ signal }) => apiPage<Job>(`/jobs${queryString({ type: type === "All Jobs" ? undefined : type, search })}`, signal) });
+  return <PageFrame title="Job Board" eyebrow="Learn & Work" action={<Button onClick={() => setCreateOpen(true)}><Plus size={17} />Post a Job</Button>} tabs={jobTypes.map(item => <Chip key={item} active={item === type} onClick={() => setType(item)}>{item.replace("ClubRole","Club roles").replace("PartTime","Part-time")}</Chip>)}><div className={styles.toolbar}><Input className={styles.toolbarGrow} value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs and opportunities" aria-label="Search job board" /></div><div className={styles.stack}>{jobs.isLoading && <Card padded>Loading jobs…</Card>}{jobs.isError && <EmptyState title="Job Board could not load" body={jobs.error.message} action={<Button onClick={() => void jobs.refetch()}>Try again</Button>} />}{jobs.data?.data.length === 0 && <EmptyState title="No jobs at this moment" body="Change the selected filters or post an opportunity for the IUT community." />}{jobs.data?.data.map(job => <JobCard key={job.id} job={job} />)}</div><JobDialog open={createOpen} onClose={() => setCreateOpen(false)} /></PageFrame>;
+}
+
+function JobCard({ job }: { job: Job }) {
+  const cache = useQueryClient(); const { notify } = useToast(); const apply = useMutation({ mutationFn: () => apiRequest(`/jobs/${job.id}/apply`, { method: job.applied ? "DELETE" : "POST" }), onSuccess: () => { notify(job.applied ? "Application withdrawn." : "Interest recorded."); void cache.invalidateQueries({ queryKey: ["jobs"] }); } });
+  return <Card className={styles.cardContent}><div className={styles.titleRow}><div><span className={`${styles.badge} ${job.type === "Volunteer" ? styles.campusBadge : ""}`}>{job.type.replace("PartTime","Part-time")}</span><h2>{job.title}</h2><div className={styles.meta}>{job.organization || job.postedBy?.displayName || "IUT community"} · {dateLabel(job.createdAt)}</div></div><BriefcaseBusiness color="var(--accent)" /></div><p>{job.description}</p><div className={styles.metrics}>{job.deadline && <span><CalendarClock size={15} /> Deadline {new Date(job.deadline).toLocaleDateString()}</span>}<span><MapPin size={15} />{job.format || "Campus"}</span><span><UsersRound size={15} />{job.applicationCount || 0} interested</span></div>{job.requirements?.length > 0 && <ul>{job.requirements.slice(0,4).map(item => <li key={item}>{item}</li>)}</ul>}<div className={styles.actions}><Button onClick={() => apply.mutate()} disabled={apply.isPending}>{job.applied ? "Withdraw interest" : "Express interest"}</Button><Button variant="secondary"><MessageCircle size={17} />Discussion</Button><EntityActions kind="job" id={job.id} saved={job.saved} invalidate={["jobs"]} /></div></Card>;
+}
+
+function JobDialog({ open, onClose }: { open: boolean; onClose(): void }) {
+  const [form, setForm] = useState({ title:"",type:"Freelance",organization:"",description:"",requirements:"",format:"Campus",compensation:"",deadline:"" }); const cache=useQueryClient(); const {notify}=useToast();
+  const create=useMutation({mutationFn:()=>apiRequest("/jobs",{method:"POST",...jsonBody({...form,requirements:form.requirements.split("\n").filter(Boolean),deadline:form.deadline?new Date(form.deadline).toISOString():null})}),onSuccess:()=>{notify("Job posted.");void cache.invalidateQueries({queryKey:["jobs"]});onClose();}});
+  const set=(key:string,value:string)=>setForm(v=>({...v,[key]:value}));
+  return <Dialog title="Post a Job" open={open} onClose={onClose}><form className={styles.form} onSubmit={e=>{e.preventDefault();create.mutate();}}><Field label="Opportunity title"><Input required value={form.title} onChange={e=>set("title",e.target.value)}/></Field><div className={styles.formGrid}><Field label="Type"><Select value={form.type} onChange={e=>set("type",e.target.value)}>{jobTypes.slice(1).map(x=><option key={x}>{x}</option>)}</Select></Field><Field label="Organization or group"><Input value={form.organization} onChange={e=>set("organization",e.target.value)}/></Field><Field label="Format"><Select value={form.format} onChange={e=>set("format",e.target.value)}><option>Campus</option><option>Remote</option><option>Hybrid</option></Select></Field><Field label="Deadline"><Input type="datetime-local" value={form.deadline} onChange={e=>set("deadline",e.target.value)}/></Field></div><Field label="Description"><Textarea required value={form.description} onChange={e=>set("description",e.target.value)}/></Field><Field label="Requirements (one per line)"><Textarea value={form.requirements} onChange={e=>set("requirements",e.target.value)}/></Field><Field label="Compensation"><Input value={form.compensation} onChange={e=>set("compensation",e.target.value)}/></Field>{create.isError&&<p role="alert">{create.error.message}</p>}<DialogActions><Button variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" disabled={create.isPending}>{create.isPending?"Posting…":"Post a Job"}</Button></DialogActions></form></Dialog>;
+}

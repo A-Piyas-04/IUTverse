@@ -2,6 +2,9 @@ const chatService = require("../services/chatService");
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { pagination, positiveInt, requiredText, uuid } = require("../utils/validation");
+const multer = require("multer");
+const storageService = require("../services/storageService");
+const attachmentUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Start or get conversation with another user
 const startConversation = async (req, res) => {
@@ -42,14 +45,21 @@ const sendMessage = async (req, res) => {
     const conversationIdResult = positiveInt(conversationId, "Conversation ID");
     if (conversationIdResult.error) return response.badRequest(res, conversationIdResult.error);
 
-    const contentResult = requiredText(content, "Message content", { max: 4000 });
-    if (contentResult.error) return response.badRequest(res, contentResult.error);
+    const contentResult = content ? requiredText(content, "Message content", { max: 4000 }) : { value: "" };
+    if (contentResult.error || (!contentResult.value && !req.file)) return response.badRequest(res, contentResult.error || "Message or attachment is required");
+
+    let attachment = null;
+    if (req.file) {
+      const uploaded = await storageService.uploadObject({ bucket: "chat-attachments", userId: senderId, file: req.file, prefix: "message" });
+      attachment = { path: uploaded.path, bucket: uploaded.bucket, name: req.file.originalname, mimeType: uploaded.mimeType, size: uploaded.size };
+    }
 
     const message = await chatService.sendMessage(
       conversationIdResult.value,
       senderId,
       receiverId,
-      contentResult.value
+      contentResult.value,
+      attachment
     );
 
     res.status(201).json({
@@ -135,10 +145,24 @@ const markAsRead = async (req, res) => {
   }
 };
 
+const getAttachment = async (req, res) => {
+  try {
+    const message = await chatService.getAttachment(req.params.messageId, req.user.userId);
+    const url = await storageService.signedUrl(message.attachment_bucket, message.attachment_path, 300);
+    return res.redirect(url);
+  } catch (error) {
+    if (error.message.includes("access denied")) return response.forbidden(res, error.message);
+    if (error.message.includes("not found")) return response.notFound(res, error.message);
+    return response.serverError(res, "Could not open attachment", error.message);
+  }
+};
+
 module.exports = {
   startConversation,
   sendMessage,
   getMessages,
   getConversations,
   markAsRead,
+  attachmentUpload,
+  getAttachment,
 };
