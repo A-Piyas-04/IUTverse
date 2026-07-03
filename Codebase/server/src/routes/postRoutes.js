@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const postController = require("../controllers/postController");
 const commentController = require("../controllers/commentController");
-const { authenticateToken, optionalAuth } = require("../middleware/auth");
+const { authenticateToken } = require("../middleware/auth");
 const upload = require("../middleware/uploadMiddleware");
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
@@ -19,10 +19,10 @@ router.post(
 );
 
 // Get all posts (paginated)
-router.get("/posts", optionalAuth, postController.getPosts);
+router.get("/posts", authenticateToken, postController.getPosts);
 
 // Get a single post by ID with all comments
-router.get("/posts/:id", optionalAuth, postController.getPost);
+router.get("/posts/:id", authenticateToken, postController.getPost);
 
 // Update a post
 router.put(
@@ -53,10 +53,10 @@ router.post(
 );
 
 // Get all comments for a post
-router.get("/posts/:postId/comments", commentController.getPostComments);
+router.get("/posts/:postId/comments", authenticateToken, commentController.getPostComments);
 
 // Get replies for a specific comment
-router.get("/comments/:commentId/replies", commentController.getCommentReplies);
+router.get("/comments/:commentId/replies", authenticateToken, commentController.getCommentReplies);
 
 // Update a comment
 router.put(

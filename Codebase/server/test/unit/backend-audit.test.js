@@ -136,7 +136,7 @@ test("BUG-016 auth middleware normalizes req.user.id and req.user.userId", () =>
   const auth = read("src/middleware/auth.js");
   assert.match(auth, /id:\s*data\.user\.id/);
   assert.match(auth, /userId:\s*data\.user\.id/);
-  assert.match(auth, /id:\s*user\.userId \|\| user\.id/);
+  assert.doesNotMatch(auth, /jwt\.verify|jsonwebtoken/);
 });
 
 test("BUG-017 lost-and-found route is mounted once", () => {
@@ -276,8 +276,11 @@ test("BUG-042 lost-and-found ownership works with normalized user IDs", () => {
 });
 
 test("BUG-043 profile updates use a whitelist payload", () => {
-  assert.match(read("src/services/userService.js"), /const allowed = \{/);
-  assert.match(read("src/services/userService.js"), /profilePayload\(profileData\)/);
+  const service = read("src/services/userService.js");
+  assert.match(service, /const publicPayload =/);
+  assert.match(service, /const privatePayload =/);
+  assert.doesNotMatch(service, /role:\s*"role"/);
+  assert.doesNotMatch(service, /badges:\s*"badges"/);
 });
 
 test("BUG-044 lost-and-found updates use an allowed-field payload", () => {

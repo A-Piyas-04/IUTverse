@@ -14,19 +14,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { login, logout, isAuthenticated, user } = useAuth();
 
-  const validateIUTEmail = (email) => {
-    const iutEmailRegex = /^[a-zA-Z0-9._%+-]+@iut-dhaka\.edu$/;
-    return iutEmailRegex.test(email);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateIUTEmail(email)) {
-      setMessage('Please enter a valid IUT email address (yourname@iut-dhaka.edu)');
-      return;
-    }
-
     if (!email || !password) {
       setMessage('Please fill in all fields');
       return;
@@ -70,8 +60,8 @@ export default function LoginPage() {
   };
 
   const handlePasswordReset = async () => {
-    if (!validateIUTEmail(email)) {
-      setMessage('Enter your IUT email first, then request a password reset.');
+    if (!email) {
+      setMessage('Enter your account email first, then request a password reset.');
       return;
     }
 

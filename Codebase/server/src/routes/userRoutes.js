@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
+const { requireAdmin } = require("../middleware/authorization");
 const profileController = require("../controllers/profileController");
 const userController = require("../controllers/userController");
 const profilePictureUpload = require("../middleware/profilePictureUpload");
@@ -11,12 +12,9 @@ const {
 } = require("../middleware/uploadErrors");
 
 // Get user profile (protected route)
-router.get("/profile", authenticateToken, (req, res) => {
-  res.json({
-    message: "Profile data",
-    user: req.user,
-  });
-});
+router.get("/profile", authenticateToken, profileController.getOwnProfile);
+router.get("/profile/me", authenticateToken, profileController.getOwnProfile);
+router.patch("/profile/me", authenticateToken, profileController.patchOwnProfile);
 
 // Get user dashboard data (protected route)
 router.get("/dashboard", authenticateToken, (req, res) => {
@@ -32,7 +30,7 @@ router.get("/dashboard", authenticateToken, (req, res) => {
 });
 
 // Get profile by userId (public)
-router.get("/profile/:userId", profileController.getProfile);
+router.get("/profile/:userId", authenticateToken, profileController.getProfile);
 // Create profile (protected)
 router.post("/profile", authenticateToken, profileController.createProfile);
 // Update profile (protected)
@@ -73,11 +71,12 @@ router.get(
 router.get(
   "/user/by-student-id/:studentId",
   authenticateToken,
+  requireAdmin,
   userController.getUserByStudentId
 );
 
 // Get user by ID (public - for viewing other profiles)
-router.get("/user/:userId", userController.getUserById);
+router.get("/user/:userId", authenticateToken, userController.getUserById);
 
 // Profile picture routes
 // Upload profile picture (protected)
@@ -90,7 +89,7 @@ router.post(
 );
 
 // Get profile picture (public)
-router.get("/profile/picture/:userId", profileController.getProfilePicture);
+router.get("/profile/picture/:userId", authenticateToken, profileController.getProfilePicture);
 
 // Delete profile picture (protected)
 router.delete(
@@ -110,7 +109,7 @@ router.post(
 );
 
 // Get cover picture (public)
-router.get("/profile/cover/:userId", profileController.getCoverPicture);
+router.get("/profile/cover/:userId", authenticateToken, profileController.getCoverPicture);
 
 // Delete cover picture (protected)
 router.delete(

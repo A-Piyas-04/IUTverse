@@ -21,12 +21,14 @@ const mapReaction = (reaction) => ({
 const mapComment = (comment) => ({
   id: comment.id,
   postId: comment.post_id,
-  userId: comment.author_id,
+  userId: comment.is_anonymous ? null : comment.author_id,
+  authorId: comment.is_anonymous ? null : comment.author_id,
+  isAnonymous: Boolean(comment.is_anonymous),
   content: comment.content,
   createdAt: comment.created_at,
   updatedAt: comment.updated_at,
   parentCommentId: comment.parent_comment_id,
-  user: mapProfile(comment.user),
+  user: comment.is_anonymous ? null : mapProfile(comment.user),
   replies: (comment.replies || []).map(mapComment),
   _count: { replies: comment.replies?.length || 0 },
 });
@@ -34,6 +36,7 @@ const mapComment = (comment) => ({
 const emptyReactionSummary = () => ({ like: 0, funny: 0, relatable: 0, angry: 0, insightful: 0, helpful: 0, wholesome: 0 });
 
 const mapPost = (post, currentUserId = null) => {
+  const anonymous = Boolean(post.is_anonymous);
   const reactions = (post.reactions || []).map(mapReaction);
   const reactionSummary = reactions.reduce((summary, reaction) => {
     if (Object.prototype.hasOwnProperty.call(summary, reaction.reactionType)) summary[reaction.reactionType] += 1;
@@ -41,8 +44,8 @@ const mapPost = (post, currentUserId = null) => {
   }, emptyReactionSummary());
   return ({
   id: post.id,
-  userId: post.author_id,
-  authorId: post.author_id,
+  userId: anonymous ? null : post.author_id,
+  authorId: anonymous ? null : post.author_id,
   content: post.content,
   category: post.categories?.[0]?.category?.name || null,
   isAnonymous: post.is_anonymous,
@@ -55,7 +58,7 @@ const mapPost = (post, currentUserId = null) => {
   reactionSummary,
   currentReaction: reactions.find((reaction) => reaction.userId === currentUserId)?.reactionType || null,
   commentCount: post.comment_count,
-  user: mapProfile(post.user),
+  user: anonymous ? null : mapProfile(post.user),
   tags: (post.categories || []).map((link) => ({ tag: link.category })),
   reactions,
   comments: (post.comments || []).map(mapComment),

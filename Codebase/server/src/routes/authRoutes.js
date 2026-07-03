@@ -7,6 +7,7 @@ const {
   changePassword,
   getAllUsers,
   validateToken,
+  getMe,
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 const { requireAdmin } = require("../middleware/authorization");
@@ -24,6 +25,7 @@ router.put('/password', authenticateToken, authLimiter, changePassword);
 
 // Token validation endpoint (protected)
 router.get('/validate', authenticateToken, validateToken);
+router.get('/me', authenticateToken, getMe);
 
 // Get all users endpoint
 router.get('/users', authenticateToken, requireAdmin, getAllUsers);

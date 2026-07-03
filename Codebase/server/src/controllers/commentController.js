@@ -11,12 +11,14 @@ const { positiveInt, requiredText } = require("../utils/validation");
 const mapComment = (comment) => ({
   id: comment.id,
   postId: comment.post_id,
-  userId: comment.author_id,
+  userId: comment.is_anonymous ? null : comment.author_id,
+  authorId: comment.is_anonymous ? null : comment.author_id,
+  isAnonymous: Boolean(comment.is_anonymous),
   content: comment.content,
   createdAt: comment.created_at,
   updatedAt: comment.updated_at,
   parentCommentId: comment.parent_comment_id,
-  user: mapProfile(comment.user),
+  user: comment.is_anonymous ? null : mapProfile(comment.user),
   replies: (comment.replies || []).map(mapComment),
 });
 
@@ -41,6 +43,7 @@ exports.createComment = async (req, res) => {
         author_id: req.user.id,
         content: contentResult.value,
         parent_comment_id: parentResult.value,
+        is_anonymous: req.body.isAnonymous === true || req.body.isAnonymous === "true",
       })
       .select(`*, user:profiles!post_comments_author_id_fkey(${profileSelect})`)
       .single();

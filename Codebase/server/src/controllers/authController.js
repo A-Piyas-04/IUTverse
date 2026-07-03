@@ -3,6 +3,7 @@ const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { requiredText } = require("../utils/validation");
 const { pageRange } = require("../utils/supabaseData");
+const securityService = require("../services/securityService");
 const {
   supabase,
   supabaseAdmin,
@@ -28,14 +29,11 @@ const publicUserFromSession = (sessionUser, profile = null) => ({
 
 const getProfile = async (userId) => {
   if (!isSupabaseAdminConfigured) return null;
-
-  const { data } = await supabaseAdmin
-    .from('profiles')
-    .select('id, display_name, role')
-    .eq('id', userId)
-    .maybeSingle();
-
-  return data;
+  const [{ data }, security] = await Promise.all([
+    supabaseAdmin.from('profiles').select('id, display_name').eq('id', userId).maybeSingle(),
+    securityService.getSecurityContext(userId),
+  ]);
+  return data ? { ...data, role: security.role, membershipStatus: security.membershipStatus } : null;
 };
 
 const signup = async (req, res) => {
@@ -102,10 +100,6 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    if (!validateIUTEmail(email)) {
-      return res.status(400).json({ message: 'Please provide a valid IUT email address' });
-    }
-
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -116,6 +110,10 @@ const login = async (req, res) => {
     }
 
     const profile = await getProfile(data.user.id);
+    if (profile?.membershipStatus !== "active") {
+      await supabase.auth.signOut().catch(() => {});
+      return response.forbidden(res, "Active IUTverse membership required");
+    }
 
     res.status(200).json({ 
       message: 'Login successful',
@@ -137,10 +135,6 @@ const requestPasswordReset = async (req, res) => {
 
     const { value: email, error } = requiredText(req.body.email, "Email", { max: 254 });
     if (error) return response.badRequest(res, error);
-    if (!validateIUTEmail(email)) {
-      return response.badRequest(res, "Please provide a valid IUT email address");
-    }
-
     const options = {};
     if (req.body.redirectTo) {
       options.redirectTo = String(req.body.redirectTo);
@@ -200,7 +194,7 @@ const getAllUsers = async (req, res) => {
 
     const { data: users, error } = await supabaseAdmin
       .from('profiles')
-      .select('id, display_name, department_id, batch, student_id, role, created_at')
+      .select('id, display_name, department_id, batch, created_at')
       .order('created_at', { ascending: false })
       .range(range.from, range.to);
 
@@ -208,7 +202,24 @@ const getAllUsers = async (req, res) => {
       return response.serverError(res, "Failed to fetch users", error.message);
     }
 
-    return response.success(res, users, null, {
+    const ids = users.map((user) => user.id);
+    const [{ data: roles, error: rolesError }, { data: memberships, error: membershipsError }] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
+      supabaseAdmin.from("memberships").select("user_id, status, source").in("user_id", ids),
+    ]);
+    if (rolesError || membershipsError) {
+      return response.serverError(res, "Failed to fetch user security data", (rolesError || membershipsError).message);
+    }
+    const roleByUser = new Map((roles || []).map((row) => [row.user_id, row.role]));
+    const membershipByUser = new Map((memberships || []).map((row) => [row.user_id, row]));
+    const safeUsers = users.map((user) => ({
+      ...user,
+      role: roleByUser.get(user.id) || "user",
+      membershipStatus: membershipByUser.get(user.id)?.status || "missing",
+      membershipSource: membershipByUser.get(user.id)?.source || null,
+    }));
+
+    return response.success(res, safeUsers, null, {
       pagination: {
         page: range.page,
         limit: range.limit,
@@ -239,11 +250,20 @@ const validateToken = async (req, res) => {
   }
 };
 
+const getMe = async (req, res) => response.success(res, {
+  id: req.user.id,
+  email: req.user.email,
+  displayName: req.user.name,
+  role: req.user.role,
+  membershipStatus: req.user.membershipStatus,
+});
+
 module.exports = {
   signup,
   login,
   requestPasswordReset,
   changePassword,
   getAllUsers,
-  validateToken
+  validateToken,
+  getMe
 };

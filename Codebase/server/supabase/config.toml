@@ -1,0 +1,8 @@
+project_id = "iutverse"
+
+[auth]
+enabled = true
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_restrict_iut_signup"

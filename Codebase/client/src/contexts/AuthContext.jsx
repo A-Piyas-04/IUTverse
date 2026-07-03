@@ -4,6 +4,17 @@ import { supabase } from "../services/supabaseClient.js";
 
 const AuthContext = createContext();
 
+const loadAuthoritativeUser = async (session) => {
+  const response = await fetch("/api/auth/me", {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.success || payload.data?.membershipStatus !== "active") {
+    throw new Error(payload.message || "Active IUTverse membership required");
+  }
+  return { ...payload.data, name: payload.data.displayName };
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -26,14 +37,7 @@ export const AuthProvider = ({ children }) => {
         if (supabase) {
           const { data } = await supabase.auth.getSession();
           if (data.session?.user) {
-            const userData = {
-              id: data.session.user.id,
-              email: data.session.user.email,
-              name:
-                data.session.user.user_metadata?.display_name ||
-                data.session.user.email,
-              createdAt: data.session.user.created_at,
-            };
+            const userData = await loadAuthoritativeUser(data.session);
             authUtils.setAuthData(data.session.access_token, userData);
             setIsAuthenticated(true);
             setUser(userData);
@@ -79,15 +83,16 @@ export const AuthProvider = ({ children }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const userData = {
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.display_name || session.user.email,
-          createdAt: session.user.created_at,
-        };
-        authUtils.setAuthData(session.access_token, userData);
-        setIsAuthenticated(true);
-        setUser(userData);
+        void loadAuthoritativeUser(session).then((userData) => {
+          authUtils.setAuthData(session.access_token, userData);
+          setIsAuthenticated(true);
+          setUser(userData);
+        }).catch(() => {
+          authUtils.clearAuthData();
+          setIsAuthenticated(false);
+          setUser(null);
+          void supabase.auth.signOut();
+        });
       } else {
         authUtils.clearAuthData();
         setIsAuthenticated(false);

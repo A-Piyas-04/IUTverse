@@ -108,12 +108,15 @@ class ApiService {
 
       if (error) return { success: false, error: error.message };
 
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.user_metadata?.display_name || data.user.email,
-        createdAt: data.user.created_at,
-      };
+      const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      const me = await meResponse.json().catch(() => ({}));
+      if (!meResponse.ok || !me.success || me.data?.membershipStatus !== "active") {
+        await supabase.auth.signOut();
+        return { success: false, error: me.message || "This account does not have active IUTverse membership." };
+      }
+      const userData = { ...me.data, name: me.data.displayName };
 
       return {
         success: true,

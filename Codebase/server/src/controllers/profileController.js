@@ -3,6 +3,25 @@ const storageService = require("../services/storageService");
 const response = require("../utils/responses");
 const { uuid } = require("../utils/validation");
 
+const getOwnProfile = async (req, res) => {
+  try {
+    const profile = await userService.getOwnerUserById(req.user.id);
+    if (!profile) return response.notFound(res, "Profile not found");
+    return response.success(res, profile);
+  } catch (error) {
+    return response.serverError(res, "Error fetching private profile", error.message);
+  }
+};
+
+const patchOwnProfile = async (req, res) => {
+  try {
+    const profile = await userService.updateProfile(req.user.id, req.body);
+    return response.success(res, profile, "Profile updated");
+  } catch (error) {
+    return response.serverError(res, "Error updating profile", error.message);
+  }
+};
+
 // GET /api/profile/:userId
 const getProfile = async (req, res) => {
   try {
@@ -10,7 +29,9 @@ const getProfile = async (req, res) => {
     if (userIdResult.error) return response.badRequest(res, userIdResult.error);
 
     const userId = userIdResult.value;
-    const profile = await userService.getPublicUserById(userId);
+    const profile = req.user?.id === userId
+      ? await userService.getOwnerUserById(userId)
+      : await userService.getPublicUserById(userId);
     if (!profile) return response.notFound(res, "Profile not found");
     res.json(profile);
   } catch (error) {
@@ -232,6 +253,8 @@ const deleteCoverPicture = async (req, res) => {
 
 module.exports = {
   getProfile,
+  getOwnProfile,
+  patchOwnProfile,
   createProfile,
   updateProfile,
   uploadProfilePicture,

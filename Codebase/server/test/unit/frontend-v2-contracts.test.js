@@ -38,13 +38,13 @@ test("frontend V2 API is mounted without replacing existing routes", () => {
   assert.match(routes, /router\.use\("\/api\/academic", academicResourceRoutes\)/);
 });
 
-test("post payloads expose numeric reaction summaries and authenticated ownership", () => {
+test("post payloads expose reaction summaries while anonymous identity is protected", () => {
   const controller = read("src/controllers/postController.js");
   const routes = read("src/routes/postRoutes.js");
   assert.match(controller, /reactionSummary/);
   assert.match(controller, /reactionCount:/);
   assert.match(controller, /currentReaction:/);
-  assert.match(controller, /authorId: post\.author_id/);
-  assert.match(routes, /router\.get\("\/posts", optionalAuth/);
-  assert.match(routes, /router\.get\("\/posts\/:id", optionalAuth/);
+  assert.match(controller, /authorId: anonymous \? null : post\.author_id/);
+  assert.match(routes, /router\.get\("\/posts", authenticateToken/);
+  assert.match(routes, /router\.get\("\/posts\/:id", authenticateToken/);
 });
