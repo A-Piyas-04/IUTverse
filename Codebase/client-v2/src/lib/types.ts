@@ -25,12 +25,17 @@ export interface Profile {
   schoolName?: string;
   collegeName?: string;
   currentProgram?: string;
+  programId?: number;
   currentYear?: string;
   currentSemester?: string;
   hometown?: string;
   currentResidence?: string;
+  residencyType?: "resident" | "non_resident";
+  residentGender?: "male" | "female";
   currentHall?: string;
+  hallId?: number;
   currentRoom?: string;
+  roomId?: number;
   currentBed?: string;
   privacy?: Record<string, boolean>;
 }
@@ -179,7 +184,7 @@ export interface Conversation {
   id: number;
   otherUser?: Profile;
   participants?: Profile[];
-  lastMessage?: string;
+  lastMessage?: Message | null;
   updatedAt?: string;
   unreadCount?: number;
 }

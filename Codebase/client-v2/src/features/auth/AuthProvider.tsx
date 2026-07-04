@@ -12,6 +12,7 @@ interface AuthValue {
   signOut(): Promise<void>;
   resetPassword(email: string): Promise<void>;
   changePassword(password: string): Promise<void>;
+  refreshUser(): Promise<void>;
 }
 
 interface MeResponse {
@@ -89,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async signOut() { const { error } = await supabase.auth.signOut(); if (error) throw error; setSession(null); setUser(null); },
     async resetPassword(email) { const { error } = await supabase.auth.resetPasswordForEmail(email); if (error) throw error; },
-    async changePassword(password) { const { error } = await supabase.auth.updateUser({ password }); if (error) throw error; }
+    async changePassword(password) { const { error } = await supabase.auth.updateUser({ password }); if (error) throw error; },
+    async refreshUser() {
+      if (!session) return;
+      setUser(await loadAuthoritativeProfile(session));
+    }
   }), [loading, session, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

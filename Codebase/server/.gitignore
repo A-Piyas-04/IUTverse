@@ -40,3 +40,4 @@ Icon?
 .Spotlight-V100
 .Trashes 
 /generated/prisma
+scripts/privileged-accounts.local.json

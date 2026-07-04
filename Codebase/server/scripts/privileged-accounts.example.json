@@ -1,0 +1,34 @@
+[
+  {
+    "email": "admin@iut-dhaka.edu",
+    "password": "REPLACE-WITH-A-UNIQUE-STRONG-PASSWORD",
+    "role": "admin",
+    "displayName": "IUTverse Administrator",
+    "departmentId": null,
+    "batch": null,
+    "studentId": null,
+    "bio": "IUTverse platform administrator",
+    "interests": ["community", "platform safety"],
+    "collegeName": null,
+    "schoolName": null,
+    "hometown": null,
+    "currentProgram": null,
+    "currentYear": null,
+    "currentSemester": null,
+    "currentHall": null,
+    "currentResidence": null,
+    "currentRoom": null,
+    "currentBed": null
+  },
+  {
+    "email": "moderator@iut-dhaka.edu",
+    "password": "REPLACE-WITH-A-DIFFERENT-STRONG-PASSWORD",
+    "role": "mod",
+    "displayName": "IUTverse Moderator",
+    "departmentId": null,
+    "batch": null,
+    "studentId": null,
+    "bio": "IUTverse community moderator",
+    "interests": ["community", "content safety"]
+  }
+]

@@ -15,6 +15,7 @@ const {
 router.get("/profile", authenticateToken, profileController.getOwnProfile);
 router.get("/profile/me", authenticateToken, profileController.getOwnProfile);
 router.patch("/profile/me", authenticateToken, profileController.patchOwnProfile);
+router.get("/profile-reference-data", authenticateToken, profileController.getProfileReferenceData);
 
 // Get user dashboard data (protected route)
 router.get("/dashboard", authenticateToken, (req, res) => {

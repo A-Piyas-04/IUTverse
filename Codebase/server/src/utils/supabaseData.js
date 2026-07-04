@@ -27,6 +27,11 @@ const mapProfile = (profile) => {
   return {
     id: profile.id,
     name: profile.display_name,
+    displayName: profile.display_name,
+    handle: profile.handle,
+    batch: profile.batch,
+    department: profile.department?.name || null,
+    profilePictureUrl: publicUrl("avatars", profile.profile_image_path),
     profile: {
       profilePicture: profile.profile_image_path,
     },

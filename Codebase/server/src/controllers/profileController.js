@@ -2,6 +2,7 @@ const userService = require("../services/userService");
 const storageService = require("../services/storageService");
 const response = require("../utils/responses");
 const { uuid } = require("../utils/validation");
+const logger = require("../utils/logger");
 
 const getOwnProfile = async (req, res) => {
   try {
@@ -18,7 +19,17 @@ const patchOwnProfile = async (req, res) => {
     const profile = await userService.updateProfile(req.user.id, req.body);
     return response.success(res, profile, "Profile updated");
   } catch (error) {
-    return response.serverError(res, "Error updating profile", error.message);
+    return error.statusCode === 400
+      ? response.badRequest(res, error.message)
+      : response.serverError(res, "Error updating profile", error.message);
+  }
+};
+
+const getProfileReferenceData = async (_req, res) => {
+  try {
+    return response.success(res, await userService.getProfileReferenceData());
+  } catch (error) {
+    return response.serverError(res, "Error fetching profile reference data", error.message);
   }
 };
 
@@ -63,9 +74,8 @@ const updateProfile = async (req, res) => {
     const profile = await userService.updateProfile(userId, profileData);
     res.json(profile);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating profile", error: error.message });
+    if (error.statusCode === 400) return response.badRequest(res, error.message);
+    return response.serverError(res, "Error updating profile", error.message);
   }
 };
 
@@ -85,16 +95,17 @@ const uploadProfilePicture = async (req, res) => {
     });
 
     const currentProfile = await userService.getProfile(userId);
-    if (currentProfile?.profile_image_path) {
-      await storageService.removeObject({
-        bucket: "avatars",
-        objectPath: currentProfile.profile_image_path,
-      });
+    let updatedProfile;
+    try {
+      updatedProfile = await userService.updateProfile(userId, { profilePicture: uploaded.path });
+    } catch (error) {
+      await storageService.removeObject({ bucket: "avatars", objectPath: uploaded.path }).catch(() => {});
+      throw error;
     }
-
-    const updatedProfile = await userService.updateProfile(userId, {
-      profilePicture: uploaded.path,
-    });
+    if (currentProfile?.profile_image_path && currentProfile.profile_image_path !== uploaded.path) {
+      await storageService.removeObject({ bucket: "avatars", objectPath: currentProfile.profile_image_path })
+        .catch((error) => logger.warn("Could not remove replaced avatar", { userId, error: error.message }));
+    }
 
     res.status(200).json({
       message: "Profile picture uploaded successfully",
@@ -176,16 +187,17 @@ const uploadCoverPicture = async (req, res) => {
     });
 
     const currentProfile = await userService.getProfile(userId);
-    if (currentProfile?.cover_image_path) {
-      await storageService.removeObject({
-        bucket: "covers",
-        objectPath: currentProfile.cover_image_path,
-      });
+    let updatedProfile;
+    try {
+      updatedProfile = await userService.updateProfile(userId, { coverPicture: uploaded.path });
+    } catch (error) {
+      await storageService.removeObject({ bucket: "covers", objectPath: uploaded.path }).catch(() => {});
+      throw error;
     }
-
-    const updatedProfile = await userService.updateProfile(userId, {
-      coverPicture: uploaded.path,
-    });
+    if (currentProfile?.cover_image_path && currentProfile.cover_image_path !== uploaded.path) {
+      await storageService.removeObject({ bucket: "covers", objectPath: currentProfile.cover_image_path })
+        .catch((error) => logger.warn("Could not remove replaced cover", { userId, error: error.message }));
+    }
 
     res.status(200).json({
       message: "Cover picture uploaded successfully",
@@ -254,6 +266,7 @@ const deleteCoverPicture = async (req, res) => {
 module.exports = {
   getProfile,
   getOwnProfile,
+  getProfileReferenceData,
   patchOwnProfile,
   createProfile,
   updateProfile,

@@ -70,3 +70,21 @@ test("profile writes omit roles and server-managed badges", () => {
   assert.doesNotMatch(users, /role:\s*"role"/);
   assert.match(users, /profile_private/);
 });
+
+test("profile reference data is normalized and protected", () => {
+  const sql = read("supabase/migrations/202607040001_profile_reference_data.sql");
+  for (const table of ["programs", "residence_halls", "hall_rooms"]) {
+    assert.match(sql, new RegExp("create table if not exists public\\." + table));
+    assert.match(sql, new RegExp("revoke all on public\\." + table + " from anon, authenticated"));
+  }
+  assert.match(sql, /Computer Science and Engineering \(CSE\)'[\s\S]*'SWE'/);
+  assert.match(sql, /Mechanical and Production Engineering \(MPE\)'[\s\S]*'IPE'/);
+  const correction = read("supabase/migrations/202607040002_department_residency_correction.sql");
+  assert.match(correction, /delete from public\.departments where id = short_id/);
+  assert.match(correction, /generate_series\(1, 5\)[\s\S]*generate_series\(1, 30\)/);
+  assert.match(correction, /generate_series\(4, 5\)[\s\S]*generate_series\(1, 17\)/);
+  const service = read("src/services/userService.js");
+  assert.match(service, /Selected program does not belong to the selected department/);
+  assert.match(service, /Selected room does not belong to the selected hall/);
+  assert.doesNotMatch(service, /currentProgram: "current_program"/);
+});

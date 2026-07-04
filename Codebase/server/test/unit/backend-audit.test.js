@@ -330,11 +330,13 @@ test("BUG-051 shared public profile mapper hides email and student identity", ()
     profile_image_path: "avatar.png",
     cover_image_path: "cover.png",
   });
-  assert.deepEqual(mapped, {
-    id: "u1",
-    name: "N",
-    profile: { profilePicture: "avatar.png" },
-  });
+  assert.equal(mapped.id, "u1");
+  assert.equal(mapped.displayName, "N");
+  assert.equal(mapped.batch, 20);
+  assert.match(mapped.profilePictureUrl, /\/avatars\/avatar[.]png$/);
+  assert.equal(mapped.email, undefined);
+  assert.equal(mapped.studentId, undefined);
+  assert.equal(mapped.role, undefined);
 });
 
 test("BUG-052 post routes use the canonical auth middleware", () => {

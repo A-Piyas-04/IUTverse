@@ -74,7 +74,7 @@ function RecentMessagesRail() {
     {conversations.isError && <div className={styles.railStatus}><p>Recent messages could not load.</p><Button variant="secondary" onClick={() => void conversations.refetch()}>Retry</Button></div>}
     {!conversations.isError && <div className={styles.recentList}>{recent.map(conversation => <button type="button" className={styles.recentPerson} key={conversation.id} onClick={() => navigate(`/messages?conversation=${conversation.id}`)}>
       <Avatar size={42} name={conversation.otherUser?.displayName} src={mediaUrl(conversation.otherUser?.profilePictureUrl)} />
-      <span className={styles.recentCopy}><strong>{conversation.otherUser?.displayName || "IUT member"}</strong><small>{conversation.lastMessage || "Start the conversation"}</small></span>
+      <span className={styles.recentCopy}><strong>{conversation.otherUser?.displayName || "IUT member"}</strong><small>{conversation.lastMessage?.content || "Start the conversation"}</small></span>
       {Boolean(conversation.unreadCount) && <span className={styles.unread} aria-label={`${conversation.unreadCount} unread messages`}>{conversation.unreadCount}</span>}
     </button>)}</div>}
     {!conversations.isLoading && recent.length < 4 && <button type="button" className={styles.startChat} onClick={() => navigate("/messages?new=1")}><Plus size={18} /><span><strong>Start a new chat</strong><small>Find another IUT member</small></span></button>}

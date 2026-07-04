@@ -42,7 +42,7 @@ export async function apiPage<T>(path: string, signal?: AbortSignal): Promise<Pa
   if (Array.isArray(result.data?.data)) return { success: true, data: result.data.data, pagination: result.data.pagination };
   for (const key of ["posts", "resources", "jobs", "questions", "conversations", "messages"]) {
     if (Array.isArray(result.data?.[key])) {
-      const values = key === "conversations" ? result.data[key].map((item: any) => ({ ...item, lastMessage: item.lastMessage?.content || item.lastMessage || "" })) : result.data[key];
+      const values = result.data[key];
       return { success: true, data: values, pagination: result.data.pagination ?? { page: 1, limit: values.length, total: values.length, totalPages: 1 } };
     }
   }
