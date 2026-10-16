@@ -72,6 +72,10 @@ const enumValueExact = (value, allowed, label) => {
   return { value: text };
 };
 
+// Text for a PostgREST or=(...) ilike filter. Commas, parentheses, quotes and
+// backslashes are filter syntax there, so they are replaced with spaces.
+const filterSearchTerm = (value) => String(value ?? "").replace(/[,()"\\]/g, " ").trim();
+
 const pagination = (page = 1, limit = 20, maxLimit = 100) => {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), maxLimit);
@@ -81,6 +85,7 @@ const pagination = (page = 1, limit = 20, maxLimit = 100) => {
 module.exports = {
   enumValue,
   enumValueExact,
+  filterSearchTerm,
   optionalText,
   pagination,
   positiveInt,

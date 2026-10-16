@@ -3,7 +3,7 @@ const {
   mapProfile,
   profileSelect,
 } = require("../utils/supabaseData");
-const { optionalText, sanitizePlainText, sanitizePlainTextArray } = require("../utils/validation");
+const { filterSearchTerm, optionalText, sanitizePlainText, sanitizePlainTextArray } = require("../utils/validation");
 
 const mapJob = (job) => ({
   id: job.id,
@@ -49,8 +49,9 @@ class JobService {
     return mapJob(job);
   }
 
-  async getAllJobs({ page = 1, limit = 20, type, search } = {}) {
+  async getAllJobs({ page = 1, limit = 20, type, search: rawSearch } = {}) {
     const supabase = ensureSupabaseAdmin();
+    const search = filterSearchTerm(rawSearch);
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 

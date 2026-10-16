@@ -4,7 +4,7 @@
 begin;
 \ir helpers/test_users.psql
 
-select plan(33);
+select plan(35);
 
 select pg_temp.create_member('a1000000-0000-0000-0000-00000000000a', 'owner.a@iut-dhaka.edu');
 select pg_temp.create_member('b1000000-0000-0000-0000-00000000000b', 'other.b@iut-dhaka.edu');
@@ -47,8 +47,16 @@ select is(
    from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('r', 'p')
      and has_table_privilege('authenticated', c.oid, 'INSERT')),
-  array['chat_messages'],
-  'authenticated can INSERT only into chat_messages (participant-checked by RLS)'
+  null,
+  'authenticated has no table-wide INSERT on any public table'
+);
+select is(
+  (select array_agg(column_name::text order by column_name)
+   from information_schema.column_privileges
+   where table_schema = 'public' and table_name = 'chat_messages'
+     and grantee = 'authenticated' and privilege_type = 'INSERT'),
+  array['content', 'conversation_id', 'sender_id'],
+  'chat_messages INSERT is limited to the message columns (participant-checked by RLS)'
 );
 select is(
   (select array_agg(c.relname::text order by c.relname)
@@ -174,6 +182,13 @@ select throws_ok(
   $$ insert into storage.objects (bucket_id, name, owner)
      values ('post-media', 'a1000000-0000-0000-0000-00000000000a/x.html', 'a1000000-0000-0000-0000-00000000000a') $$,
   '42501', null, 'members cannot write Storage objects directly');
+reset role;
+
+select pg_temp.act_as('a1000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ insert into public.chat_messages (conversation_id, sender_id, content, attachment_bucket, attachment_path)
+     values (1, 'a1000000-0000-0000-0000-00000000000a', 'x', 'academic-resources', 'someone/else.pdf') $$,
+  '42501', null, 'clients cannot set chat attachment columns');
 reset role;
 
 select * from finish();

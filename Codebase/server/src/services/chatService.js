@@ -193,7 +193,8 @@ class ChatService {
     const supabase = ensureSupabaseAdmin();
     const { data, error } = await supabase.from("chat_messages").select("id,conversation_id,attachment_bucket,attachment_path,attachment_name").eq("id", Number(messageId)).maybeSingle();
     if (error) throw error;
-    if (!data?.attachment_path) throw new Error("Attachment not found");
+    // Only sign objects the API itself stored for chat.
+    if (!data?.attachment_path || data.attachment_bucket !== "chat-attachments") throw new Error("Attachment not found");
     if (!(await this.isParticipant(data.conversation_id, userId))) throw new Error("Conversation not found or access denied");
     return data;
   }

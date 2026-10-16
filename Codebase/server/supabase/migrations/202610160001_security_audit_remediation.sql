@@ -89,6 +89,12 @@ end $$;
 
 revoke insert on public.chat_messages from anon;
 
+-- Clients may only supply the message itself. Attachment columns are written
+-- by the API after it validates and stores the file; letting a client set
+-- them would make the API sign URLs for arbitrary Storage objects.
+revoke insert on public.chat_messages from authenticated;
+grant insert (conversation_id, sender_id, content) on public.chat_messages to authenticated;
+
 -- Tables created by later migrations must opt in to client writes explicitly.
 alter default privileges for role postgres in schema public
   revoke insert, update, delete, truncate on tables from anon, authenticated;

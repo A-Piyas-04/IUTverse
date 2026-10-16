@@ -5,7 +5,7 @@ const {
   publicUrl,
   uploadToBucket,
 } = require("../utils/supabaseData");
-const { sanitizePlainText } = require("../utils/validation");
+const { filterSearchTerm, sanitizePlainText } = require("../utils/validation");
 
 const mapPost = (post) => ({
   id: post.id,
@@ -53,8 +53,8 @@ class LostAndFoundService {
 
     if (filters.type && filters.type !== "all") query = query.eq("type", filters.type);
     if (filters.status) query = query.eq("status", filters.status);
-    if (filters.search) {
-      const search = `%${filters.search}%`;
+    if (filterSearchTerm(filters.search)) {
+      const search = `%${filterSearchTerm(filters.search)}%`;
       query = query.or(`title.ilike.${search},description.ilike.${search},location.ilike.${search}`);
     }
 

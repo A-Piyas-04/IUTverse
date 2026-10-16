@@ -4,7 +4,7 @@ const {
   profileSelect,
   publicUrl,
 } = require("../utils/supabaseData");
-const { optionalText, sanitizePlainText } = require("../utils/validation");
+const { filterSearchTerm, optionalText, sanitizePlainText } = require("../utils/validation");
 
 const mapDepartment = (department) => ({
   id: department.id,
@@ -75,7 +75,8 @@ const getAllAcademicResources = async (filters = {}, { page = 1, limit = 20 } = 
   if (filters.departmentId) query = query.eq("department_id", Number(filters.departmentId));
   if (filters.type) query = query.eq("type", filters.type);
   if (filters.courseCode) query = query.ilike("course_code", `%${filters.courseCode}%`);
-  if (filters.search) query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,course_code.ilike.%${filters.search}%`);
+  const search = filterSearchTerm(filters.search);
+  if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,course_code.ilike.%${search}%`);
 
   const { data, count, error } = await query
     .order("created_at", { ascending: false })
