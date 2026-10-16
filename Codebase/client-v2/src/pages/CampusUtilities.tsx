@@ -4,8 +4,8 @@ import { ArrowLeft, BookOpenCheck, Brain, CalendarDays, CloudSun, Landmark, Refr
 import { apiRequest } from "@/lib/api";
 import { academicCalendarUrl, prayerTimes } from "@/content/legacy";
 import { Button, Card, Dialog } from "@/components/ui/Ui";
-import factsRaw from "../../../client/src/pages/homepage/view/IUTFacts/iutFacts.txt?raw";
-import teasersRaw from "../../../client/src/pages/homepage/view/BrainTeaser/BrainTeaser.txt?raw";
+import factsRaw from "@/content/iutFacts.txt?raw";
+import teasersRaw from "@/content/brainTeasers.txt?raw";
 import styles from "./Pages.module.css";
 
 type Utility = "menu" | "prayer" | "calendar" | "facts" | "teaser" | "weather";

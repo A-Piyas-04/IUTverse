@@ -42,6 +42,9 @@ const config = {
     url: process.env.SUPABASE_URL,
     anonKey: process.env.SUPABASE_ANON_KEY,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    // Address browsers use for Supabase when it differs from SUPABASE_URL,
+    // e.g. in Docker the API calls http://kong:8000 but browsers need localhost.
+    publicUrl: process.env.SUPABASE_PUBLIC_URL || null,
   },
   auth: {
     // Must also be on the Supabase Auth redirect allowlist (exact URL).

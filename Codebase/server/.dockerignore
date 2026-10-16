@@ -1,0 +1,20 @@
+# Never bake local secrets into an image. Docker Compose supplies all config.
+.env
+.env.*
+!env.example
+
+node_modules
+npm-debug.log*
+*.log
+
+# Not needed at runtime
+test
+coverage
+reports
+.stryker-tmp
+uploads
+prisma
+docs
+supabase/.temp
+supabase/.branches
+supabase/tests

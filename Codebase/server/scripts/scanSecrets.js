@@ -13,6 +13,10 @@ const allowedPlaceholders = [
   "postgres.project-ref:password",
 ];
 
+// Supabase's published demo keys for local stacks (issuer "supabase-demo"),
+// used by docker-compose.yml. They only work with the public demo JWT secret.
+const supabaseDemoKey = /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIi[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+/g;
+
 const placeholderValue = /(your[-_]|example|placeholder|replace[-_]with|generated[-_]password|change[-_]?me|xxxx|\*\*\*\*|redacted|required|optional|string|boolean|undefined|process\.env)/i;
 
 // Mirrors the custom rules in /.gitleaks.toml so the check also runs where the
@@ -111,6 +115,7 @@ const scanContent = (file, text) => {
   const normalized = file.replace(/\\/g, "/");
   if (selfReferentialFiles.has(normalized) || skippedFile.test(normalized)) return [];
   if (isAllowedPlaceholder(text) && /env\.example$/i.test(normalized)) return [];
+  text = text.replace(supabaseDemoKey, "<supabase-demo-key>");
 
   return detectors
     .filter((detector) => detector.test({ file: normalized, text }))
@@ -168,11 +173,14 @@ const selfTest = () => {
     ["notes.md", "smtp app pass" + "word: abcd efgh ijkl mnop"],
     ["config.yml", "pass" + "word: Zx9!kq77Lm"],
     ["src/token.js", "const t = '" + "q8Vb3ZpL0rT6yWm2NcX5hJ7sKd1Fg4Ae9Ru" + "';"],
+    // A service-role JWT from a real project (issuer "supabase") is still caught.
+    ["docker-compose.yml", "SERVICE_ROLE_KEY: " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + "eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUifQ.x9"],
   ];
   const clean = [
     ["README.md", '{ "email": "student@iut-dhaka.edu", "password": "generated_password" }'],
     ["src/auth.js", "const { email, password } = req.body;"],
     ["package.json", '"integrity": "sha512-' + "q8Vb3ZpL0rT6yWm2NcX5hJ7sKd1Fg4Ae9Ru" + '"'],
+    ["docker-compose.yml", "SERVICE_ROLE_KEY: " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + "eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU"],
   ];
 
   const missed = samples.filter(([file, text]) => scanContent(file, text).length === 0);

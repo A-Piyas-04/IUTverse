@@ -56,12 +56,19 @@ paths = [
   '''(^|/)(dist|build|coverage|node_modules)/''',
   '''\.(png|jpe?g|gif|webp|ico|pdf|woff2?|ttf|eot|svg|map)$''',
   # The repo's own scanner contains detector patterns and self-test samples.
-  '''^Codebase/server/scripts/scanSecrets\.js$''',
-  '''^Codebase/server/test/unit/secret-scan\.test\.js$''',
-  '''^\.gitleaks\.toml$''',
+  '''(^|/)Codebase/server/scripts/scanSecrets\.js$''',
+  '''(^|/)Codebase/server/test/unit/secret-scan\.test\.js$''',
+  '''(^|/)\.gitleaks\.toml$''',
 ]
 regexTarget = "line"
 regexes = [
   # curl examples in docs use "Bearer YOUR_TOKEN"-style placeholders.
   '''(?i)Bearer[ \t]+(?:YOUR|<|\$|\{|TOKEN|ACCESS)''',
+]
+
+[[allowlists]]
+description = "Supabase's published demo keys for local stacks (issuer supabase-demo); they only work with the public demo JWT secret in docker-compose.yml"
+regexTarget = "match"
+regexes = [
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIi[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+''',
 ]

@@ -3,6 +3,17 @@ const {
   isSupabaseAdminConfigured,
 } = require("../config/supabase");
 const { validateUploadedFile } = require("../utils/fileValidation");
+const config = require("../config/config");
+
+const trimSlash = (value) => String(value || "").replace(/\/+$/, "");
+
+// Storage URLs given to browsers must use the browser-facing Supabase address.
+const browserUrl = (url) => {
+  const internal = trimSlash(config.supabase.url);
+  const external = trimSlash(config.supabase.publicUrl);
+  if (!url || !external || !internal || !url.startsWith(internal)) return url;
+  return external + url.slice(internal.length);
+};
 
 const ensureStorage = () => {
   if (!isSupabaseAdminConfigured) {
@@ -65,7 +76,7 @@ const publicUrl = (bucket, objectPath) => {
   if (!bucket || !objectPath) return null;
 
   const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(objectPath);
-  return data.publicUrl;
+  return browserUrl(data.publicUrl);
 };
 
 const signedUrl = async (bucket, objectPath, expiresIn = 300) => {
@@ -73,10 +84,11 @@ const signedUrl = async (bucket, objectPath, expiresIn = 300) => {
   if (!bucket || !objectPath) return null;
   const { data, error } = await supabaseAdmin.storage.from(bucket).createSignedUrl(objectPath, expiresIn);
   if (error) throw error;
-  return data.signedUrl;
+  return browserUrl(data.signedUrl);
 };
 
 module.exports = {
+  browserUrl,
   buildObjectPath,
   uploadObject,
   removeObject,

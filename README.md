@@ -35,51 +35,40 @@ IUTverse is a comprehensive campus-centric platform designed to streamline commu
 
 ## Getting Started
 
-### Prerequisites
-- Node.js (v16+)
-- npm or yarn
-- PostgreSQL
+### Run everything with Docker (recommended)
 
-### Installation
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-org/IUTverse.git
-   cd IUTverse/Codebase
-   ```
-2. **Install dependencies:**
-   - For client:
-     ```bash
-     cd client
-     npm install
-     ```
-   - For server:
-     ```bash
-     cd ../server
-     npm install
-     ```
-3. **Configure environment variables:**
-   - Copy `.env.example` to `.env` in both `client` and `server` folders and fill in required values (API keys, DB credentials, etc).
-4. **Set up the database:**
-   ```bash
-   cd server
-   npx prisma migrate dev
-   ```
-5. **Run the development servers:**
-   - Client:
-     ```bash
-     cd client
-     npm run dev
-     ```
-   - Server:
-     ```bash
-     cd server
-     npm run dev
-     ```
+The only requirement is [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine with Compose). No `.env` files or other setup are needed.
 
-## Usage
-- Access the client at `http://localhost:5173/` (or as specified in terminal output).
-- Register or log in to explore features.
-- Use the navigation menu to access different modules (Weather, CatCorner, Lost & Found, Jobs, Confessions, Academics, CatQA, Profile, Notifications, Event Hub, Chat, Admin).
+```bash
+git clone https://github.com/A-Piyas-04/IUTverse.git
+cd IUTverse
+docker-compose build
+docker-compose up
+```
+
+The first start takes a minute or two while it sets up the database. When it is ready, open **http://localhost:8080** and sign up with any `@iut-dhaka.edu` address. There's no email confirmation step locally.
+
+| What | Address |
+|---|---|
+| Web app | http://localhost:8080 |
+| API | http://localhost:3100/api |
+| Supabase gateway (auth, database API, storage, realtime) | http://localhost:8000 |
+
+What runs: the React client (nginx), the Express API, Redis, and a complete local Supabase stack (Postgres, Auth, PostgREST, Storage, Realtime, Kong). On first start a one-off `migrate` container applies every migration in `Codebase/server/supabase/migrations` and loads the starter content from `seed_iutverse.sql`.
+
+Useful commands:
+
+- `docker-compose down` stops everything and keeps your data.
+- `docker-compose down -v` also deletes the database and uploaded files, for a clean start.
+- `docker-compose logs -f api` follows one service's logs.
+- If a port is taken, set `CLIENT_PORT`, `API_PORT` or `SUPABASE_PORT` before `docker-compose build` and `docker-compose up`. The client is built with these addresses, so rebuild after changing them.
+- Set `SEED_DEMO_DATA=false` to start with an empty database.
+
+The keys in `docker-compose.yml` are Supabase's public demo keys for local development. They only work against this local stack. Never use them, or this compose file, for a hosted deployment; see `Codebase/documentation/vercel-deployment.md`.
+
+### Run without Docker
+
+See `Codebase/server/supabase/README.md` for the Supabase setup, then run `npm install` and `npm run dev` in `Codebase/server` and `Codebase/client-v2`.
 
 ## Contribution Guidelines
 1. Fork the repository and create your feature branch (`git checkout -b feature/YourFeature`).
