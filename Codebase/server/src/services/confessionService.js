@@ -265,6 +265,7 @@ class ConfessionService {
       id: confession.id,
       content: confession.content,
       tag: confession.tag,
+      status: confession.status,
       timestamp: confession.created_at,
       reactions: reactionCounts,
       poll: pollData,

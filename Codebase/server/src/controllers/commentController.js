@@ -7,6 +7,7 @@ const {
 const { badRequest, forbidden, notFound, serverError } = require("../utils/responses");
 const logger = require("../utils/logger");
 const { positiveInt, requiredText } = require("../utils/validation");
+const { canViewContent } = require("../utils/contentVisibility");
 
 const mapComment = (comment) => ({
   id: comment.id,
@@ -62,11 +63,17 @@ exports.getPostComments = async (req, res) => {
     const postIdResult = positiveInt(req.params.postId, "Post ID");
     if (postIdResult.error) return badRequest(res, postIdResult.error);
 
+    // Comments are only as visible as the post they belong to.
+    const { data: post, error: postError } = await supabase.from("posts").select("id, status, author_id").eq("id", postIdResult.value).maybeSingle();
+    if (postError) throw postError;
+    if (!post || !canViewContent({ status: post.status, ownerId: post.author_id, viewer: req.user })) return notFound(res, "Post not found");
+
     const { page, limit, from, to } = pageRange(req.query.page || 1, req.query.limit || 20);
     const { data, count, error } = await supabase
       .from("post_comments")
       .select(`*, user:profiles!post_comments_author_id_fkey(${profileSelect})`, { count: "exact" })
       .eq("post_id", postIdResult.value)
+      .eq("status", "active")
       .is("parent_comment_id", null)
       .order("created_at", { ascending: false })
       .range(from, to);
@@ -93,6 +100,7 @@ exports.getCommentReplies = async (req, res) => {
       .from("post_comments")
       .select(`*, user:profiles!post_comments_author_id_fkey(${profileSelect})`)
       .eq("parent_comment_id", commentIdResult.value)
+      .eq("status", "active")
       .order("created_at", { ascending: true });
 
     if (error) throw error;

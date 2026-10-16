@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("../middleware/auth");
+const { authenticateToken, optionalAuth } = require("../middleware/auth");
 const confessionController = require("../controllers/confessionController");
 const { createLimiter } = require("../middleware/security");
 const {
@@ -22,6 +22,7 @@ router.get("/confessions/random", confessionController.getRandomConfession);
 router.get("/confessions/analytics", confessionController.getAnalytics);
 router.get(
   "/confessions/:id",
+  optionalAuth,
   validateIdParam,
   confessionController.getConfessionById
 );

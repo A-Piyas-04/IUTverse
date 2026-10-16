@@ -87,6 +87,7 @@ const hydratePost = async (post, commentLimit = 3, currentUserId = null) => {
       .from("post_comments")
       .select(`*, user:profiles!post_comments_author_id_fkey(${profileSelect})`)
       .eq("post_id", post.id)
+      .eq("status", "active")
       .is("parent_comment_id", null)
       .order("created_at", { ascending: false })
       .limit(commentLimit),

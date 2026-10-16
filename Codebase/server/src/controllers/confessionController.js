@@ -1,5 +1,6 @@
 const confessionService = require("../services/confessionService");
 const logger = require("../utils/logger");
+const { canViewContent } = require("../utils/contentVisibility");
 
 const createConfession = async (req, res) => {
   try {
@@ -61,7 +62,8 @@ const getConfessionById = async (req, res) => {
 
     const confession = await confessionService.getConfessionById(id);
 
-    if (!confession) {
+    // Confessions have no stored author, so only moderators see non-active ones.
+    if (!confession || !canViewContent({ status: confession.status, ownerId: null, viewer: req.user })) {
       return res.status(404).json({ message: "Confession not found" });
     }
 
