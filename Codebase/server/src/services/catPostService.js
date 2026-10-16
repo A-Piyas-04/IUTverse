@@ -18,6 +18,7 @@ const mapPost = (post) => ({
   imageUrl: publicUrl(post.image_bucket, post.image_path),
   imageBucket: post.image_bucket,
   likeCount: post.like_count,
+  status: post.status,
   createdAt: post.created_at,
   updatedAt: post.updated_at,
   user: mapProfile(post.user),

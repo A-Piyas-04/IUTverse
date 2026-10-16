@@ -19,12 +19,12 @@ router.post(
   academicResourceController.createDepartment
 );
 
-// Get all academic resources with optional filtering (public route)
-router.get("/resources", academicResourceController.getAllAcademicResources);
+// Members only
+router.get("/resources", authenticateToken, academicResourceController.getAllAcademicResources);
 
-// Get academic resource by ID (public route)
 router.get(
   "/resources/:id",
+  authenticateToken,
   academicResourceController.getAcademicResourceById
 );
 

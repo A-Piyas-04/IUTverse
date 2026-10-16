@@ -1,3 +1,4 @@
+const { canViewContent } = require("../utils/contentVisibility");
 const academicResourceService = require("../services/academicResourceService");
 const storageService = require("../services/storageService");
 const response = require("../utils/responses");
@@ -102,7 +103,7 @@ const getAcademicResourceById = async (req, res) => {
     if (id.error) return response.badRequest(res, id.error);
 
     const resource = await academicResourceService.getAcademicResourceById(id.value);
-    if (!resource) {
+    if (!resource || !canViewContent({ status: resource.status, ownerId: resource.uploadedById, viewer: req.user })) {
       return res.status(404).json({
         success: false,
         message: "Academic resource not found",

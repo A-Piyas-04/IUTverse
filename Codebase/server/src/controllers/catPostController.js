@@ -1,6 +1,7 @@
 const catPostService = require('../services/catPostService');
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
+const { canViewContent } = require("../utils/contentVisibility");
 const { pagination, positiveInt, requiredText } = require("../utils/validation");
 
 const createPost = async (req, res) => {
@@ -41,6 +42,9 @@ const getPostById = async (req, res) => {
     if (postId.error) return response.badRequest(res, postId.error);
     
     const post = await catPostService.getPostById(postId.value);
+    if (!canViewContent({ status: post.status, ownerId: post.userId, viewer: req.user })) {
+      return response.notFound(res, 'Post not found');
+    }
     res.status(200).json({ success: true, data: post });
   } catch (error) {
     logger.error('Get post error:', error);

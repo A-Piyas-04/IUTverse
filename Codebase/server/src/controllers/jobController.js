@@ -1,7 +1,8 @@
 const jobService = require('../services/jobService');
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
-const { enumValueExact, optionalText, pagination, positiveInt, requiredText, sanitizePlainTextArray } = require("../utils/validation");
+const { canViewContent } = require("../utils/contentVisibility");
+const { optionalText, pagination, positiveInt, requiredText, sanitizePlainTextArray } = require("../utils/validation");
 
 const validJobTypes = ["Internship", "Job", "Research", "Project", "ClubRole", "Competition", "Freelance", "PartTime", "Volunteer"];
 
@@ -45,10 +46,8 @@ const jobPayload = (body, { partial = false } = {}) => {
   if (body.format !== undefined) payload.format = optionalText(body.format, { max: 40 });
   if (body.department !== undefined) payload.department = optionalText(body.department, { max: 120 });
   if (body.skills !== undefined) payload.skills = Array.isArray(body.skills) ? sanitizePlainTextArray(body.skills, { max: 100 }) : sanitizePlainTextArray(String(body.skills).split(","), { max: 100 });
-  if (body.status !== undefined && partial) {
-    const status = enumValueExact(body.status, ["ACTIVE", "ARCHIVED", "DELETED"], "Status");
-    payload.status = status.error ? String(body.status).toLowerCase() : status.value.toLowerCase();
-  }
+  // status is not owner-editable: DELETE soft-deletes, and archive/restore are
+  // moderation decisions made through /api/reports.
 
   return { payload };
 };
@@ -89,7 +88,9 @@ const getJobById = async (req, res) => {
     if (id.error) return response.badRequest(res, id.error);
 
     const job = await jobService.getJobById(id.value);
-    if (!job) return response.notFound(res, 'Job not found');
+    if (!job || !canViewContent({ status: job.status, ownerId: job.postedById, viewer: req.user })) {
+      return response.notFound(res, 'Job not found');
+    }
     res.json(job);
   } catch (error) {
     logger.error("[JobController] Error fetching job", error);

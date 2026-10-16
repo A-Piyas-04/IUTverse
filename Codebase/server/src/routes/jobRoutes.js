@@ -6,15 +6,15 @@ const jobCommentController = require("../controllers/jobCommentController");
 const jobApplicationController = require("../controllers/jobApplicationController");
 const { createLimiter } = require("../middleware/security");
 
-// Public - Jobs
-router.get("/jobs", jobController.getAllJobs);
-router.get("/jobs/:id", jobController.getJobById);
+// Members only - Jobs
+router.get("/jobs", authenticateToken, jobController.getAllJobs);
+router.get("/jobs/:id", authenticateToken, jobController.getJobById);
 
-// Public - Comments (can view comments without authentication)
-router.get("/jobs/:jobId/comments", jobCommentController.getCommentsByJobId);
-router.get("/jobs/comments/:commentId", jobCommentController.getCommentById);
+// Members only - Comments
+router.get("/jobs/:jobId/comments", authenticateToken, jobCommentController.getCommentsByJobId);
+router.get("/jobs/comments/:commentId", authenticateToken, jobCommentController.getCommentById);
 
-// Public - Job Applications (view count and list)
+// Members only - Job Applications (view count and list)
 router.get(
   "/jobs/:jobId/applications",
   authenticateToken,
@@ -22,6 +22,7 @@ router.get(
 );
 router.get(
   "/jobs/:jobId/applications/count",
+  authenticateToken,
   jobApplicationController.getApplicationCount
 );
 

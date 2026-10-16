@@ -4,6 +4,13 @@ const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { isAllowedImageMime } = require("../utils/fileValidation");
 const { enumValue, optionalText, pagination, positiveInt, requiredText } = require("../utils/validation");
+const { canModerate } = require("../middleware/authorization");
+const { LOST_FOUND_PUBLIC_STATUSES, canViewContent } = require("../utils/contentVisibility");
+
+// Lost & found is readable without signing in. Anonymous callers do not get
+// the poster's identity or contact details.
+const forViewer = (post, viewer) =>
+  viewer ? post : { ...post, userId: null, user: null, contact: null, contactNote: null };
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -41,7 +48,8 @@ class LostAndFoundController {
       }
 
       if (filters.status) {
-        const status = enumValue(filters.status, ["active", "resolved", "archived", "deleted", "flagged"], "Status");
+        const allowed = canModerate(req.user) ? ["active", "resolved", "archived", "deleted", "flagged"] : LOST_FOUND_PUBLIC_STATUSES;
+        const status = enumValue(filters.status, allowed, "Status");
         if (status.error) return response.badRequest(res, status.error);
         filters.status = status.value;
       }
@@ -51,7 +59,7 @@ class LostAndFoundController {
       
       res.json({
         success: true,
-        data: result.posts,
+        data: result.posts.map((post) => forViewer(post, req.user)),
         pagination: result.pagination,
       });
     } catch (error) {
@@ -73,7 +81,7 @@ class LostAndFoundController {
 
       const post = await lostAndFoundService.getPostById(postIdResult.value);
       
-      if (!post) {
+      if (!post || !canViewContent({ status: post.status, ownerId: post.userId, viewer: req.user, publicStatuses: LOST_FOUND_PUBLIC_STATUSES })) {
         return res.status(404).json({
           success: false,
           message: 'Post not found'
@@ -82,7 +90,7 @@ class LostAndFoundController {
       
       res.json({
         success: true,
-        data: post
+        data: forViewer(post, req.user)
       });
     } catch (error) {
       logger.error('Error in getPostById:', error);
@@ -294,6 +302,10 @@ class LostAndFoundController {
         });
       }
       
+      if (/^Only \w+ posts can be marked/.test(error.message)) {
+        return res.status(409).json({ success: false, message: error.message });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Failed to mark post as resolved',
@@ -334,6 +346,10 @@ class LostAndFoundController {
         });
       }
       
+      if (/^Only \w+ posts can be marked/.test(error.message)) {
+        return res.status(409).json({ success: false, message: error.message });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Failed to mark post as active',

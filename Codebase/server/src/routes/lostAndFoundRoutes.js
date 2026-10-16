@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { controller: lostAndFoundController, upload } = require('../controllers/lostAndFoundController');
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
 
-// Get all lost and found posts (public)
-router.get('/', lostAndFoundController.getAllPosts.bind(lostAndFoundController));
+// Public; signed-in members also see poster details
+router.get('/', optionalAuth, lostAndFoundController.getAllPosts.bind(lostAndFoundController));
 
-// Get a specific post by ID (public)
-router.get('/:postId', lostAndFoundController.getPostById.bind(lostAndFoundController));
+// Public; signed-in members also see poster details
+router.get('/:postId', optionalAuth, lostAndFoundController.getPostById.bind(lostAndFoundController));
 
 // Create a new lost and found post
 router.post('/', 

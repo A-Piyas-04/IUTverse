@@ -6,11 +6,10 @@ const upload = require('../middleware/upload');
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
 
-// Get all posts (public)
-router.get('/', catPostController.getAllPosts);
+// Members only
+router.get('/', authenticateToken, catPostController.getAllPosts);
 
-// Get specific post by ID (public)
-router.get('/:id', catPostController.getPostById);
+router.get('/:id', authenticateToken, catPostController.getPostById);
 
 // Create new post (with image upload)
 router.post('/', authenticateToken, createLimiter, upload.single('image'), imageUploadErrorHandler, catPostController.createPost);

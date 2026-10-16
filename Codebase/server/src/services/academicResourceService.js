@@ -70,7 +70,7 @@ const getAllAcademicResources = async (filters = {}, { page = 1, limit = 20 } = 
   let query = supabase
     .from("academic_resources")
     .select(resourceSelect, { count: "exact" })
-    .neq("status", "deleted");
+    .eq("status", "active");
 
   if (filters.departmentId) query = query.eq("department_id", Number(filters.departmentId));
   if (filters.type) query = query.eq("type", filters.type);

@@ -1,6 +1,6 @@
 const express = require("express");
 const controller = require("../controllers/v2Controller");
-const { authenticateToken, optionalAuth } = require("../middleware/auth");
+const { authenticateToken } = require("../middleware/auth");
 const { createLimiter } = require("../middleware/security");
 const upload = require("../middleware/upload");
 
@@ -11,7 +11,7 @@ router.delete("/saved-items/:kind/:id", authenticateToken, controller.savedDelet
 router.post("/reports", authenticateToken, createLimiter, controller.reportCreate);
 router.get("/reports", authenticateToken, controller.reportsList);
 router.patch("/reports/:id", authenticateToken, createLimiter, controller.reportUpdate);
-router.get("/events", optionalAuth, controller.listEvents);
+router.get("/events", authenticateToken, controller.listEvents);
 router.post("/events", authenticateToken, createLimiter, upload.single("image"), controller.createEvent);
 router.put("/events/:id", authenticateToken, createLimiter, upload.single("image"), controller.updateEvent);
 router.delete("/events/:id", authenticateToken, createLimiter, controller.deleteEvent);

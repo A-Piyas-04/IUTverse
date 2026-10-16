@@ -57,7 +57,7 @@ class JobService {
     let countQuery = supabase
       .from("jobs")
       .select("id", { count: "exact", head: true })
-      .neq("status", "deleted");
+      .eq("status", "active");
     if (type) countQuery = countQuery.eq("type", type);
     if (search) countQuery = countQuery.or(`title.ilike.%${search}%,description.ilike.%${search}%,organization.ilike.%${search}%`);
     const { count, error: countError } = await countQuery;
@@ -80,7 +80,7 @@ class JobService {
     let dataQuery = supabase
       .from("jobs")
       .select(`*, postedBy:profiles!jobs_posted_by_id_fkey(${profileSelect})`)
-      .neq("status", "deleted");
+      .eq("status", "active");
     if (type) dataQuery = dataQuery.eq("type", type);
     if (search) dataQuery = dataQuery.or(`title.ilike.%${search}%,description.ilike.%${search}%,organization.ilike.%${search}%`);
     const { data, error } = await dataQuery
@@ -131,7 +131,6 @@ class JobService {
     if (data.format !== undefined) payload.format = optionalText(data.format, { max: 40 });
     if (data.skills !== undefined) payload.skills = sanitizePlainTextArray(data.skills, { max: 100 });
     if (data.department !== undefined) payload.department = optionalText(data.department, { max: 120 });
-    if (data.status !== undefined) payload.status = data.status;
 
     const { data: job, error } = await supabase
       .from("jobs")

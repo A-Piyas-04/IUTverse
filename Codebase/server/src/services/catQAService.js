@@ -20,6 +20,7 @@ const mapQuestion = (question) => ({
   id: question.id,
   userId: question.user_id,
   question: question.question,
+  status: question.status,
   createdAt: question.created_at,
   updatedAt: question.updated_at,
   user: mapProfile(question.user),
@@ -88,7 +89,8 @@ class CatQAService {
       throw new Error("Answer content is required");
     }
 
-    await this.getQuestionById(questionId);
+    const question = await this.getQuestionById(questionId);
+    if (question.status !== "active") throw new Error("Question not found");
 
     const supabase = ensureSupabaseAdmin();
     const { data, error } = await supabase

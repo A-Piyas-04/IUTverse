@@ -9,6 +9,7 @@ const {
 const { badRequest, forbidden, notFound, serverError } = require("../utils/responses");
 const logger = require("../utils/logger");
 const { optionalText, positiveInt, requiredText } = require("../utils/validation");
+const { canViewContent } = require("../utils/contentVisibility");
 
 const mapReaction = (reaction) => ({
   id: reaction.id,
@@ -237,7 +238,7 @@ exports.getPost = async (req, res) => {
       .eq("id", idResult.value)
       .maybeSingle();
     if (error) throw error;
-    if (!post) return notFound(res, "Post not found");
+    if (!post || !canViewContent({ status: post.status, ownerId: post.author_id, viewer: req.user })) return notFound(res, "Post not found");
     return res.status(200).json({ success: true, data: await hydratePost(post, 100, req.user?.id || null) });
   } catch (error) {
     logger.error("Error fetching post:", error);

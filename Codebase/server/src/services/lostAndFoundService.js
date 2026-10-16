@@ -35,7 +35,7 @@ const mapPost = (post) => ({
 
 const allowedUpdateFields = (data) => {
   const payload = {};
-  const fieldMap = { type:"type", title:"title", description:"description", location:"location", contact:"contact", status:"status", category:"category", occurredAt:"occurred_at", contactPreference:"contact_preference", contactNote:"contact_note", returnLocation:"return_location", availability:"availability", privacyAccepted:"privacy_accepted" };
+  const fieldMap = { type:"type", title:"title", description:"description", location:"location", contact:"contact", category:"category", occurredAt:"occurred_at", contactPreference:"contact_preference", contactNote:"contact_note", returnLocation:"return_location", availability:"availability", privacyAccepted:"privacy_accepted" };
   for (const [field, column] of Object.entries(fieldMap)) {
     if (data[field] !== undefined) payload[column] = typeof data[field] === "string" ? sanitizePlainText(data[field], { max: 3000 }) : data[field];
   }
@@ -168,12 +168,34 @@ class LostAndFoundService {
     return { message: "Post deleted successfully" };
   }
 
+  // Owners may only toggle between active and resolved. Archived, flagged and
+  // deleted are moderation states and cannot be left from here.
+  async transitionStatus(postId, userId, from, to) {
+    const supabase = ensureSupabaseAdmin();
+    const existing = await this.getRawPost(postId);
+    if (!existing) throw new Error("Post not found");
+    if (existing.user_id !== userId) throw new Error("Unauthorized to update this post");
+    if (existing.status !== from) throw new Error(`Only ${from} posts can be marked ${to}`);
+
+    const { data, error } = await supabase
+      .from("lost_and_found_posts")
+      .update({ status: to })
+      .eq("id", Number(postId))
+      .eq("status", from)
+      .select(`*, user:profiles!lost_and_found_posts_user_id_fkey(${profileSelect})`)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error(`Only ${from} posts can be marked ${to}`);
+    return mapPost(data);
+  }
+
   async markAsResolved(postId, userId) {
-    return this.updatePost(postId, userId, { status: "resolved" });
+    return this.transitionStatus(postId, userId, "active", "resolved");
   }
 
   async markAsActive(postId, userId) {
-    return this.updatePost(postId, userId, { status: "active" });
+    return this.transitionStatus(postId, userId, "resolved", "active");
   }
 
   async getRawPost(postId) {

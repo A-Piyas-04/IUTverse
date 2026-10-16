@@ -7,6 +7,7 @@ const config = require("../config/config");
 const { createTransporter } = require("../config/email");
 const storageService = require("../services/storageService");
 const securityService = require("../services/securityService");
+const { canViewContent } = require("../utils/contentVisibility");
 
 const ENTITY_TABLES = {
   post: "posts", comment: "post_comments", resource: "academic_resources", job: "jobs",
@@ -110,7 +111,7 @@ const reportUpdate = async (req, res) => {
 const listEvents = async (req, res) => {
   try {
     const { page, limit, from, to } = pageRange(req.query.page, req.query.limit);
-    let query = ensureSupabaseAdmin().from("events").select(`*, createdBy:profiles!events_created_by_id_fkey(${profileSelect})`, { count: "exact" }).neq("status", "deleted").order("event_date").range(from, to);
+    let query = ensureSupabaseAdmin().from("events").select(`*, createdBy:profiles!events_created_by_id_fkey(${profileSelect})`, { count: "exact" }).eq("status", "active").eq("is_public", true).order("event_date").range(from, to);
     if (req.query.type && req.query.type !== "Wishlisted") query = query.eq("type", req.query.type);
     if (req.query.type === "Wishlisted") {
       if (!req.user?.id) return response.success(res, [], null, { pagination: toPagination(page, limit, 0) });
@@ -203,9 +204,9 @@ const toggleHelpful = async (req, res) => {
 
 const resourceFile = async (req, res) => {
   try {
-    const { data, error } = await ensureSupabaseAdmin().from("academic_resources").select("file_bucket,file_path").eq("id", Number(req.params.id)).neq("status", "deleted").maybeSingle();
+    const { data, error } = await ensureSupabaseAdmin().from("academic_resources").select("file_bucket,file_path,status,uploaded_by_id").eq("id", Number(req.params.id)).maybeSingle();
     if (error) throw error;
-    if (!data?.file_path) return response.notFound(res, "Resource file not found");
+    if (!data?.file_path || !canViewContent({ status: data.status, ownerId: data.uploaded_by_id, viewer: req.user })) return response.notFound(res, "Resource file not found");
     return res.redirect(await storageService.signedUrl(data.file_bucket, data.file_path, 300));
   } catch (error) { logger.error("resourceFile failed", error); return response.serverError(res, "Could not open resource", error.message); }
 };

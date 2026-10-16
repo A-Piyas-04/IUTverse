@@ -1,6 +1,7 @@
 const catQAService = require('../services/catQAService');
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
+const { canViewContent } = require("../utils/contentVisibility");
 const { positiveInt, requiredText } = require("../utils/validation");
 
 class CatQAController {
@@ -59,7 +60,10 @@ class CatQAController {
       if (questionId.error) return response.badRequest(res, questionId.error);
 
       const question = await catQAService.getQuestionById(questionId.value);
-      
+      if (!canViewContent({ status: question.status, ownerId: question.userId, viewer: req.user })) {
+        return response.notFound(res, 'Question not found');
+      }
+
       res.status(200).json({
         success: true,
         data: question,

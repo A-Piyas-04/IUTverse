@@ -4,11 +4,10 @@ const catQAController = require('../controllers/catQAController');
 const { authenticateToken } = require('../middleware/auth');
 const { createLimiter } = require("../middleware/security");
 
-// Get all questions with answers
-router.get('/questions', catQAController.getAllQuestions);
+// Members only
+router.get('/questions', authenticateToken, catQAController.getAllQuestions);
 
-// Get a specific question by ID
-router.get('/questions/:id', catQAController.getQuestionById);
+router.get('/questions/:id', authenticateToken, catQAController.getQuestionById);
 
 router.post('/questions', authenticateToken, createLimiter, catQAController.createQuestion);
 
