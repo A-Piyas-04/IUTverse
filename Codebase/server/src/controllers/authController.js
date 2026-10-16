@@ -4,8 +4,9 @@ const logger = require("../utils/logger");
 const { requiredText } = require("../utils/validation");
 const { pageRange } = require("../utils/supabaseData");
 const securityService = require("../services/securityService");
+const config = require("../config/config");
 const {
-  supabase,
+  createAuthClient,
   supabaseAdmin,
   isSupabaseConfigured,
   isSupabaseAdminConfigured,
@@ -54,7 +55,7 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid IUT email address' });
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await createAuthClient().auth.signUp({
       email,
       password,
       options: {
@@ -65,7 +66,9 @@ const signup = async (req, res) => {
     });
 
     if (error) {
-      return res.status(400).json({ message: error.message });
+      // The provider message distinguishes existing accounts; keep it in logs.
+      logger.warn('Signup rejected by Supabase Auth', { code: error.code, status: error.status });
+      return res.status(400).json({ message: 'Could not create the account. If you already have one, sign in or reset your password.' });
     }
 
     if (isSupabaseAdminConfigured && data.user) {
@@ -100,7 +103,8 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const authClient = createAuthClient();
+    const { data, error } = await authClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -111,7 +115,8 @@ const login = async (req, res) => {
 
     const profile = await getProfile(data.user.id);
     if (profile?.membershipStatus !== "active") {
-      await supabase.auth.signOut().catch(() => {});
+      // Revokes only this request's session.
+      await authClient.auth.signOut().catch(() => {});
       return response.forbidden(res, "Active IUTverse membership required");
     }
 
@@ -135,13 +140,15 @@ const requestPasswordReset = async (req, res) => {
 
     const { value: email, error } = requiredText(req.body.email, "Email", { max: 254 });
     if (error) return response.badRequest(res, error);
-    const options = {};
-    if (req.body.redirectTo) {
-      options.redirectTo = String(req.body.redirectTo);
-    }
+    // The redirect target is server configuration, never client input. Unset
+    // means Supabase uses the project's Site URL.
+    const options = config.auth.passwordResetRedirectUrl
+      ? { redirectTo: config.auth.passwordResetRedirectUrl }
+      : {};
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, options);
-    if (resetError) return response.badRequest(res, resetError.message);
+    const { error: resetError } = await createAuthClient().auth.resetPasswordForEmail(email, options);
+    // Same response either way so the endpoint does not reveal which emails exist.
+    if (resetError) logger.warn('Password reset request failed', { code: resetError.code, status: resetError.status });
 
     return response.success(
       res,
@@ -150,7 +157,7 @@ const requestPasswordReset = async (req, res) => {
     );
   } catch (error) {
     logger.error("Password reset request error:", error);
-    return response.serverError(res, error.message || "Failed to request password reset");
+    return response.serverError(res, "Failed to request password reset");
   }
 };
 

@@ -253,8 +253,8 @@ test("BUG-037 package main points to server.js", () => {
   assert.equal(JSON.parse(read("package.json")).main, "server.js");
 });
 
-test("BUG-038 dev script uses nodemon", () => {
-  assert.match(JSON.parse(read("package.json")).scripts.dev, /nodemon/);
+test("BUG-038 dev script restarts on file changes", () => {
+  assert.match(JSON.parse(read("package.json")).scripts.dev, /node --watch|nodemon/);
 });
 
 test("BUG-039 backend test script runs real tests", () => {
@@ -427,7 +427,8 @@ test("NEW-003 list endpoints added pagination metadata", () => {
 
 test("NEW-004 vulnerable dependency range was updated", () => {
   const pkg = JSON.parse(read("package.json"));
-  assert.match(pkg.dependencies.nodemailer, /^(\^)?8\./);
+  // nodemailer <=10.0.5 has a reachable addressparser DoS (replyTo on issue reports).
+  assert.match(pkg.dependencies.nodemailer, /^(\^)?(1\d|[2-9]\d)\./);
   assert.match(pkg.dependencies.multer, /^(\^)?2\./);
 });
 

@@ -17,7 +17,10 @@ const config = {
     url: process.env.SUPABASE_URL,
     anonKey: process.env.SUPABASE_ANON_KEY,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    jwtSecret: process.env.SUPABASE_JWT_SECRET,
+  },
+  auth: {
+    // Must also be on the Supabase Auth redirect allowlist (exact URL).
+    passwordResetRedirectUrl: process.env.PASSWORD_RESET_REDIRECT_URL || null,
   },
   email: {
     user: process.env.EMAIL_USER,

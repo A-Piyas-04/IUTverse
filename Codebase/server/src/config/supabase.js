@@ -10,14 +10,19 @@ const isSupabaseAdminConfigured = Boolean(
   supabaseUrl && supabaseServiceRoleKey
 );
 
-const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-  : null;
+// A fresh anon client per auth call. supabase-js keeps the signed-in session
+// on the client instance, so a shared client would let concurrent requests
+// (for example signOut for one user) act on another user's session.
+const createAuthClient = () =>
+  isSupabaseConfigured
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          detectSessionInUrl: false,
+        },
+      })
+    : null;
 
 const supabaseAdmin = isSupabaseAdminConfigured
   ? createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -29,7 +34,7 @@ const supabaseAdmin = isSupabaseAdminConfigured
   : null;
 
 module.exports = {
-  supabase,
+  createAuthClient,
   supabaseAdmin,
   isSupabaseConfigured,
   isSupabaseAdminConfigured,
