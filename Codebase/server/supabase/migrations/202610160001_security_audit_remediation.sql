@@ -149,10 +149,13 @@ $$;
 
 -- Locks a report target and returns (author, status), or no row when the
 -- target does not exist. Confessions have no stored author.
+-- SECURITY INVOKER on purpose: it returns anonymous posts' authors, so it must
+-- never run with elevated rights for a client. Its caller, moderate_report,
+-- already runs as the owner.
 create or replace function public.lock_report_target(kind public.entity_kind, target_id bigint)
 returns table (author_id uuid, status public.content_status)
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 begin
