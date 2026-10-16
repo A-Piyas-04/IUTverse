@@ -85,3 +85,6 @@ user iutverse.txt
 # Mutation testing
 .stryker-tmp/
 Codebase/server/reports/
+
+# .md files
+*.md
