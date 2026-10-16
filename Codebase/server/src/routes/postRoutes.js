@@ -6,6 +6,7 @@ const { authenticateToken } = require("../middleware/auth");
 const upload = require("../middleware/uploadMiddleware");
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 
 // POST ROUTES
 // Create a new post
@@ -15,6 +16,7 @@ router.post(
   createLimiter,
   upload.single("image"),
   imageUploadErrorHandler,
+  acceptStoredUpload("post"),
   postController.createPost
 );
 
@@ -31,6 +33,7 @@ router.put(
   createLimiter,
   upload.single("image"),
   imageUploadErrorHandler,
+  acceptStoredUpload("post"),
   postController.updatePost
 );
 

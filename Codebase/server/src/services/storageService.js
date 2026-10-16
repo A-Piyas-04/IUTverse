@@ -25,6 +25,14 @@ const buildObjectPath = (userId, prefix = "upload", extension = "") => {
 const uploadObject = async ({ bucket, userId, file, prefix }) => {
   ensureStorage();
 
+  // Already uploaded straight to Storage and validated by claimUpload.
+  if (file?.stored) {
+    if (file.bucket !== bucket) {
+      throw Object.assign(new Error("Upload does not belong to this destination"), { statusCode: 400, isPublic: true });
+    }
+    return { bucket, path: file.path, mimeType: file.mimetype, size: file.size };
+  }
+
   const fileType = validateUploadedFile(file, { bucket });
   const objectPath = buildObjectPath(userId, prefix, fileType.extension);
   const { error } = await supabaseAdmin.storage

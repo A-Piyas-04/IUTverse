@@ -5,6 +5,7 @@ const { authenticateToken } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 
 // Members only
 router.get('/', authenticateToken, catPostController.getAllPosts);
@@ -12,7 +13,7 @@ router.get('/', authenticateToken, catPostController.getAllPosts);
 router.get('/:id', authenticateToken, catPostController.getPostById);
 
 // Create new post (with image upload)
-router.post('/', authenticateToken, createLimiter, upload.single('image'), imageUploadErrorHandler, catPostController.createPost);
+router.post('/', authenticateToken, createLimiter, upload.single('image'), imageUploadErrorHandler, acceptStoredUpload("catPost"), catPostController.createPost);
 
 // Delete post (authenticated)
 router.delete('/:id', authenticateToken, catPostController.deletePost);

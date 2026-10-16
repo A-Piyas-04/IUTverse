@@ -3,6 +3,7 @@ const router = express.Router();
 const chatController = require("../controllers/chatController");
 const { authenticateToken } = require("../middleware/auth");
 const { createLimiter } = require("../middleware/security");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 
 // All chat routes require authentication
 router.use(authenticateToken);
@@ -14,7 +15,7 @@ router.post("/conversations", createLimiter, chatController.startConversation);
 router.get("/conversations", chatController.getConversations);
 
 // Send a message
-router.post("/messages", createLimiter, chatController.attachmentUpload.single("attachment"), chatController.sendMessage);
+router.post("/messages", createLimiter, chatController.attachmentUpload.single("attachment"), acceptStoredUpload("chat", { nameField: "attachmentName" }), chatController.sendMessage);
 
 // Get messages in a conversation
 router.get(

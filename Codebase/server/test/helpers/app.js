@@ -70,6 +70,60 @@ const from = (table) => {
   return builder;
 };
 
+// In-memory Storage. Signed URLs point at a local HTTP server that honors
+// Range requests, like Supabase Storage does.
+const http = require("node:http");
+const storage = {
+  objects: new Map(),
+  calls: [],
+  url: null,
+  put(bucket, objectPath, body, contentType) {
+    this.objects.set(`${bucket}/${objectPath}`, { body: Buffer.from(body), contentType });
+  },
+  has(bucket, objectPath) {
+    return this.objects.has(`${bucket}/${objectPath}`);
+  },
+  reset() {
+    this.objects.clear();
+    this.calls = [];
+  },
+};
+const objectServer = http.createServer((req, res) => {
+  const object = storage.objects.get(decodeURIComponent(new URL(req.url, "http://storage").pathname.slice(1)));
+  if (!object) {
+    res.statusCode = 404;
+    return res.end();
+  }
+  const range = /^bytes=(\d+)-(\d+)$/.exec(req.headers.range || "");
+  if (!range) return res.end(object.body);
+  res.statusCode = 206;
+  return res.end(object.body.subarray(Number(range[1]), Number(range[2]) + 1));
+});
+const bucketApi = (bucket) => ({
+  createSignedUploadUrl: async (objectPath) => {
+    storage.calls.push(["createSignedUploadUrl", bucket, objectPath]);
+    return { data: { path: objectPath, token: `token-for-${objectPath}`, signedUrl: `${storage.url}/upload/${bucket}/${objectPath}` }, error: null };
+  },
+  info: async (objectPath) => {
+    const object = storage.objects.get(`${bucket}/${objectPath}`);
+    return object
+      ? { data: { size: object.body.length, contentType: object.contentType, metadata: {} }, error: null }
+      : { data: null, error: new Error("Object not found") };
+  },
+  createSignedUrl: async (objectPath) => ({ data: { signedUrl: `${storage.url}/${bucket}/${objectPath}` }, error: null }),
+  remove: async (paths) => {
+    for (const objectPath of paths) storage.objects.delete(`${bucket}/${objectPath}`);
+    storage.calls.push(["remove", bucket, ...paths]);
+    return { data: [], error: null };
+  },
+  upload: async (objectPath, body, options) => {
+    storage.put(bucket, objectPath, body, options?.contentType);
+    storage.calls.push(["upload", bucket, objectPath]);
+    return { data: { path: objectPath }, error: null };
+  },
+  getPublicUrl: () => ({ data: { publicUrl: null } }),
+});
+
 const supabaseAdmin = {
   from,
   rpc: async () => {
@@ -83,7 +137,7 @@ const supabaseAdmin = {
         : { data: { user: null }, error: new Error("invalid token") };
     },
   },
-  storage: { from: () => ({ getPublicUrl: () => ({ data: { publicUrl: null } }) }) },
+  storage: { from: bucketApi },
 };
 
 stubModule("config/supabase.js", {
@@ -116,30 +170,40 @@ const resetStubs = () => {
   Object.assign(securityService, defaults());
   for (const key of Object.keys(calls)) delete calls[key];
   db.reset();
+  storage.reset();
 };
 
 const app = require("../../src/app");
 
 let server;
 let baseUrl;
-const start = () =>
+const listen = (target) =>
   new Promise((resolve) => {
-    server = app.listen(0, "127.0.0.1", () => {
-      baseUrl = `http://127.0.0.1:${server.address().port}`;
-      resolve();
-    });
+    const instance = target.listen(0, "127.0.0.1", () => resolve(instance));
   });
-const stop = () => new Promise((resolve) => (server ? server.close(resolve) : resolve()));
+const start = async () => {
+  server = await listen(app);
+  baseUrl = `http://127.0.0.1:${server.address().port}`;
+  await listen(objectServer);
+  storage.url = `http://127.0.0.1:${objectServer.address().port}`;
+};
+const close = (target) => new Promise((resolve) => (target?.listening ? target.close(resolve) : resolve()));
+const stop = async () => {
+  await close(server);
+  await close(objectServer);
+};
 
-const request = async (method, pathName, { token, body } = {}) => {
+// `body` is sent as JSON; pass `form` (a FormData) for multipart requests.
+const request = async (method, pathName, { token, body, form } = {}) => {
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  const res = await fetch(`${baseUrl}${pathName}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const payload = form ?? (body === undefined ? undefined : JSON.stringify(body));
+  const res = await fetch(`${baseUrl}${pathName}`, { method, headers, body: payload });
   const text = await res.text();
   let json = null;
   try { json = JSON.parse(text); } catch { /* not JSON */ }
   return { status: res.status, body: json };
 };
 
-module.exports = { USERS, calls, db, request, resetStubs, securityService, start, stop };
+module.exports = { USERS, calls, db, request, resetStubs, securityService, start, stop, storage };

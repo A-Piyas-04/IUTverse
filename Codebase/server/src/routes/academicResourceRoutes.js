@@ -6,6 +6,7 @@ const { requireAdmin } = require("../middleware/authorization");
 const uploadPdf = require("../middleware/uploadPdf");
 const { pdfUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 
 // Get all departments (public route)
 router.get("/departments", academicResourceController.getAllDepartments);
@@ -36,6 +37,7 @@ router.post(
   createLimiter,
   uploadPdf.single("pdf"),
   pdfUploadErrorHandler,
+  acceptStoredUpload("resource"),
   academicResourceController.createAcademicResource
 );
 
@@ -46,6 +48,7 @@ router.put(
   createLimiter,
   uploadPdf.single("pdf"),
   pdfUploadErrorHandler,
+  acceptStoredUpload("resource"),
   academicResourceController.updateAcademicResource
 );
 

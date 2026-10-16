@@ -3,6 +3,7 @@ const controller = require("../controllers/v2Controller");
 const { authenticateToken } = require("../middleware/auth");
 const { createLimiter } = require("../middleware/security");
 const upload = require("../middleware/upload");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 
 const router = express.Router();
 router.post("/saved-items/:kind/:id", authenticateToken, createLimiter, controller.savedCreate);
@@ -12,8 +13,8 @@ router.post("/reports", authenticateToken, createLimiter, controller.reportCreat
 router.get("/reports", authenticateToken, controller.reportsList);
 router.patch("/reports/:id", authenticateToken, createLimiter, controller.reportUpdate);
 router.get("/events", authenticateToken, controller.listEvents);
-router.post("/events", authenticateToken, createLimiter, upload.single("image"), controller.createEvent);
-router.put("/events/:id", authenticateToken, createLimiter, upload.single("image"), controller.updateEvent);
+router.post("/events", authenticateToken, createLimiter, upload.single("image"), acceptStoredUpload("event"), controller.createEvent);
+router.put("/events/:id", authenticateToken, createLimiter, upload.single("image"), acceptStoredUpload("event"), controller.updateEvent);
 router.delete("/events/:id", authenticateToken, createLimiter, controller.deleteEvent);
 router.put("/events/:id/rsvp", authenticateToken, createLimiter, controller.updateRsvp);
 router.post("/academic/resources/:id/helpful", authenticateToken, createLimiter, controller.toggleHelpful);

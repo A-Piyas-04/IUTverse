@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/authorization");
 const { lookupLimiter } = require("../middleware/security");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 const profileController = require("../controllers/profileController");
 const userController = require("../controllers/userController");
 const profilePictureUpload = require("../middleware/profilePictureUpload");
@@ -88,6 +89,7 @@ router.post(
   authenticateToken,
   profilePictureUpload.single("profilePicture"),
   profileImageUploadErrorHandler,
+  acceptStoredUpload("avatar"),
   profileController.uploadProfilePicture
 );
 
@@ -108,6 +110,7 @@ router.post(
   authenticateToken,
   coverPictureUpload.single("coverPicture"),
   imageUploadErrorHandler,
+  acceptStoredUpload("cover"),
   profileController.uploadCoverPicture
 );
 

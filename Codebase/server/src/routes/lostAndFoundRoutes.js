@@ -4,6 +4,7 @@ const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { controller: lostAndFoundController, upload } = require('../controllers/lostAndFoundController');
 const { imageUploadErrorHandler } = require("../middleware/uploadErrors");
 const { createLimiter } = require("../middleware/security");
+const { acceptStoredUpload } = require("../middleware/storedUpload");
 
 // Public; signed-in members also see poster details
 router.get('/', optionalAuth, lostAndFoundController.getAllPosts.bind(lostAndFoundController));
@@ -17,6 +18,7 @@ router.post('/',
   createLimiter,
   upload.single('image'), 
   imageUploadErrorHandler,
+  acceptStoredUpload("lostFound"),
   lostAndFoundController.createPost.bind(lostAndFoundController)
 );
 
@@ -26,6 +28,7 @@ router.patch('/:postId',
   createLimiter,
   upload.single('image'), 
   imageUploadErrorHandler,
+  acceptStoredUpload("lostFound"),
   lostAndFoundController.updatePost.bind(lostAndFoundController)
 );
 

@@ -82,9 +82,14 @@ const validateUploadedFile = (file, { bucket, allowedMimeTypes = allowedForBucke
   return detected;
 };
 
+const extensionForMime = (mimeType) =>
+  signatures.find((signature) => signature.mimeType === String(mimeType || "").toLowerCase())?.extension || null;
+
 module.exports = {
   detectFileType,
+  extensionForMime,
   imageMimeTypes,
+  publicFileError,
   isAllowedImageMime,
   isAllowedPdfMime,
   pdfMimeTypes,
