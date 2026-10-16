@@ -1,0 +1,67 @@
+title = "IUTverse gitleaks config"
+
+# Keep every built-in gitleaks rule and add project-specific ones.
+[extend]
+useDefault = true
+
+# A line that is just "someone@example.com<sep>secret", the shape of a pasted
+# credentials list. Passwords are often low-entropy, so no entropy threshold.
+[[rules]]
+id = "email-password-pair"
+description = "Email address paired with a password-like value"
+regex = '''(?m)^[ \t]*[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+(?:[ \t]*[:|;,][ \t]*|[ \t]+(?:(?i:pass(?:word)?|pwd|pw)[ \t]*[:=]?[ \t]*)?)([^\s@]{6,})[ \t\r]*$'''
+secretGroup = 1
+keywords = ["@"]
+
+# "password: hunter22" style lines in plain-text or config files. Source files
+# are excluded because `password: req.body.password` is normal code.
+[[rules]]
+id = "labelled-password-in-text"
+description = "Literal password value in a text or config file"
+path = '''(?i)(\.(txt|md|csv|json|ya?ml|ini|cfg|conf|toml|env|log|properties)$|(^|/)[^/.]+$)'''
+regex = '''(?i)\b(?:password|passwd|pwd|app[ _-]?password|smtp[ _-]?pass(?:word)?|email[ _-]?pass)\b["']?[ \t]*[:=][ \t]*["']?([^\s"'#<>${}()\[\],]{6,})'''
+secretGroup = 1
+entropy = 2.8
+keywords = ["pass", "pwd"]
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''(?i)(your[-_]|example|placeholder|replace[-_]with|generated[-_]password|change[-_]?me|xxxx|\*\*\*\*|redacted|required|optional|string|boolean|undefined|process\.env)''']
+
+# Google app passwords are four groups of four lowercase letters.
+[[rules]]
+id = "gmail-app-password"
+description = "Google app password next to a password/SMTP keyword"
+regex = '''(?i)(?:pass|pwd|smtp|app)[^\n]{0,30}?\b([a-z]{4} [a-z]{4} [a-z]{4} [a-z]{4})\b'''
+secretGroup = 1
+keywords = ["pass", "pwd", "smtp", "app"]
+
+# Long, random-looking tokens anywhere in tracked files.
+[[rules]]
+id = "high-entropy-string"
+description = "High-entropy string that may be a credential"
+regex = '''(?:^|['"`=:\s])([A-Za-z0-9+/_-]{32,}={0,2})(?:$|['"`\s,;])'''
+secretGroup = 1
+entropy = 4.6
+[[rules.allowlists]]
+regexTarget = "line"
+regexes = [
+  '''(?i)\b(?:integrity|sha(?:1|256|384|512))[-"':\s]''',
+  '''(?i)\bdata:image/''',
+]
+
+[[allowlists]]
+description = "Generated files, binaries and documented placeholders"
+paths = [
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)(dist|build|coverage|node_modules)/''',
+  '''\.(png|jpe?g|gif|webp|ico|pdf|woff2?|ttf|eot|svg|map)$''',
+  # The repo's own scanner contains detector patterns and self-test samples.
+  '''^Codebase/server/scripts/scanSecrets\.js$''',
+  '''^Codebase/server/test/unit/secret-scan\.test\.js$''',
+  '''^\.gitleaks\.toml$''',
+]
+regexTarget = "line"
+regexes = [
+  # curl examples in docs use "Bearer YOUR_TOKEN"-style placeholders.
+  '''(?i)Bearer[ \t]+(?:YOUR|<|\$|\{|TOKEN|ACCESS)''',
+]
