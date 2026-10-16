@@ -42,7 +42,7 @@ jobs:
           node-version: 22
 
       - name: Built-in secret scanner
-        working-directory: Codebase/server
+        working-directory: server
         run: |
           node scripts/scanSecrets.js --self-test
           node scripts/scanSecrets.js
@@ -51,14 +51,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Codebase/server
+        working-directory: server
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: Codebase/server/package-lock.json
+          cache-dependency-path: server/package-lock.json
       - run: npm ci
       # Behavioral route tests stub Supabase; nothing reaches a real project.
       - run: npm test
@@ -70,14 +70,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Codebase/server
+        working-directory: server
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: Codebase/server/package-lock.json
+          cache-dependency-path: server/package-lock.json
       - run: npm ci
       - name: Start local Supabase (applies every migration)
         run: npx supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
@@ -90,14 +90,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Codebase/client-v2
+        working-directory: client
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: Codebase/client-v2/package-lock.json
+          cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint

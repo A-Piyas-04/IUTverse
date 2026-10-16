@@ -56,8 +56,8 @@ paths = [
   '''(^|/)(dist|build|coverage|node_modules)/''',
   '''\.(png|jpe?g|gif|webp|ico|pdf|woff2?|ttf|eot|svg|map)$''',
   # The repo's own scanner contains detector patterns and self-test samples.
-  '''(^|/)Codebase/server/scripts/scanSecrets\.js$''',
-  '''(^|/)Codebase/server/test/unit/secret-scan\.test\.js$''',
+  '''(^|/)server/scripts/scanSecrets\.js$''',
+  '''(^|/)server/test/unit/security-scan\.test\.js$''',
   '''(^|/)\.gitleaks\.toml$''',
 ]
 regexTarget = "line"

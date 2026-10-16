@@ -110,7 +110,7 @@ services:
   # Applies the IUTverse migrations (they need the auth and storage schemas)
   # and loads the starter data, then exits.
   migrate:
-    build: ./Codebase/server
+    build: ./server
     command: ["node", "scripts/dockerInit.js"]
     restart: "no"
     depends_on:
@@ -212,7 +212,7 @@ services:
       retries: 30
 
   api:
-    build: ./Codebase/server
+    build: ./server
     restart: unless-stopped
     depends_on:
       migrate:
@@ -238,7 +238,7 @@ services:
 
   client:
     build:
-      context: ./Codebase/client-v2
+      context: ./client
       args:
         VITE_SUPABASE_URL: http://localhost:${SUPABASE_PORT:-8000}
         VITE_SUPABASE_ANON_KEY: *anon-key
