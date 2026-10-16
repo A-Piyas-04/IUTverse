@@ -88,3 +88,7 @@ Codebase/server/reports/
 
 # .md files
 *.md
+
+# Security reports with exploit details (keep local only)
+AUDIT-REPORT-*.md
+DIFFERENTIAL-REVIEW-*.md
