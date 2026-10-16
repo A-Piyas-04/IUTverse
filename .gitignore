@@ -77,3 +77,7 @@ Icon?
 ._*
 .Spotlight-V100
 .Trashes
+
+# User-uploaded files (personal data; lives in Supabase Storage)
+Codebase/server/uploads/
+user iutverse.txt
