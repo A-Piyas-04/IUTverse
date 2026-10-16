@@ -9,9 +9,12 @@
 .ghost { background: transparent; color: var(--muted-2); }
 .icon { width: 44px; padding: 0; border-color: var(--border); background: transparent; }
 .field { display: grid; gap: 7px; color: var(--muted-2); font-size: 14px; font-weight: 600; }
-.input, .textarea, .select { width: 100%; min-height: 46px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: var(--fg); padding: 11px 13px; outline: none; transition: 180ms var(--ease); }
+.input, .textarea, .select { width: 100%; min-height: 46px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: var(--fg); padding: 11px 13px; outline: 2px solid transparent; outline-offset: 1px; transition: 180ms var(--ease); }
 .textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
 .input:focus, .textarea:focus, .select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 78%); }
+@media (forced-colors: active) {
+  .input:focus, .textarea:focus, .select:focus { outline-color: Highlight; }
+}
 .error { color: var(--danger); font-size: 13px; font-weight: 500; }
 .card { border: 1px solid var(--border); border-radius: var(--radius); background: color-mix(in srgb, var(--surface), transparent 2%); overflow: hidden; }
 .cardPad { padding: 18px; }

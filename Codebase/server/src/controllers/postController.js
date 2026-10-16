@@ -430,6 +430,9 @@ exports.getUserFeed = async (req, res) => {
       .from("posts")
       .select(`*, user:profiles!posts_author_id_fkey(${profileSelect})`, { count: "exact" })
       .eq("status", "active")
+      // Selecting by the author's cohort would shrink an anonymous author's
+      // anonymity set to their department and batch.
+      .eq("is_anonymous", false)
       .in("author_id", authorIds)
       .order("created_at", { ascending: false })
       .range(from, to);

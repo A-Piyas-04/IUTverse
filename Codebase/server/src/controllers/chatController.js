@@ -48,6 +48,11 @@ const sendMessage = async (req, res) => {
     const contentResult = content ? requiredText(content, "Message content", { max: 4000 }) : { value: "" };
     if (contentResult.error || (!contentResult.value && !req.file)) return response.badRequest(res, contentResult.error || "Message or attachment is required");
 
+    // Check access before uploading so non-participants cannot fill storage.
+    if (!(await chatService.isParticipant(conversationIdResult.value, senderId))) {
+      return response.forbidden(res, "Conversation not found or access denied");
+    }
+
     let attachment = null;
     if (req.file) {
       const uploaded = await storageService.uploadObject({ bucket: "chat-attachments", userId: senderId, file: req.file, prefix: "message" });

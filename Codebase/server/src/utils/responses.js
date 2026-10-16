@@ -16,13 +16,16 @@ const created = (res, data, message = null, extras = {}) =>
     ...extras,
   });
 
-const exposeInternalErrors = process.env.NODE_ENV !== "production";
+// Internal error detail is opt-in for local debugging (EXPOSE_ERRORS=true) and
+// never sent in production, so a missing or mistyped NODE_ENV fails closed.
+const exposeInternalErrors = () =>
+  process.env.EXPOSE_ERRORS === "true" && process.env.NODE_ENV !== "production";
 
 const failure = (res, status, message, error = undefined, extras = {}) =>
   send(res, status, {
     success: false,
     message,
-    ...(error && exposeInternalErrors ? { error } : {}),
+    ...(error && exposeInternalErrors() ? { error } : {}),
     ...extras,
   });
 
@@ -38,4 +41,5 @@ module.exports = {
   serverError: (res, message = "Internal server error", error = undefined) =>
     failure(res, 500, message, error),
   failure,
+  exposeInternalErrors,
 };

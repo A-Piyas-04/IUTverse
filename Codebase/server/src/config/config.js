@@ -12,6 +12,7 @@ const config = {
     rateLimitGeneralMax: parseInt(process.env.RATE_LIMIT_GENERAL_MAX, 10) || 300,
     rateLimitAuthMax: parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10) || 10,
     rateLimitCreateMax: parseInt(process.env.RATE_LIMIT_CREATE_MAX, 10) || 60,
+    rateLimitLookupMax: parseInt(process.env.RATE_LIMIT_LOOKUP_MAX, 10) || 20,
   },
   supabase: {
     url: process.env.SUPABASE_URL,

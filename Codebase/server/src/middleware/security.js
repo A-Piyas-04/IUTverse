@@ -1,4 +1,4 @@
-const rateLimit = require("express-rate-limit");
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 const helmet = require("helmet");
 const config = require("../config/config");
 const { failure } = require("../utils/responses");
@@ -51,10 +51,11 @@ const helmetMiddleware = helmet({
   referrerPolicy: { policy: "no-referrer" },
 });
 
-const makeLimiter = ({ windowMs, max, message }) =>
+const makeLimiter = ({ windowMs, max, message, keyGenerator }) =>
   rateLimit({
     windowMs,
     max,
+    ...(keyGenerator ? { keyGenerator } : {}),
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => failure(res, 429, message),
@@ -80,8 +81,18 @@ const createLimiter = makeLimiter({
   message: "Too many write requests. Please try again later.",
 });
 
+// Per-member limit for lookups that act as an existence oracle (sequential
+// student IDs). Mount after authenticateToken.
+const lookupLimiter = makeLimiter({
+  windowMs: minutes(config.security.rateLimitWindowMinutes),
+  max: config.security.rateLimitLookupMax,
+  message: "Too many lookups. Please try again later.",
+  keyGenerator: (req) => (req.user?.id ? `user:${req.user.id}` : `ip:${ipKeyGenerator(req.ip)}`),
+});
+
 module.exports = {
   apiLimiter,
+  lookupLimiter,
   authLimiter,
   corsGuard,
   corsOptions,

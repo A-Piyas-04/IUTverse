@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/authorization");
+const { lookupLimiter } = require("../middleware/security");
 const profileController = require("../controllers/profileController");
 const userController = require("../controllers/userController");
 const profilePictureUpload = require("../middleware/profilePictureUpload");
@@ -65,6 +66,7 @@ router.delete(
 router.get(
   "/user/student-id/check/:studentId",
   authenticateToken,
+  lookupLimiter,
   userController.checkStudentIdAvailability
 );
 

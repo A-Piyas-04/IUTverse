@@ -34,14 +34,38 @@ test("success sends the standard success envelope with extras", () => {
   });
 });
 
-test("serverError sends the standard error envelope", () => {
-  const res = mockRes();
-  response.serverError(res, "Unexpected server error", "boom");
+const withEnv = (vars, fn) => {
+  const saved = Object.fromEntries(Object.keys(vars).map((key) => [key, process.env[key]]));
+  Object.assign(process.env, vars);
+  try {
+    fn();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+};
 
-  assert.equal(res.statusCode, 500);
-  assert.deepEqual(res.body, {
-    success: false,
-    message: "Unexpected server error",
-    error: "boom",
+test("serverError hides internal detail by default", () => {
+  withEnv({ NODE_ENV: "development", EXPOSE_ERRORS: "" }, () => {
+    const res = mockRes();
+    response.serverError(res, "Unexpected server error", "boom");
+
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.body, { success: false, message: "Unexpected server error" });
+  });
+});
+
+test("serverError includes internal detail only when EXPOSE_ERRORS=true outside production", () => {
+  withEnv({ NODE_ENV: "development", EXPOSE_ERRORS: "true" }, () => {
+    const res = mockRes();
+    response.serverError(res, "Unexpected server error", "boom");
+    assert.deepEqual(res.body, { success: false, message: "Unexpected server error", error: "boom" });
+  });
+  withEnv({ NODE_ENV: "production", EXPOSE_ERRORS: "true" }, () => {
+    const res = mockRes();
+    response.serverError(res, "Unexpected server error", "boom");
+    assert.deepEqual(res.body, { success: false, message: "Unexpected server error" });
   });
 });

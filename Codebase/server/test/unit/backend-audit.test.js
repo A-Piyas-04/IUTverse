@@ -432,9 +432,9 @@ test("NEW-004 vulnerable dependency range was updated", () => {
   assert.match(pkg.dependencies.multer, /^(\^)?2\./);
 });
 
-test("NEW-005 production 5xx responses are stripped of internal details", () => {
+test("NEW-005 5xx responses are stripped of internal details unless opted in", () => {
   const app = read("src/app.js");
-  assert.match(app, /sanitizeProductionErrors/);
-  assert.match(app, /process\.env\.NODE_ENV === "production" && res\.statusCode >= 500/);
+  assert.match(app, /sanitizeServerErrors/);
+  assert.match(app, /res\.statusCode >= 500 && !exposeInternalErrors\(\)/);
   assert.match(app, /message: "Internal server error"/);
 });
