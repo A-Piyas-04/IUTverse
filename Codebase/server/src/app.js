@@ -10,6 +10,7 @@ const {
 } = require("./middleware/security");
 const { badRequest, exposeInternalErrors, payloadTooLarge, serverError } = require("./utils/responses");
 const logger = require("./utils/logger");
+const config = require("./config/config");
 
 const app = express();
 
@@ -32,6 +33,8 @@ const sanitizeServerErrors = (req, res, next) => {
 
 // Middleware
 app.disable("x-powered-by");
+// Must precede the rate limiters so req.ip is the client, not the proxy.
+if (config.trustProxy) app.set("trust proxy", config.trustProxy);
 app.use(helmetMiddleware);
 app.use(sanitizeServerErrors);
 app.use(express.json({ limit: "1mb" }));

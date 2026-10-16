@@ -1,6 +1,9 @@
 const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
+const { RedisStore } = require("rate-limit-redis");
 const helmet = require("helmet");
 const config = require("../config/config");
+const { getRedis } = require("../config/redis");
+const logger = require("../utils/logger");
 const { failure } = require("../utils/responses");
 
 const parseOrigins = (value) =>
@@ -51,10 +54,38 @@ const helmetMiddleware = helmet({
   referrerPolicy: { policy: "no-referrer" },
 });
 
-const makeLimiter = ({ windowMs, max, message, keyGenerator }) =>
+// MemoryStore counts per process, which on serverless means per instance.
+// With REDIS_URL set, all instances share counters.
+if (!config.redisUrl && config.nodeEnv === "production") {
+  logger.warn("REDIS_URL is not set; rate limits are per instance and do not hold across serverless scale-out");
+}
+
+// The Redis client queues commands while disconnected, so an outage would
+// hang requests instead of reaching passOnStoreError. Bound each increment.
+const STORE_TIMEOUT_MS = 1500;
+class BoundedRedisStore extends RedisStore {
+  increment(key) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("rate-limit store timed out")), STORE_TIMEOUT_MS);
+    });
+    return Promise.race([super.increment(key), timeout]).finally(() => clearTimeout(timer));
+  }
+}
+
+const sharedStore = (prefix) => {
+  const redis = getRedis();
+  return redis ? new BoundedRedisStore({ prefix: `rl:${prefix}:`, sendCommand: (...args) => redis.sendCommand(args) }) : undefined;
+};
+
+// failOpen: when the shared store is unreachable, let requests through (true)
+// or reject them (false). Credential and lookup limits fail closed.
+const makeLimiter = ({ name, windowMs, max, message, keyGenerator, failOpen = true }) =>
   rateLimit({
     windowMs,
     max,
+    store: sharedStore(name),
+    passOnStoreError: failOpen,
     ...(keyGenerator ? { keyGenerator } : {}),
     standardHeaders: true,
     legacyHeaders: false,
@@ -64,18 +95,22 @@ const makeLimiter = ({ windowMs, max, message, keyGenerator }) =>
 const minutes = (value) => value * 60 * 1000;
 
 const apiLimiter = makeLimiter({
+  name: "api",
   windowMs: minutes(config.security.rateLimitWindowMinutes),
   max: config.security.rateLimitGeneralMax,
   message: "Too many API requests. Please try again later.",
 });
 
 const authLimiter = makeLimiter({
+  name: "auth",
+  failOpen: false,
   windowMs: minutes(config.security.rateLimitWindowMinutes),
   max: config.security.rateLimitAuthMax,
   message: "Too many authentication attempts. Please try again later.",
 });
 
 const createLimiter = makeLimiter({
+  name: "create",
   windowMs: minutes(config.security.rateLimitWindowMinutes),
   max: config.security.rateLimitCreateMax,
   message: "Too many write requests. Please try again later.",
@@ -84,6 +119,8 @@ const createLimiter = makeLimiter({
 // Per-member limit for lookups that act as an existence oracle (sequential
 // student IDs). Mount after authenticateToken.
 const lookupLimiter = makeLimiter({
+  name: "lookup",
+  failOpen: false,
   windowMs: minutes(config.security.rateLimitWindowMinutes),
   max: config.security.rateLimitLookupMax,
   message: "Too many lookups. Please try again later.",

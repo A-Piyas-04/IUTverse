@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Download, ExternalLink, Plus, ThumbsUp } from "lucide-react";
-import { apiPage, apiRequest } from "@/lib/api";
+import { apiPage, apiRequest, resolveApiLink } from "@/lib/api";
 import type { Resource } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
@@ -19,7 +19,7 @@ export function ResourcesPage() {
 
 function ResourceCard({ resource }: { resource: Resource }) {
   const query = useQueryClient(); const helpful = useMutation({ mutationFn: () => apiRequest(`/academic/resources/${resource.id}/helpful`, { method: "POST" }), onSuccess: () => void query.invalidateQueries({ queryKey: ["resources"] }) });
-  return <Card className={styles.cardContent}><div className={styles.titleRow}><div><span className={styles.badge}>{resource.type.replaceAll("_", " ")}</span><h2>{resource.title}</h2><div className={styles.meta}>{resource.courseCode || "Campus resource"} · {resource.department?.name || "All departments"} · {dateLabel(resource.createdAt)}</div></div><BookOpen color="var(--accent)" /></div>{resource.description && <p>{resource.description}</p>}<div className={styles.actions}>{resource.fileUrl && <Button variant="secondary" onClick={() => window.open(resource.fileUrl, "_blank", "noopener,noreferrer")}><Download size={17} />Preview / Download</Button>}{resource.externalLink && <Button variant="secondary" onClick={() => window.open(resource.externalLink, "_blank", "noopener,noreferrer")}><ExternalLink size={17} />Open resource</Button>}<Button variant="ghost" onClick={() => helpful.mutate()}><ThumbsUp size={17} />Helpful {resource.helpfulCount || 0}</Button><EntityActions kind="resource" id={resource.id} saved={resource.saved} invalidate={["resources"]} /></div></Card>;
+  return <Card className={styles.cardContent}><div className={styles.titleRow}><div><span className={styles.badge}>{resource.type.replaceAll("_", " ")}</span><h2>{resource.title}</h2><div className={styles.meta}>{resource.courseCode || "Campus resource"} · {resource.department?.name || "All departments"} · {dateLabel(resource.createdAt)}</div></div><BookOpen color="var(--accent)" /></div>{resource.description && <p>{resource.description}</p>}<div className={styles.actions}>{resource.fileUrl && <Button variant="secondary" onClick={() => window.open(resolveApiLink(resource.fileUrl), "_blank", "noopener,noreferrer")}><Download size={17} />Preview / Download</Button>}{resource.externalLink && <Button variant="secondary" onClick={() => window.open(resource.externalLink, "_blank", "noopener,noreferrer")}><ExternalLink size={17} />Open resource</Button>}<Button variant="ghost" onClick={() => helpful.mutate()}><ThumbsUp size={17} />Helpful {resource.helpfulCount || 0}</Button><EntityActions kind="resource" id={resource.id} saved={resource.saved} invalidate={["resources"]} /></div></Card>;
 }
 
 function ResourceDialog({ open, onClose }: { open: boolean; onClose(): void }) {

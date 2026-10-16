@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { apiUrl } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/types";
 
@@ -24,7 +25,7 @@ interface MeResponse {
 const AuthContext = createContext<AuthValue | null>(null);
 
 const loadAuthoritativeProfile = async (session: Session): Promise<Profile> => {
-  const response = await fetch("/api/auth/me", { headers: { Authorization: `Bearer ${session.access_token}` } });
+  const response = await fetch(apiUrl("/auth/me"), { headers: { Authorization: `Bearer ${session.access_token}` } });
   const payload = await response.json().catch(() => null) as MeResponse | null;
   if (!response.ok || !payload?.success || payload.data.membershipStatus !== "active") {
     throw new Error(payload?.message || "This account does not have active IUTverse membership.");

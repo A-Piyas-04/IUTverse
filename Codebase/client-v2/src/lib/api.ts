@@ -1,6 +1,14 @@
 import { supabase } from "./supabase";
 import type { ApiResult, PaginatedResult } from "./types";
 
+// Deployed builds call the API host directly (VITE_API_BASE_URL). Local dev
+// leaves it unset and goes through the Vite proxy at /api.
+export const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/+$/, "");
+export const apiUrl = (path: string) => `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+// The server returns some links as /api/... paths; resolve them on the API host.
+export const resolveApiLink = (value?: string | null) =>
+  value?.startsWith("/api/") ? apiUrl(value.slice("/api".length)) : value ?? undefined;
+
 export class ApiError extends Error {
   constructor(message: string, public status: number, public details?: unknown) { super(message); }
 }
@@ -29,7 +37,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, sig
   if (sessionData.session?.access_token) headers.set("Authorization", `Bearer ${sessionData.session.access_token}`);
   if (options.body && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
 
-  const response = await fetch(`/api${path}`, { ...options, headers, signal });
+  const response = await fetch(apiUrl(path), { ...options, headers, signal });
   const contentType = response.headers.get("content-type") ?? "";
   const payload = contentType.includes("application/json") ? await response.json() : await response.text();
   if (!response.ok) throw new ApiError(payload?.message || `Request failed (${response.status})`, response.status, payload);

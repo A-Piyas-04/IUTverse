@@ -1,0 +1,12 @@
+# Deploy from Codebase/client-v2 (static client) and Codebase/server (API) as
+# separate Vercel projects with those Root Directories. If the repository root
+# is ever used as a project root, never ship the legacy client or tooling.
+Codebase/client/
+Codebase/documentation/
+Codebase/tests/
+Ideate/
+redesign/
+node_modules/
+.claude/
+.agents/
+*.md

@@ -41,7 +41,7 @@ test("runtime authorization uses protected security context", () => {
   assert.match(auth, /membershipStatus !== "active"/);
   assert.doesNotMatch(auth, /jsonwebtoken|jwt\.verify/);
   assert.doesNotMatch(auth, /select\(['"]id, display_name, role/);
-  assert.match(clientAuth, /\/api\/auth\/me/);
+  assert.match(clientAuth, /apiUrl\("\/auth\/me"\)/);
   assert.doesNotMatch(clientAuth, /user_metadata\?\.role/);
 });
 

@@ -7,6 +7,7 @@ const config = require("../config/config");
 const { createTransporter } = require("../config/email");
 const storageService = require("../services/storageService");
 const securityService = require("../services/securityService");
+const sharedCache = require("../services/sharedCache");
 const { canViewContent } = require("../utils/contentVisibility");
 
 const ENTITY_TABLES = {
@@ -211,15 +212,17 @@ const resourceFile = async (req, res) => {
   } catch (error) { logger.error("resourceFile failed", error); return response.serverError(res, "Could not open resource", error.message); }
 };
 
-let weatherCache = { expires: 0, value: null };
+const WEATHER_CACHE_KEY = "cache:campus-weather";
 const weather = async (_req, res) => {
   try {
-    if (weatherCache.value && weatherCache.expires > Date.now()) return response.success(res, weatherCache.value);
+    const cached = await sharedCache.get(WEATHER_CACHE_KEY);
+    if (cached) return response.success(res, cached);
     if (!process.env.OPENWEATHER_API_KEY) return response.failure(res, 503, "Weather service is not configured");
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=23.9981&lon=90.423&appid=${encodeURIComponent(process.env.OPENWEATHER_API_KEY)}&units=metric`;
     const result = await fetch(url); if (!result.ok) throw new Error(`Weather provider returned ${result.status}`); const data = await result.json();
-    weatherCache = { expires: Date.now() + 10 * 60 * 1000, value: { location: `${data.name || "Gazipur"}, ${data.sys?.country || "BD"}`, temperature: data.main?.temp, feelsLike: data.main?.feels_like, humidity: data.main?.humidity, windSpeed: data.wind?.speed, description: data.weather?.[0]?.description || "Weather unavailable" } };
-    return response.success(res, weatherCache.value);
+    const value = { location: `${data.name || "Gazipur"}, ${data.sys?.country || "BD"}`, temperature: data.main?.temp, feelsLike: data.main?.feels_like, humidity: data.main?.humidity, windSpeed: data.wind?.speed, description: data.weather?.[0]?.description || "Weather unavailable" };
+    await sharedCache.set(WEATHER_CACHE_KEY, value, 10 * 60);
+    return response.success(res, value);
   } catch (error) { logger.error("weather proxy failed", error); return response.failure(res, 502, "Weather data is temporarily unavailable"); }
 };
 
