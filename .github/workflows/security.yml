@@ -46,3 +46,59 @@ jobs:
         run: |
           node scripts/scanSecrets.js --self-test
           node scripts/scanSecrets.js
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Codebase/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Codebase/server/package-lock.json
+      - run: npm ci
+      # Behavioral route tests stub Supabase; nothing reaches a real project.
+      - run: npm test
+      - run: npm audit --audit-level=high
+
+  # RLS, grants and moderation functions, tested as separate members against a
+  # throwaway local Supabase stack built from the migrations.
+  database:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Codebase/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Codebase/server/package-lock.json
+      - run: npm ci
+      - name: Start local Supabase (applies every migration)
+        run: npx supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: pgTAP
+        run: npx supabase test db
+      - if: always()
+        run: npx supabase stop --no-backup
+
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Codebase/client-v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Codebase/client-v2/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test

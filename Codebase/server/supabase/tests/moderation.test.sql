@@ -4,7 +4,7 @@
 begin;
 \ir helpers/test_users.psql
 
-select plan(30);
+select plan(38);
 
 select pg_temp.create_member('a2000000-0000-0000-0000-00000000000a', 'author.a@iut-dhaka.edu');
 select pg_temp.create_member('e2000000-0000-0000-0000-00000000000e', 'reporter.r@iut-dhaka.edu');
@@ -19,7 +19,9 @@ insert into public.posts (id, author_id, content, is_anonymous, status) values
   (920002, 'f1000000-0000-0000-0000-0000000000f1', 'post by mod one', false, 'archived');
 insert into public.jobs (id, title, type, description, posted_by_id, status) values
   (920001, 'deleted job', 'Internship', 'x', 'a2000000-0000-0000-0000-00000000000a', 'deleted'),
-  (920002, 'active job', 'Internship', 'x', 'a2000000-0000-0000-0000-00000000000a', 'active');
+  (920002, 'active job', 'Internship', 'x', 'a2000000-0000-0000-0000-00000000000a', 'active'),
+  (920003, 'archived job', 'Internship', 'x', 'a2000000-0000-0000-0000-00000000000a', 'archived'),
+  (920004, 'job reported by a moderator', 'Internship', 'x', 'a2000000-0000-0000-0000-00000000000a', 'active');
 
 insert into public.content_reports (id, reporter_id, entity_kind, entity_id, reason) values
   (920001, 'f1000000-0000-0000-0000-0000000000f1', 'post', 920001, 'self-filed by mod one'),
@@ -27,7 +29,9 @@ insert into public.content_reports (id, reporter_id, entity_kind, entity_id, rea
   (920003, 'e2000000-0000-0000-0000-00000000000e', 'post', 920002, 'report on mod one''s post'),
   (920004, 'e2000000-0000-0000-0000-00000000000e', 'job', 920002, 'report on active job'),
   (920005, 'e2000000-0000-0000-0000-00000000000e', 'job', 920002, 'second report on active job'),
-  (920006, 'e2000000-0000-0000-0000-00000000000e', 'post', 920001, 'member report on anonymous post');
+  (920006, 'e2000000-0000-0000-0000-00000000000e', 'post', 920001, 'member report on anonymous post'),
+  (920007, 'e2000000-0000-0000-0000-00000000000e', 'job', 920003, 'report on archived job'),
+  (920008, 'f1000000-0000-0000-0000-0000000000f1', 'job', 920004, 'filed by mod one');
 
 -- ------------------------------------------------------- identity disclosure
 select throws_ok(
@@ -77,6 +81,15 @@ select throws_ok(
 );
 
 -- ------------------------------------------------------- moderate_report
+select throws_ok(
+  $$ select public.moderate_report(920008, 'f1000000-0000-0000-0000-0000000000f1', 'archive') $$,
+  '42501', 'moderators cannot decide reports they filed',
+  'a moderator cannot decide a report they filed'
+);
+select is(
+  (select status::text from public.jobs where id = 920004), 'active',
+  'the self-reported content is unchanged'
+);
 select throws_ok(
   $$ select public.moderate_report(920001, 'f3000000-0000-0000-0000-0000000000f3', 'dismiss') $$,
   '55000', 'report is already resolved',
@@ -161,6 +174,16 @@ select is(
   'dismiss does not change the content'
 );
 
+select results_eq(
+  $$ select status::text, review_action from public.moderate_report(920007, 'f2000000-0000-0000-0000-0000000000f2', 'approve') $$,
+  $$ values ('reviewed'::text, 'approve'::text) $$,
+  'approve marks the report reviewed'
+);
+select is(
+  (select status::text from public.jobs where id = 920003), 'active',
+  'approve restores archived content to active'
+);
+
 -- ------------------------------------------------------- admin_set_user_role (M-3)
 select throws_ok(
   $$ select public.admin_set_user_role('e2000000-0000-0000-0000-00000000000e', 'mod', 'f4000000-0000-0000-0000-0000000000f4', 'promote for testing') $$,
@@ -171,6 +194,27 @@ select throws_ok(
   $$ select public.admin_set_user_role('e2000000-0000-0000-0000-00000000000e', 'mod', 'f1000000-0000-0000-0000-0000000000f1', 'promote for testing') $$,
   'P0001', 'administrator access required',
   'moderators cannot change roles'
+);
+
+select throws_ok(
+  $$ select public.admin_set_user_role('f3000000-0000-0000-0000-0000000000f3', 'user', 'f3000000-0000-0000-0000-0000000000f3', 'stepping down for testing') $$,
+  'P0001', 'administrators cannot change their own role',
+  'an administrator cannot change their own role'
+);
+select is(
+  (select role::text from public.user_roles where user_id = 'f3000000-0000-0000-0000-0000000000f3'), 'admin',
+  'the administrator keeps their role'
+);
+select is(
+  public.admin_set_user_role('e2000000-0000-0000-0000-00000000000e', 'mod', 'f3000000-0000-0000-0000-0000000000f3', 'promote for testing'),
+  'mod'::public.app_role,
+  'an administrator can change another member''s role'
+);
+select is(
+  (select count(*)::int from public.security_audit_events
+   where action = 'user.role_changed' and target_id = 'e2000000-0000-0000-0000-00000000000e'),
+  1,
+  'the role change is audited'
 );
 
 -- ------------------------------------------------------- client access

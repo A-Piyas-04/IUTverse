@@ -81,3 +81,7 @@ Icon?
 # User-uploaded files (personal data; lives in Supabase Storage)
 Codebase/server/uploads/
 user iutverse.txt
+
+# Mutation testing
+.stryker-tmp/
+Codebase/server/reports/
