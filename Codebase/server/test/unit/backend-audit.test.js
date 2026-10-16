@@ -144,9 +144,11 @@ test("BUG-017 lost-and-found route is mounted once", () => {
   assert.equal(mounts.length, 1);
 });
 
-test("BUG-018 legacy root controller/route/middleware directories are empty", () => {
+test("BUG-018 legacy root controller/route/middleware directories are empty or removed", () => {
   for (const dir of ["controllers", "routes", "middleware"]) {
-    assert.deepEqual(fs.readdirSync(path.join(serverRoot, dir)), []);
+    const full = path.join(serverRoot, dir);
+    if (!fs.existsSync(full)) continue;
+    assert.deepEqual(fs.readdirSync(full), []);
   }
 });
 

@@ -2,17 +2,21 @@ const { ensureSupabaseAdmin, pageRange, profileSelect, publicUrl } = require("..
 const response = require("../utils/responses");
 const logger = require("../utils/logger");
 const { canModerate } = require("../middleware/authorization");
-const { optionalText, requiredText } = require("../utils/validation");
+const { optionalText, positiveInt, requiredText } = require("../utils/validation");
 const config = require("../config/config");
 const { createTransporter } = require("../config/email");
 const storageService = require("../services/storageService");
+const securityService = require("../services/securityService");
 
 const ENTITY_TABLES = {
   post: "posts", comment: "post_comments", resource: "academic_resources", job: "jobs",
   lost_found: "lost_and_found_posts", confession: "confessions", cat_post: "cat_posts", event: "events",
 };
 
-const safeEntity = (kind) => Object.prototype.hasOwnProperty.call(ENTITY_TABLES, kind);
+const REPORT_STATUSES = ["pending", "reviewed", "dismissed"];
+const REPORT_DECISIONS = ["approve", "archive", "dismiss"];
+
+const safeEntity = (kind) =>Object.prototype.hasOwnProperty.call(ENTITY_TABLES, kind);
 const toPagination = (page, limit, total) => ({ page, limit, total, totalPages: Math.ceil(total / limit) });
 
 const savedCreate = async (req, res) => {
@@ -51,19 +55,27 @@ const savedStatus = async (req, res) => {
 
 const reportCreate = async (req, res) => {
   try {
-    const { entityKind, entityId, reason, details } = req.body;
-    if (!safeEntity(entityKind) || !Number.isInteger(Number(entityId))) return response.badRequest(res, "Invalid report target");
+    const { entityKind, reason, details } = req.body;
+    const entityId = positiveInt(req.body.entityId, "Report target");
+    if (!safeEntity(entityKind) || entityId.error) return response.badRequest(res, "Invalid report target");
     const reasonValue = requiredText(reason, "Reason", { max: 120 });
     if (reasonValue.error) return response.badRequest(res, reasonValue.error);
-    const { data, error } = await ensureSupabaseAdmin().from("content_reports").upsert({ reporter_id: req.user.id, entity_kind: entityKind, entity_id: Number(entityId), reason: reasonValue.value, details: optionalText(details, { max: 2000 }), status: "pending" }, { onConflict: "reporter_id,entity_kind,entity_id,reason" }).select().single();
+    const db = ensureSupabaseAdmin();
+    const { data: target, error: targetError } = await db.from(ENTITY_TABLES[entityKind]).select("id").eq("id", entityId.value).neq("status", "deleted").maybeSingle();
+    if (targetError) throw targetError;
+    if (!target) return response.notFound(res, "Reported content not found");
+    // ON CONFLICT DO NOTHING: resubmitting never re-opens a resolved report.
+    const { data, error } = await db.from("content_reports").upsert({ reporter_id: req.user.id, entity_kind: entityKind, entity_id: entityId.value, reason: reasonValue.value, details: optionalText(details, { max: 2000 }) }, { onConflict: "reporter_id,entity_kind,entity_id,reason", ignoreDuplicates: true }).select();
     if (error) throw error;
-    return response.created(res, data, "Report submitted");
+    if (!data?.length) return response.success(res, null, "You have already reported this content");
+    return response.created(res, data[0], "Report submitted");
   } catch (error) { logger.error("reportCreate failed", error); return response.serverError(res, "Could not submit report", error.message); }
 };
 
 const reportsList = async (req, res) => {
   try {
     if (!canModerate(req.user)) return response.forbidden(res, "Moderator access required");
+    if (req.query.status && !REPORT_STATUSES.includes(req.query.status)) return response.badRequest(res, `Status must be one of: ${REPORT_STATUSES.join(", ")}`);
     const { page, limit, from, to } = pageRange(req.query.page, req.query.limit);
     let query = ensureSupabaseAdmin().from("content_reports").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(from, to);
     if (req.query.status) query = query.eq("status", req.query.status);
@@ -73,18 +85,26 @@ const reportsList = async (req, res) => {
   } catch (error) { logger.error("reportsList failed", error); return response.serverError(res, "Could not load reports", error.message); }
 };
 
+// moderate_report raises with these SQLSTATEs; anything else is a server error.
+const MODERATION_ERRORS = { "42501": 403, P0002: 404, "55000": 409, "22023": 400 };
+
 const reportUpdate = async (req, res) => {
   try {
     if (!canModerate(req.user)) return response.forbidden(res, "Moderator access required");
-    const status = ["reviewed", "dismissed"].includes(req.body.status) ? req.body.status : null;
-    if (!status) return response.badRequest(res, "Invalid report status");
-    const { data, error } = await ensureSupabaseAdmin().from("content_reports").update({ status, reviewed_by_id: req.user.id, review_action: optionalText(req.body.action, { max: 80 }), reviewed_at: new Date().toISOString() }).eq("id", Number(req.params.id)).select().maybeSingle();
-    if (error) throw error;
-    if (!data) return response.notFound(res, "Report not found");
-    if (req.body.action === "archive" && safeEntity(data.entity_kind)) await ensureSupabaseAdmin().from(ENTITY_TABLES[data.entity_kind]).update({ status: "archived" }).eq("id", data.entity_id);
-    if (req.body.action === "approve" && safeEntity(data.entity_kind)) await ensureSupabaseAdmin().from(ENTITY_TABLES[data.entity_kind]).update({ status: "active" }).eq("id", data.entity_id);
+    const reportId = positiveInt(req.params.id, "Report ID");
+    if (reportId.error) return response.badRequest(res, reportId.error);
+    // `action` is accepted from older clients; a separate `status` is ignored
+    // because the decision alone determines both outcomes.
+    const requested = req.body?.decision ?? req.body?.action;
+    const decision = REPORT_DECISIONS.includes(requested) ? requested : null;
+    if (!decision) return response.badRequest(res, `Decision must be one of: ${REPORT_DECISIONS.join(", ")}`);
+    const data = await securityService.moderateReport({ actorId: req.user.id, reportId: reportId.value, decision });
     return response.success(res, data, "Report reviewed");
-  } catch (error) { logger.error("reportUpdate failed", error); return response.serverError(res, "Could not update report", error.message); }
+  } catch (error) {
+    const status = MODERATION_ERRORS[error?.code];
+    if (status) return response.failure(res, status, error.message);
+    logger.error("reportUpdate failed", error); return response.serverError(res, "Could not update report", error.message);
+  }
 };
 
 const listEvents = async (req, res) => {

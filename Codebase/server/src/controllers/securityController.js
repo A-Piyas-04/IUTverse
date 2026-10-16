@@ -52,7 +52,7 @@ const disclosePostIdentity = async (req, res) => {
     });
   } catch (error) {
     logger.error("Anonymous identity disclosure failed", error);
-    if (/moderator access/i.test(error.message)) return response.forbidden(res, error.message);
+    if (/moderator access|cannot act on reports/i.test(error.message)) return response.forbidden(res, error.message);
     if (/matching unresolved|anonymous post not found/i.test(error.message)) return response.badRequest(res, error.message);
     return response.serverError(res, "Could not disclose anonymous identity", error.message);
   }

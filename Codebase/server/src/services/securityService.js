@@ -43,4 +43,16 @@ const discloseAnonymousPostAuthor = async ({ actorId, postId, reportId, justific
   return data?.[0] || null;
 };
 
-module.exports = { discloseAnonymousPostAuthor, getSecurityContext, setUserRole };
+// Locks the report, checks the actor is neither the reporter nor the content
+// author, applies one fixed decision and audits it, all in one transaction.
+const moderateReport = async ({ actorId, reportId, decision }) => {
+  const { data, error } = await ensureSupabaseAdmin().rpc("moderate_report", {
+    target_report_id: reportId,
+    actor_user_id: actorId,
+    decision,
+  });
+  if (error) throw error;
+  return data;
+};
+
+module.exports = { discloseAnonymousPostAuthor, getSecurityContext, moderateReport, setUserRole };
