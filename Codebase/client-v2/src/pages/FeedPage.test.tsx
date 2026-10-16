@@ -6,11 +6,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PostReaction } from "@/lib/types";
 import { PostCard, PostComposer, summarizeReactions } from "./FeedPage";
 import { apiRequest } from "@/lib/api";
+import { uploadDirect } from "@/lib/uploads";
 
 vi.mock("@/lib/api", async importOriginal => {
   const original = await importOriginal<typeof import("@/lib/api")>();
   return { ...original, apiRequest: vi.fn() };
 });
+vi.mock("@/lib/uploads", () => ({ uploadDirect: vi.fn() }));
 const authState = vi.hoisted(() => ({ userId: "owner" }));
 vi.mock("@/features/auth/AuthProvider", () => ({ useAuth: () => ({ user: { id: authState.userId, displayName: "Owner" } }) }));
 vi.mock("@/components/shell/AppShell", () => ({ PageFrame: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
@@ -22,6 +24,8 @@ describe("post interactions", () => {
     authState.userId = "owner";
     vi.mocked(apiRequest).mockReset();
     vi.mocked(apiRequest).mockResolvedValue({ success: true, data: {} });
+    vi.mocked(uploadDirect).mockReset();
+    vi.mocked(uploadDirect).mockResolvedValue("owner/post-1-2.jpg");
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:preview") });
     Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
   });
@@ -36,7 +40,7 @@ describe("post interactions", () => {
     expect(String(Object.values(summarizeReactions(reactions)).reduce((sum, value) => sum + value, 0))).toBe("3");
   });
 
-  it("submits an image-only post under the image multipart field", async () => {
+  it("uploads an image-only post straight to Storage and sends only its path", async () => {
     const user = userEvent.setup();
     const { container } = renderWithProviders(<PostComposer />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -46,7 +50,9 @@ describe("post interactions", () => {
     await user.click(screen.getByRole("button", { name: "Post" }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith("/posts", expect.objectContaining({ method: "POST", body: expect.any(FormData) })));
     const options = vi.mocked(apiRequest).mock.calls.find(call => call[0] === "/posts")?.[1];
-    expect((options?.body as FormData).get("image")).toBe(image);
+    expect(uploadDirect).toHaveBeenCalledWith("post", image);
+    expect((options?.body as FormData).get("uploadPath")).toBe("owner/post-1-2.jpg");
+    expect((options?.body as FormData).get("image")).toBeNull();
   });
 
   it("rejects an unsupported post attachment before submission", async () => {

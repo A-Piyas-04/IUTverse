@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Camera, CheckCircle2, Edit3, LockKeyhole, MessageSquare, ShieldCheck } from "lucide-react";
 import { apiRequest, jsonBody, mediaUrl } from "@/lib/api";
+import { uploadDirect } from "@/lib/uploads";
 import type { Post, Profile } from "@/lib/types";
 import { Avatar, Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -140,7 +141,7 @@ function EditProfileDialog({ profile, open, onClose }: { profile: Profile; open:
     setUploading(type);
     try {
       const body = new FormData();
-      body.append(type === "picture" ? "profilePicture" : "coverPicture", file);
+      body.append("uploadPath", await uploadDirect(type === "picture" ? "avatar" : "cover", file));
       await apiRequest("/profile/upload-" + type, { method: "POST", body });
       await Promise.all([cache.invalidateQueries({ queryKey: ["profile"] }), cache.invalidateQueries({ queryKey: ["conversations"] })]);
       notify(type === "picture" ? "Profile picture updated." : "Cover picture updated.");

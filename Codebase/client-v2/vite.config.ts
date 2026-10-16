@@ -19,8 +19,11 @@ function contentSecurityPolicy(env: Record<string, string>): Plugin {
       handler(html) {
         // Browsers hash script text after HTML newline normalization (CRLF -> LF),
         // which matters for Windows checkouts.
-        const inlineScriptHashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-          .map(([, body]) => `'sha256-${createHash("sha256").update(body.replace(/\r\n?/g, "\n")).digest("base64")}'`);
+        const inlineScriptHashes: string[] = [];
+        const inlineScript = /<script>([\s\S]*?)<\/script>/g;
+        for (let match = inlineScript.exec(html); match; match = inlineScript.exec(html)) {
+          inlineScriptHashes.push(`'sha256-${createHash("sha256").update(match[1].replace(/\r\n?/g, "\n")).digest("base64")}'`);
+        }
         const supabase = originOf(env.VITE_SUPABASE_URL);
         const supabaseHttp = supabase ?? "https://*.supabase.co";
         const supabaseWs = supabase ? supabase.replace(/^http/, "ws") : "wss://*.supabase.co";
