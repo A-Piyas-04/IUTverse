@@ -74,10 +74,35 @@ browser.
   the build environment and pins the inline theme script by hash. Browsers
   enforce both policies.
 
+## Uploads
+
+Vercel caps request bodies at about 4.5 MB, which is less than the upload
+limits (5 MB images, 10 MB PDFs and chat attachments). File bytes therefore
+never pass through the API function:
+
+1. The client calls `POST /api/uploads` with `purpose`, `mimeType`, `size`
+   (plus `conversationId` for chat). The API checks the type, the
+   per-purpose size cap and chat membership, then returns a Supabase signed
+   upload URL for a path it chooses: `<userId>/<prefix>-<ts>-<rand>.<ext>`.
+2. The browser uploads to that URL with `supabase.storage.uploadToSignedUrl`.
+   Bucket `allowed_mime_types` and `file_size_limit` apply.
+3. The client sends `uploadPath` to the normal route (`/api/posts`,
+   `/api/academic/resources`, `/api/chat/messages`, and so on). Before any row
+   references the object, the route checks the caller's folder, the route's
+   prefix, the stored size, magic bytes and declared type. If any check fails,
+   it deletes the object.
+
+Multipart uploads still work for small files. Purposes and limits are defined
+in `server/src/services/uploadIntentService.js`.
+
+The client's meta CSP already allows `connect-src` to the Supabase origin, so
+the signed upload needs no extra configuration.
+
 ## Known limits
 
-- Vercel caps request bodies at about 4.5 MB. Uploads up to 10 MB (PDFs, chat
-  attachments) are rejected before Express sees them. Moving uploads to
-  Supabase signed upload URLs removes this limit.
+- Objects uploaded to a signed URL but never claimed stay in their bucket, and
+  in public buckets they are readable at their path. Content is limited by
+  each bucket's type and size rules. Clean these up periodically: anything
+  older than a day that no row references.
 - Vercel WAF rate-limit rules are a useful second layer in front of the
-  Express limiters, especially for `/api/auth/*`.
+  Express limiters, especially for `/api/auth/*` and `/api/uploads`.
