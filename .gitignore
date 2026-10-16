@@ -1,0 +1,79 @@
+# AI agent tooling
+.claude/
+.agents/
+skills-lock.json
+CLAUDE.local.md
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Build output
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.cache/
+.parcel-cache/
+.turbo/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!env.example
+*.pem
+*.key
+*.p12
+*.pfx
+scripts/privileged-accounts.local.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test and coverage output
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+*.tmp
+*.temp
+
+# Local platform state
+.vercel/
+.netlify/
+.supabase/
+Codebase/server/supabase/.branches/
+Codebase/server/supabase/.temp/
+/generated/prisma
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
