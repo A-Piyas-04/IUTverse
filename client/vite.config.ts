@@ -59,10 +59,12 @@ export default defineConfig(({ mode }) => {
     resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
     server: {
       port: 5174,
-      // Local development only. Deployed builds use VITE_API_BASE_URL.
+      // Local development only; deployed builds use VITE_API_BASE_URL. The
+      // default is 127.0.0.1, not localhost, so Windows/WSL cannot route the
+      // request to an IPv6 listener that is not the API.
       proxy: {
-        "/api": { target: "http://localhost:3000", changeOrigin: true },
-        "/files": { target: "http://localhost:3000", changeOrigin: true }
+        "/api": { target: process.env.DEV_API_TARGET || "http://127.0.0.1:3000", changeOrigin: true },
+        "/files": { target: process.env.DEV_API_TARGET || "http://127.0.0.1:3000", changeOrigin: true }
       }
     },
     build: {
