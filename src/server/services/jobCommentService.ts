@@ -1,0 +1,169 @@
+import "server-only";
+import { ensureSupabaseAdmin, mapProfile, profileSelect } from "../utils/supabaseData";
+import { sanitizePlainText } from "../utils/validation";
+
+interface CommentDto {
+  id: number;
+  content: string;
+  jobId: number;
+  authorId: string;
+  parentCommentId: number | null;
+  createdAt: string;
+  updatedAt: string;
+  author: ReturnType<typeof mapProfile>;
+  replies: CommentDto[];
+}
+
+const mapComment = (comment: any): CommentDto => ({
+  id: comment.id,
+  content: comment.content,
+  jobId: comment.job_id,
+  authorId: comment.author_id,
+  parentCommentId: comment.parent_comment_id,
+  createdAt: comment.created_at,
+  updatedAt: comment.updated_at,
+  author: mapProfile(comment.author),
+  replies: (comment.replies || []).map(mapComment),
+});
+
+class JobCommentService {
+  async createComment(data: { content: string; jobId: number; authorId: string; parentCommentId?: number | null }) {
+    const supabase = ensureSupabaseAdmin();
+    const { data: comment, error } = await supabase
+      .from("job_comments")
+      .insert({
+        content: sanitizePlainText(data.content, { max: 2000 }),
+        job_id: Number(data.jobId),
+        author_id: data.authorId,
+        parent_comment_id: data.parentCommentId || null,
+      })
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapComment(comment);
+  }
+
+  async getCommentsByJobId(jobId: number, { page = 1, limit = 20 }: { page?: number; limit?: number } = {}) {
+    const supabase = ensureSupabaseAdmin();
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    const { data: comments, count, error } = await supabase
+      .from("job_comments")
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`, { count: "exact" })
+      .eq("job_id", Number(jobId))
+      .is("parent_comment_id", null)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+
+    const ids = (comments as any[]).map((comment) => comment.id);
+    let replies: any[] = [];
+    if (ids.length) {
+      const result = await supabase
+        .from("job_comments")
+        .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+        .in("parent_comment_id", ids)
+        .order("created_at", { ascending: true })
+        .limit(ids.length * 20);
+      if (result.error) throw result.error;
+      replies = result.data as any[];
+    }
+
+    return {
+      comments: (comments as any[]).map((comment) =>
+        mapComment({
+          ...comment,
+          replies: replies.filter((reply) => reply.parent_comment_id === comment.id),
+        })
+      ),
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    };
+  }
+
+  async createReply(commentId: number | string, data: { content: string; jobId: number; authorId: string }) {
+    return this.createComment({
+      ...data,
+      parentCommentId: Number(commentId),
+    });
+  }
+
+  async updateComment(commentId: number | string, content: string, userId: string) {
+    const supabase = ensureSupabaseAdmin();
+    const comment = await this.getRawComment(commentId);
+    if (!comment || comment.author_id !== userId) {
+      throw new Error("Unauthorized to update this comment");
+    }
+
+    const { data, error } = await supabase
+      .from("job_comments")
+      .update({ content: sanitizePlainText(content, { max: 2000 }) })
+      .eq("id", Number(commentId))
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .single();
+
+    if (error) throw error;
+    return mapComment(data);
+  }
+
+  async deleteComment(commentId: number | string, userId: string) {
+    const supabase = ensureSupabaseAdmin();
+    const comment = await this.getRawComment(commentId);
+    if (!comment || comment.author_id !== userId) {
+      throw new Error("Unauthorized to delete this comment");
+    }
+
+    const { data, error } = await supabase
+      .from("job_comments")
+      .delete()
+      .eq("id", Number(commentId))
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getRawComment(commentId: number | string) {
+    const supabase = ensureSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("job_comments")
+      .select("*")
+      .eq("id", Number(commentId))
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getCommentById(commentId: number | string) {
+    const supabase = ensureSupabaseAdmin();
+    const { data: comment, error } = await supabase
+      .from("job_comments")
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .eq("id", Number(commentId))
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!comment) return null;
+
+    const { data: replies, error: repliesError } = await supabase
+      .from("job_comments")
+      .select(`*, author:profiles!job_comments_author_id_fkey(${profileSelect})`)
+      .eq("parent_comment_id", Number(commentId))
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    if (repliesError) throw repliesError;
+    return mapComment({ ...comment, replies });
+  }
+}
+
+const jobCommentService = new JobCommentService();
+export default jobCommentService;
