@@ -10,10 +10,10 @@ import { uploadDirect } from "@/lib/uploads";
 import type { Post, PostReaction, ReactionType } from "@/lib/types";
 import { Avatar, Button, Card, Chip, Dialog, DialogActions, EmptyState, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
+import { EntityActions } from "@/components/shared/EntityActions";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { dateLabel, queryString } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { dateLabel, queryString } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 const homeTabs = ["For you", "Department", "Batch", "Resources"];
 const communityTabs = ["All", "Department", "Batch", "Questions", "Resources", "Media"];

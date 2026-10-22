@@ -2,7 +2,7 @@
 
 IUTverse is one Next.js application. The pages and the HTTP API are served by the same server, under the same origin. The API is the former Express application, ported route for route: the same URLs, the same request and response bodies, the same authentication and authorization rules. Supabase remains the foundation for authentication, the database and file storage.
 
-This document describes the API half. The pages live in `src/app` (routes), `src/views` (page components), `src/components`, `src/features` and `src/lib`.
+This document describes the API half. The pages live in `src/app` (routes only), `src/features` (one folder per feature), `src/components` (shared UI) and `src/lib`.
 
 ## Runtime Overview
 

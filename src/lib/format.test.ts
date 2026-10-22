@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { dateLabel, queryString } from "./pageUtils";
+import { dateLabel, queryString } from "@/lib/format";
 
 describe("page utilities", () => {
   it("builds query strings without empty values", () => {

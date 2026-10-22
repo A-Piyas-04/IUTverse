@@ -7,9 +7,9 @@ import { apiPage, apiRequest, jsonBody } from "@/lib/api";
 import type { Job } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
-import { dateLabel, queryString } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { EntityActions } from "@/components/shared/EntityActions";
+import { dateLabel, queryString } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 const jobTypes = ["All Jobs", "Internship", "Job", "Research", "Project", "ClubRole", "Competition", "Freelance", "PartTime", "Volunteer"];
 

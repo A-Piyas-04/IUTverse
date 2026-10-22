@@ -8,9 +8,9 @@ import { uploadDirect } from "@/lib/uploads";
 import type { Resource } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
-import { dateLabel, queryString } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { EntityActions } from "@/components/shared/EntityActions";
+import { dateLabel, queryString } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 const types = ["All", "QUESTION", "NOTE", "BOOK", "OTHER", "CLASS_LECTURE", "PDF", "SLIDES", "LAB_MANUAL", "QUESTION_SOLUTION", "LINK", "VIDEO", "DATASET"];
 

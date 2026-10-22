@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { AuthPage } from "@/views/AuthPage";
+import { AuthPage } from "@/features/auth/AuthPage";
 
 export default function SignupPage() {
   return (

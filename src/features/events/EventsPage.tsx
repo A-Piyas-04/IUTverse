@@ -8,11 +8,11 @@ import { uploadDirect } from "@/lib/uploads";
 import type { EventItem } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
+import { EntityActions } from "@/components/shared/EntityActions";
 import { eventClubs } from "@/content/siteContent";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { queryString } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { queryString } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 export function EventsPage(){const[type,setType]=useState("All");const[create,setCreate]=useState(false);const[editing,setEditing]=useState<EventItem|null>(null);const events=useQuery({queryKey:["events",type],queryFn:({signal})=>apiPage<EventItem>(`/events${queryString({type:type==="All"?undefined:type})}`,signal)});return <PageFrame title="Event Hub" eyebrow="Discover and join exciting events happening at IUT" action={<Button onClick={()=>setCreate(true)}><Plus size={17}/>Add Your Event</Button>} tabs={["All","General","Club","Sports","Wishlisted"].map(x=><Chip key={x} active={type===x} onClick={()=>setType(x)}>{x}</Chip>)}><div className={styles.gridCards}>{events.isLoading&&<Card padded>Loading events…</Card>}{events.isError&&<EmptyState title="Event Hub could not load" body={events.error.message}/>} {events.data?.data.length===0&&<EmptyState title="No events found" body="Try adjusting your filters or add an event for the IUT community."/>}{events.data?.data.map(item=><EventCard key={item.id} item={item} onEdit={()=>setEditing(item)}/>)}</div><EventDialog open={create} onClose={()=>setCreate(false)}/><EventDialog open={Boolean(editing)} item={editing||undefined} onClose={()=>setEditing(null)}/></PageFrame>}
 

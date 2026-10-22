@@ -1,4 +1,4 @@
-import { EventsPage } from "@/views/EventsPage";
+import { EventsPage } from "@/features/events/EventsPage";
 
 export default function Page() {
   return <EventsPage />;

@@ -8,7 +8,7 @@ import { academicCalendarUrl, prayerTimes } from "@/content/siteContent";
 import { Button, Card, Dialog } from "@/components/ui/Ui";
 import { iutFacts as facts } from "@/content/iutFacts";
 import { brainTeasers as teasers } from "@/content/brainTeasers";
-import styles from "./Pages.module.css";
+import styles from "@/styles/pages.module.css";
 
 type Utility = "menu" | "prayer" | "calendar" | "facts" | "teaser" | "weather";
 const cards = [

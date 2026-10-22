@@ -9,9 +9,9 @@ import { readStored, removeStored, writeStored } from "@/lib/storage";
 import type { LostFoundItem } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
-import { dateLabel, queryString } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { EntityActions } from "@/components/shared/EntityActions";
+import { dateLabel, queryString } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 type Draft = { type:"lost"|"found"; title:string; category:string; occurredAt:string; location:string; description:string; contactPreference:string; contactNote:string; returnLocation:string; availability:string; privacyAccepted:boolean };
 const initial: Draft = { type:"lost",title:"",category:"",occurredAt:"",location:"",description:"",contactPreference:"message",contactNote:"",returnLocation:"",availability:"",privacyAccepted:false };

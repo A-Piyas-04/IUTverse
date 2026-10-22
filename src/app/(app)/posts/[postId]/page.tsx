@@ -1,4 +1,4 @@
-import { PostDetailPage } from "@/views/PostDetailPage";
+import { PostDetailPage } from "@/features/feed/PostDetailPage";
 
 export default function Page() {
   return <PostDetailPage />;

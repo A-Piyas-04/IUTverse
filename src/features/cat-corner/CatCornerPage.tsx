@@ -8,10 +8,10 @@ import { uploadDirect } from "@/lib/uploads";
 import type { CatPost } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
+import { EntityActions } from "@/components/shared/EntityActions";
 import { catSections } from "@/content/siteContent";
-import { dateLabel } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { dateLabel } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 export function CatCornerPage(){const[section,setSection]=useState("Posts");return <PageFrame title="CatCorner" eyebrow="Enjoy your time with campus cats!" tabs={catSections.map(x=><Chip key={x} active={section===x} onClick={()=>setSection(x)}>{x}</Chip>)}>{section==="Posts"&&<CatFeed/>}{section==="Cat Profiles"&&<CatProfiles/>}{section==="Release your Stress"&&<CatBreak/>}{section==="Random Cat Facts"&&<CatFacts/>}{section==="Cat Help Desk"&&<CatQA/>}{section==="Cat Game"&&<CatGame/>}</PageFrame>}
 

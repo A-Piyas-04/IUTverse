@@ -39,7 +39,7 @@ describe("frontend contracts", () => {
 
   it("calls the API the way the server reads it (client and server agree on paths)", () => {
     // Every literal /api path the client builds must resolve to a route file.
-    const clientFiles = ["src/views", "src/features", "src/components", "src/lib"]
+    const clientFiles = ["src/features", "src/components", "src/lib"]
       .flatMap((dir) => fs.readdirSync(path.join(root, dir), { recursive: true, withFileTypes: true }))
       .filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name) && !/\.test\./.test(entry.name))
       .map((entry) => fs.readFileSync(path.join(entry.parentPath, entry.name), "utf8"))

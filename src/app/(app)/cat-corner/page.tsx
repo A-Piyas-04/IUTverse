@@ -1,4 +1,4 @@
-import { CatCornerPage } from "@/views/CatCornerPage";
+import { CatCornerPage } from "@/features/cat-corner/CatCornerPage";
 
 export default function Page() {
   return <CatCornerPage />;

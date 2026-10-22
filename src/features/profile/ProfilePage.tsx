@@ -10,8 +10,8 @@ import type { Post, Profile } from "@/lib/types";
 import { Avatar, Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Select, Textarea, useToast } from "@/components/ui/Ui";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { PageFrame } from "@/components/shell/AppShell";
-import { PostCard } from "./FeedPage";
-import styles from "./Pages.module.css";
+import { PostCard } from "@/features/feed/FeedPage";
+import styles from "@/styles/pages.module.css";
 
 interface ReferenceData {
   departments: { id: number; name: string }[];

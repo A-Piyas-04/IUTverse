@@ -9,8 +9,8 @@ import type { Comment, Post } from "@/lib/types";
 import { Avatar, Button, Card, EmptyState, Textarea } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
 import { PostCard } from "./FeedPage";
-import { dateLabel } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { dateLabel } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 export function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>(); const query = useQuery({ queryKey: ["post", postId], queryFn: ({ signal }) => apiRequest<Post>(`/posts/${postId}`, {}, signal), enabled: Boolean(postId) });

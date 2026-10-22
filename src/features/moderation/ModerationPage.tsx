@@ -7,7 +7,7 @@ import { apiPage, apiRequest, jsonBody } from "@/lib/api";
 import type { ReportItem } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import styles from "./Pages.module.css";
+import styles from "@/styles/pages.module.css";
 
 type Decision = "approve" | "archive" | "dismiss";
 

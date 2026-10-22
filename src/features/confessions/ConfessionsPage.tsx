@@ -8,9 +8,9 @@ import { readStored, removeStored, writeStored } from "@/lib/storage";
 import type { Confession } from "@/lib/types";
 import { Button, Card, Chip, Dialog, DialogActions, EmptyState, Field, Input, Textarea, useToast } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
-import { EntityActions } from "@/features/shared/EntityActions";
-import { dateLabel, queryString } from "./pageUtils";
-import styles from "./Pages.module.css";
+import { EntityActions } from "@/components/shared/EntityActions";
+import { dateLabel, queryString } from "@/lib/format";
+import styles from "@/styles/pages.module.css";
 
 const filters=["Latest","Popular","Polls","Support","Random"];
 export function ConfessionsPage(){const[filter,setFilter]=useState("Latest");const[search,setSearch]=useState("");const[compose,setCompose]=useState(false);const data=useQuery({queryKey:["confessions",filter,search],queryFn:({signal})=>apiPage<Confession>(`/confessions${queryString({sort:filter.toLowerCase(),search,limit:20})}`,signal)});return <PageFrame title="Confessions" eyebrow="Private expression, without a profile trail" action={<Button onClick={()=>setCompose(true)}><Plus size={17}/>Write confession</Button>} tabs={filters.map(x=><Chip key={x} active={filter===x} onClick={()=>setFilter(x)}>{x}</Chip>)}><div className={`${styles.notice}`} style={{margin:16}}><ShieldCheck size={20}/><strong>Your identity stays hidden from readers.</strong> Avoid names, student IDs, exact locations, or details that could identify someone.</div><div className={styles.toolbar}><Input className={styles.toolbarGrow} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search confessions" aria-label="Search confessions"/></div><div className={styles.stack}>{data.isLoading&&<Card padded>Loading confessions…</Card>}{data.isError&&<EmptyState title="Confessions could not load" body={data.error.message}/>} {data.data?.data.length===0&&<EmptyState title="No confessions with this tag yet" body="Write the first one if you have something to share."/>}{data.data?.data.map(item=><ConfessionCard key={item.id} item={item}/>)}</div><ConfessionDialog open={compose} onClose={()=>setCompose(false)}/></PageFrame>}

@@ -1,7 +1,7 @@
 "use client";
 
 import { RoleProtected } from "@/components/shell/Protected";
-import { ModerationPage } from "@/views/ModerationPage";
+import { ModerationPage } from "@/features/moderation/ModerationPage";
 
 export default function Page() {
   return (

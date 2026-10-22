@@ -28,11 +28,14 @@ IUTverse is a comprehensive campus-centric platform designed to streamline commu
 
 ```text
 src/
-  app/            routes: pages in (auth) and (app), the API in api/
-  views/          page components
-  components/     shell, navigation, UI kit
-  features/       auth and theme providers, shared actions
-  lib/            API client, Supabase client, helpers
+  app/            routing only: pages in (auth) and (app), the API in api/
+  features/       one folder per feature: its pages, components and tests
+                  (auth, feed, profile, messages, jobs, confessions, events,
+                  lost-and-found, cat-corner, academic, moderation, about, theme)
+  components/     shared UI: ui/ kit, shell/ layout and navigation, shared/
+  lib/            API client, Supabase client, types and helpers
+  content/        static site content
+  styles/         global and shared page styles
   server/         server-only code: HTTP layer, controllers, services
   proxy.ts        CORS for /api, Content-Security-Policy for pages
 supabase/         migrations, seed data, pgTAP tests

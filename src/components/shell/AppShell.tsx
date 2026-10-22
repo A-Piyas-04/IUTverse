@@ -9,7 +9,7 @@ import { useTheme } from "@/features/theme/ThemeProvider";
 import { apiPage, mediaUrl } from "@/lib/api";
 import type { Conversation } from "@/lib/types";
 import { Avatar, Button } from "@/components/ui/Ui";
-import { CampusUtilitiesDialog } from "@/views/CampusUtilities";
+import { CampusUtilitiesDialog } from "@/components/shell/CampusUtilities";
 import { NavLink } from "./NavLink";
 import styles from "./Shell.module.css";
 
