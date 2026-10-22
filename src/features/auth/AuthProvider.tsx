@@ -1,9 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { apiUrl } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
+import { RESET_PASSWORD_PATH } from "@/lib/authLink";
+import { authLinkHash, authLinkIntent, supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/types";
 
 interface AuthValue {
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -63,10 +66,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // A recovery email signs the member in with a temporary session. Send them
+    // to the page where they choose the new password instead of into the app.
+    const onResetPage = () => window.location.pathname === RESET_PASSWORD_PATH;
+    const toResetPage = () => {
+      if (!onResetPage()) router.replace(RESET_PASSWORD_PATH);
+    };
+    if ((authLinkIntent.recovery || authLinkIntent.error) && !onResetPage()) {
+      // Landed on another page (Supabase falls back to the project's Site URL when
+      // the redirect is not allowlisted). A full load keeps the link's fragment for
+      // the reset page and avoids racing the signed-out route guard.
+      window.location.replace(`${RESET_PASSWORD_PATH}${authLinkHash}`);
+      return;
+    }
+
     void supabase.auth.getSession().then(({ data }) => applySession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => { void applySession(next); });
+    const { data } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === "PASSWORD_RECOVERY") toResetPage();
+      void applySession(next);
+    });
     return () => { active = false; data.subscription.unsubscribe(); };
-  }, []);
+  }, [router]);
 
   const value = useMemo<AuthValue>(() => ({
     session,
@@ -92,7 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     async signOut() { const { error } = await supabase.auth.signOut(); if (error) throw error; setSession(null); setUser(null); },
-    async resetPassword(email) { const { error } = await supabase.auth.resetPasswordForEmail(email); if (error) throw error; },
+    async resetPassword(email) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}${RESET_PASSWORD_PATH}` });
+      if (error) throw error;
+    },
     async changePassword(password) { const { error } = await supabase.auth.updateUser({ password }); if (error) throw error; },
     async refreshUser() {
       if (!session) return;

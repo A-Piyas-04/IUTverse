@@ -102,4 +102,10 @@ describe("AuthPage", () => {
     await waitFor(() => expect(auth.value.resetPassword).toHaveBeenCalledWith("nuren@iut-dhaka.edu"));
     expect(await screen.findByRole("status")).toHaveTextContent("If that account exists");
   });
+
+  it("confirms a finished password reset on the login page", () => {
+    query.search = "reset=success";
+    render(<AuthPage mode="login" />);
+    expect(screen.getByRole("status")).toHaveTextContent("Password updated. Log in with your new password.");
+  });
 });

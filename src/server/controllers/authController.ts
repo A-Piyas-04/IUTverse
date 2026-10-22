@@ -110,6 +110,8 @@ export const login: Handler = async (ctx) => {
     });
 
     if (error || !data.session || !data.user) {
+      // Same answer for every cause; the log says which (e.g. invalid_credentials, email_not_confirmed).
+      logger.warn("Login rejected by Supabase Auth", { code: error?.code, status: error?.status });
       return json(401, { message: "Invalid email or password. Please check your credentials." });
     }
 

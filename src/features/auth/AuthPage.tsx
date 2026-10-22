@@ -31,8 +31,11 @@ type SignupData = z.infer<typeof signupSchema>;
 export function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const auth = useAuth();
   const router = useRouter();
-  const destination = safeDestination(useSearchParams().get("next"));
-  const [message, setMessage] = useState("");
+  const params = useSearchParams();
+  const destination = safeDestination(params.get("next"));
+  const [message, setMessage] = useState(() =>
+    params.get("reset") === "success" ? "Password updated. Log in with your new password." : "",
+  );
   const [resetting, setResetting] = useState(false);
   const login = useForm<LoginData>({ resolver: zodResolver(loginSchema) });
   const signup = useForm<SignupData>({ resolver: zodResolver(signupSchema) });

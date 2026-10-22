@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { readAuthLinkIntent, type AuthLinkIntent } from "./authLink";
 
 // NEXT_PUBLIC_* values are inlined into the browser bundle at build time; both
 // are public by design (project URL and anon key). Read them by their literal
@@ -28,6 +29,10 @@ const inert = () =>
       return undefined;
     }
   });
+
+// Read before the client is created: the client strips the fragment from the URL.
+export const authLinkHash = typeof window !== "undefined" ? window.location.hash : "";
+export const authLinkIntent: AuthLinkIntent = readAuthLinkIntent(authLinkHash);
 
 export const supabase: SupabaseClient = url && key && typeof window !== "undefined"
   ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
