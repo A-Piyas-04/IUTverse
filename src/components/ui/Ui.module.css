@@ -23,7 +23,6 @@
 .avatar { flex: 0 0 auto; display: inline-grid; place-items: center; overflow: hidden; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--campus)); color: var(--on-accent); font-weight: 800; }
 .empty { display: grid; place-items: center; text-align: center; min-height: 220px; padding: 36px; color: var(--muted-2); }
 .empty svg { color: var(--muted); margin-bottom: 14px; }
-.skeleton { border-radius: 10px; background: linear-gradient(100deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 300% 100%; animation: shimmer 1.5s infinite; }
 .toastRegion { position: fixed; z-index: 100; right: 18px; bottom: 18px; display: grid; gap: 8px; width: min(360px, calc(100vw - 36px)); }
 .toast { border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface-2); box-shadow: var(--shadow); padding: 13px 15px; }
 .dialogBackdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: var(--backdrop); backdrop-filter: blur(8px); }
@@ -32,4 +31,3 @@
 .dialogHeader h2 { margin: 0; font-size: 20px; }
 .dialogBody { padding: 18px; }
 .dialogActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-@keyframes shimmer { to { background-position: -300% 0; } }

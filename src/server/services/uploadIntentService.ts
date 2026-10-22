@@ -11,7 +11,7 @@
 //
 // Bucket allowed_mime_types / file_size_limit stay in force as a backstop.
 import "server-only";
-import type { StorageClient } from "@supabase/storage-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin, isSupabaseAdminConfigured } from "../config/supabase";
 import { PublicError } from "../http/errors";
 import type { UploadedFile } from "../http/context";
@@ -96,7 +96,7 @@ export const createUploadIntent = async ({
   return { purpose, bucket: spec.bucket, path: data.path || path, token: data.token, signedUrl: data.signedUrl, mimeType: type, maxBytes: spec.maxBytes };
 };
 
-type BucketApi = ReturnType<StorageClient["from"]>;
+type BucketApi = ReturnType<SupabaseClient["storage"]["from"]>;
 
 // Reads the first bytes of a stored object without loading all of it.
 const readHead = async (storage: BucketApi, path: string) => {

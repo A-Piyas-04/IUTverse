@@ -43,16 +43,6 @@ export const mapProfile = (profile: any) => {
   };
 };
 
-export const requireOwned = (row: any, userId: string, ownerField = "user_id") => {
-  if (!row) {
-    throw new Error("Not found");
-  }
-
-  if (row[ownerField] !== userId) {
-    throw new Error("Unauthorized");
-  }
-};
-
 export const uploadToBucket = async ({
   bucket,
   userId,

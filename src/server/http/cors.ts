@@ -20,8 +20,6 @@ const configured = parseOrigins(config.security.corsOrigins);
 // In production an empty list means same-origin only.
 const extraOrigins = configured.length ? configured : config.isProduction ? [] : defaultDevOrigins;
 
-export const allowedOrigins = (): readonly string[] => extraOrigins;
-
 const hostOf = (origin: string) => {
   try {
     return new URL(origin).host;

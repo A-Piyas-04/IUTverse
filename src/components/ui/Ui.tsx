@@ -21,7 +21,6 @@ export function Card({ children, padded = false, className = "" }: { children: R
 export function Chip({ active, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) { return <button type="button" className={`${styles.chip} ${active ? styles.chipActive : ""}`} aria-pressed={active} {...props} />; }
 export function Avatar({ name, src, size = 42 }: { name?: string; src?: string; size?: number }) { const initials = (name || "IUT").split(/\s+/).slice(0, 2).map(x => x[0]).join("").toUpperCase(); return <span className={styles.avatar} style={{ width: size, height: size }}>{src ? <img src={src} alt="" /> : initials}</span>; }
 export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) { return <div className={styles.empty}><div><Inbox size={34} aria-hidden="true" /><h3>{title}</h3><p>{body}</p>{action}</div></div>; }
-export function Skeleton({ height = 18 }: { height?: number }) { return <div className={styles.skeleton} style={{ height }} aria-hidden="true" />; }
 
 interface ToastContextValue { notify(message: string): void; }
 const ToastContext = createContext<ToastContextValue>({ notify() {} });
