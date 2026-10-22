@@ -9,8 +9,9 @@
 # Everything here is a local-development default and works without any .env
 # file. The JWT secret and the anon/service keys are Supabase's published demo
 # values for local stacks: they only work against this stack and must never be
-# used for a hosted project. To change ports, set CLIENT_PORT, API_PORT or
-# SUPABASE_PORT (in the shell or a .env file next to this one).
+# used for a hosted project. To change ports, set WEB_PORT or SUPABASE_PORT
+# (in the shell or a .env file next to this one). The web port is baked into the
+# page build, so rebuild after changing it.
 #
 # Ports are published on 127.0.0.1 only: the stack is not reachable from the
 # network, and on Windows/WSL2 it avoids wslrelay intercepting IPv6 localhost.
@@ -54,8 +55,8 @@ services:
       API_EXTERNAL_URL: http://localhost:${SUPABASE_PORT:-8000}
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgresql://supabase_auth_admin:postgres@db:5432/postgres
-      GOTRUE_SITE_URL: http://localhost:${CLIENT_PORT:-8080}
-      GOTRUE_URI_ALLOW_LIST: http://localhost:${CLIENT_PORT:-8080}
+      GOTRUE_SITE_URL: http://localhost:${WEB_PORT:-8080}
+      GOTRUE_URI_ALLOW_LIST: http://localhost:${WEB_PORT:-8080}
       GOTRUE_DISABLE_SIGNUP: "false"
       GOTRUE_JWT_SECRET: *jwt-secret
       GOTRUE_JWT_EXP: 3600
@@ -110,8 +111,9 @@ services:
   # Applies the IUTverse migrations (they need the auth and storage schemas)
   # and loads the starter data, then exits.
   migrate:
-    build: ./server
-    command: ["node", "scripts/dockerInit.js"]
+    build:
+      context: .
+      target: migrate
     restart: "no"
     depends_on:
       db:
@@ -211,8 +213,15 @@ services:
       timeout: 3s
       retries: 30
 
-  api:
-    build: ./server
+  # The whole application: pages and API in one Next.js server.
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        # Public values baked into the browser bundle.
+        NEXT_PUBLIC_SUPABASE_URL: http://localhost:${SUPABASE_PORT:-8000}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: *anon-key
     restart: unless-stopped
     depends_on:
       migrate:
@@ -222,33 +231,16 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${API_PORT:-3100}:3000"
+      - "127.0.0.1:${WEB_PORT:-8080}:3000"
     environment:
-      NODE_ENV: production
-      PORT: 3000
       SUPABASE_URL: http://kong:8000
       SUPABASE_PUBLIC_URL: http://localhost:${SUPABASE_PORT:-8000}
       SUPABASE_ANON_KEY: *anon-key
       SUPABASE_SERVICE_ROLE_KEY: *service-key
-      CORS_ORIGINS: http://localhost:${CLIENT_PORT:-8080}
       REDIS_URL: redis://redis:6379
       OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
       EMAIL_USER: ""
       EMAIL_PASS: ""
-
-  client:
-    build:
-      context: ./client
-      args:
-        VITE_SUPABASE_URL: http://localhost:${SUPABASE_PORT:-8000}
-        VITE_SUPABASE_ANON_KEY: *anon-key
-        VITE_API_BASE_URL: http://localhost:${API_PORT:-3100}/api
-    restart: unless-stopped
-    depends_on:
-      api:
-        condition: service_healthy
-    ports:
-      - "127.0.0.1:${CLIENT_PORT:-8080}:80"
 
 volumes:
   db-data:

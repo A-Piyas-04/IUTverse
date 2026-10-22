@@ -1,10 +1,24 @@
-# Deploy client/ (static site) and server/ (API) as separate Vercel projects
-# with those Root Directories. If the repository root is ever linked as a
-# project, never ship tooling, docs or local state.
+# IUTverse deploys to Vercel as one Next.js project rooted at the repository
+# root (UI and API together). This file applies to `vercel deploy` from the CLI;
+# it keeps tooling, docs and local state out of the upload.
+#
+# Migration and provisioning scripts use DATABASE_URL / DIRECT_URL /
+# BOOTSTRAP_* / PRIVILEGED_ACCOUNTS_FILE and must run from a trusted machine or
+# CI, never from the deployed functions.
+scripts/
+supabase/
 docs/
 docker/
 docker-compose.yml
+Dockerfile
 node_modules/
+.next/
 .claude/
 .agents/
+# Local leftovers of the pre-Next.js layout
+client/
+server/
 *.md
+.env
+.env.*
+!.env.example

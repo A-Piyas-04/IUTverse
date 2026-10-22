@@ -1,0 +1,42 @@
+# Never bake local secrets into an image. Docker Compose supplies all config.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# Dependencies and build output are produced inside the image.
+node_modules
+.next
+out
+build
+dist
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Not needed at runtime
+.git
+.github
+.githooks
+.claude
+.agents
+.vercel
+docs
+docker
+e2e
+tests
+playwright-report
+test-results
+reports
+.stryker-tmp
+supabase/tests
+supabase/.temp
+supabase/.branches
+*.md
+!README.md
+*.log
+
+# Local leftovers of the pre-Next.js layout (they hold .env files, uploads, node_modules)
+client
+server

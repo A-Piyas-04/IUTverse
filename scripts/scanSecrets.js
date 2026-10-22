@@ -2,7 +2,7 @@ const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-const repoRoot = path.resolve(__dirname, "../..");
+const repoRoot = path.resolve(__dirname, "..");
 
 const allowedPlaceholders = [
   "your-email@gmail.com",
@@ -29,8 +29,8 @@ const textFile = /(\.(txt|md|csv|json|ya?ml|ini|cfg|conf|toml|env|log|properties
 const skippedFile = /((^|[/\\])package-lock\.json$|(^|[/\\])(dist|build|coverage|node_modules)[/\\]|\.(png|jpe?g|gif|webp|ico|pdf|woff2?|ttf|eot|svg|map)$)/i;
 // Files whose job is to contain detector patterns and fake samples.
 const selfReferentialFiles = new Set([
-  "server/scripts/scanSecrets.js",
-  "server/test/unit/security-scan.test.js",
+  "scripts/scanSecrets.js",
+  "tests/server/security-scan.test.ts",
   ".gitleaks.toml",
 ]);
 
@@ -166,9 +166,9 @@ const run = ({ staged }) => {
 
 const selfTest = () => {
   const samples = [
-    ["server/.env", "SUPABASE_SERVICE_ROLE_KEY=" + "e" + "yJabc"],
-    ["server/.env", "EMAIL_" + "PASS=" + "wcth" + " vluy roxs dzwt"],
-    ["server/src/example.js", "const key = 'service_" + "role " + "e" + "yJabc';"],
+    [".env", "SUPABASE_SERVICE_ROLE_KEY=" + "e" + "yJabc"],
+    [".env", "EMAIL_" + "PASS=" + "wcth" + " vluy roxs dzwt"],
+    ["src/example.js", "const key = 'service_" + "role " + "e" + "yJabc';"],
     ["users.txt", "someone" + "@iut-dhaka.edu" + ":Tr0ub4dor&3x"],
     ["notes.md", "smtp app pass" + "word: abcd efgh ijkl mnop"],
     ["config.yml", "pass" + "word: Zx9!kq77Lm"],

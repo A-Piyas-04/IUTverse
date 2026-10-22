@@ -42,42 +42,42 @@ jobs:
           node-version: 22
 
       - name: Built-in secret scanner
-        working-directory: server
         run: |
           node scripts/scanSecrets.js --self-test
           node scripts/scanSecrets.js
 
-  server:
+  # The whole app: pages and API. Route tests stub Supabase; nothing reaches a
+  # real project.
+  app:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci
-      # Behavioral route tests stub Supabase; nothing reaches a real project.
+      - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
-      - run: npm audit --audit-level=high
+      - run: npm run build
+      # What ships to users. Dev tooling advisories (for example the glob chain
+      # under the Next.js ESLint plugin, which has no patched release yet) do
+      # not reach production and are reviewed separately with `npm audit`.
+      - run: npm audit --omit=dev --audit-level=high
 
   # RLS, grants and moderation functions, tested as separate members against a
   # throwaway local Supabase stack built from the migrations.
   database:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - name: Start local Supabase (applies every migration)
         run: npx supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
@@ -85,20 +85,3 @@ jobs:
         run: npx supabase test db
       - if: always()
         run: npx supabase stop --no-backup
-
-  client:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: client/package-lock.json
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test

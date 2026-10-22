@@ -1,9 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config({
-  path: path.join(__dirname, "..", ".env"),
-  quiet: true,
-});
+require("./lib/loadEnv").loadEnv();
 const { createClient } = require("@supabase/supabase-js");
 
 const url = process.env.SUPABASE_URL;

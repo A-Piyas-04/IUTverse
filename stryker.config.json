@@ -2,19 +2,21 @@
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "testRunner": "command",
   "commandRunner": {
-    "command": "node --test --test-skip-pattern=\"BUG-051|runtime authorization uses protected security context\" test/unit/*.test.js"
+    "command": "npx vitest run --project server --testNamePattern \"^(?!.*(BUG-051|authorizes at runtime)).*$\""
   },
   "coverageAnalysis": "off",
   "mutate": [
-    "src/controllers/communityController.js",
-    "src/controllers/securityController.js",
-    "src/middleware/*.js"
+    "src/server/controllers/communityController.ts",
+    "src/server/controllers/securityController.ts",
+    "src/server/middleware/*.ts"
   ],
   "ignorePatterns": [
     ".env",
     ".env.*",
-    "uploads",
-    "prisma",
+    ".next",
+    "client",
+    "server",
+    "node_modules",
     "reports",
     "coverage",
     "supabase/.temp",

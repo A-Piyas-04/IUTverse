@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const { Client } = require("pg");
-const dotenv = require("dotenv");
+const { loadEnv } = require("./lib/loadEnv");
 
-dotenv.config({ path: path.join(__dirname, "..", ".env"), quiet: true });
+loadEnv();
 
 const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
@@ -15,7 +15,7 @@ if (!connectionString) {
 let parsedUrl;
 try {
   parsedUrl = new URL(connectionString);
-} catch (error) {
+} catch {
   console.error("The configured database connection string is not a valid URL.");
   process.exit(1);
 }

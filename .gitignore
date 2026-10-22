@@ -1,11 +1,14 @@
-# One ignore file for the whole repo (client/, server/, docs/, docker/).
+# One ignore file for the whole repo (src/, supabase/, scripts/, docs/, docker/).
 
 # Dependencies
 node_modules/
 
 # Build output
+.next/
+out/
 dist/
 build/
+next-env.d.ts
 *.tsbuildinfo
 
 # Environment and secrets. Example files are committed.
@@ -30,18 +33,20 @@ test-results/
 playwright-report/
 playwright/.cache/
 .stryker-tmp/
-server/reports/
+reports/
 
 # Local platform and tool state
 .vercel/
 .netlify/
-server/supabase/.branches/
-server/supabase/.temp/
+supabase/.branches/
+supabase/.temp/
 *.tmp
 *.temp
 
-# Files uploaded to the pre-Supabase server (personal data; now in Storage)
-server/uploads/
+# Local leftovers of the pre-Next.js layout (client/ and server/). They hold env
+# files, uploads with personal data and node_modules, so nothing there is ever tracked.
+/client/
+/server/
 
 # Security reports with exploit details (keep local only)
 AUDIT-REPORT-*.md

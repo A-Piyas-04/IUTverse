@@ -53,11 +53,11 @@ regexes = [
 description = "Generated files, binaries and documented placeholders"
 paths = [
   '''(^|/)package-lock\.json$''',
-  '''(^|/)(dist|build|coverage|node_modules)/''',
+  '''(^|/)(dist|build|coverage|node_modules|\.next)/''',
   '''\.(png|jpe?g|gif|webp|ico|pdf|woff2?|ttf|eot|svg|map)$''',
   # The repo's own scanner contains detector patterns and self-test samples.
-  '''(^|/)server/scripts/scanSecrets\.js$''',
-  '''(^|/)server/test/unit/security-scan\.test\.js$''',
+  '''(^|/)scripts/scanSecrets\.js$''',
+  '''(^|/)tests/server/security-scan\.test\.ts$''',
   '''(^|/)\.gitleaks\.toml$''',
 ]
 regexTarget = "line"
