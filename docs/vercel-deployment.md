@@ -1,26 +1,20 @@
 # Vercel deployment
 
-IUTverse deploys as two Vercel projects from this repository.
+IUTverse deploys as **one** Vercel project: a Next.js app that serves the pages and the API (`/api/*`) from the same origin. Create the project from the repository root (Root Directory empty, Framework Preset *Next.js*). `vercel.json` raises the API functions' `maxDuration` to 30 seconds; everything else is detected.
 
-| Project | Root Directory | What it serves |
-|---|---|---|
-| API | `server` | Express app as one serverless function (`api/index.js`). `vercel.json` rewrites every path to it. |
-| Client | `client` | Static Vite build. `vercel.json` adds the SPA fallback and security headers. |
-
-The repository-root `.vercelignore` keeps docs, Docker files and local tooling
-out of a deployment if the root is ever linked as a project.
+The repository-root `.vercelignore` keeps docs, Docker files, migration scripts and local tooling out of a CLI deployment.
 
 ## Before the first deploy
 
-1. Apply `server/supabase/migrations/202610160001_security_audit_remediation.sql`
+1. Apply `supabase/migrations/202610160001_security_audit_remediation.sql`
    to the hosted project from a trusted machine (`npm run migrate:supabase`).
 2. In the Supabase dashboard, under Auth → URL Configuration:
-   - Set **Site URL** to the production client URL.
-   - Set **Redirect URLs** to exact URLs only: the production client URL and
+   - Set **Site URL** to the production URL.
+   - Set **Redirect URLs** to exact URLs only: the production URL and
      each stable preview alias. Do not use `**` wildcards.
 3. In the Supabase dashboard, under Auth → Rate Limits, review the sign-in,
-   sign-up and reset limits. The client signs in with Supabase directly, so the
-   Express auth limiter never sees those attempts. Enable CAPTCHA for sign-up
+   sign-up and reset limits. The browser signs in with Supabase directly, so the
+   API's own auth limiter never sees those attempts. Enable CAPTCHA for sign-up
    and password reset.
 4. Use a separate Supabase project for Preview deployments. Otherwise every
    preview runs with production service-role access.
@@ -30,48 +24,31 @@ out of a deployment if the root is ever linked as a project.
 
 Scope Production and Preview separately.
 
-### API project
-
 | Variable | Notes |
 |---|---|
-| `NODE_ENV` | `production` |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | |
-| `SUPABASE_SERVICE_ROLE_KEY` | Sensitive |
-| `CORS_ORIGINS` | Exact client origins, comma-separated: the production domain plus stable preview aliases. Required in production; `*` is rejected at startup. |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Server-side Supabase access. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Sensitive. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Inlined into the browser bundle **at build time**, so they must be set before the build. Public by design. |
 | `REDIS_URL` | Shared rate-limit counters and weather cache. Without it, limits are per instance. Sensitive. |
+| `CORS_ORIGINS` | Optional. Extra exact browser origins allowed to call `/api`. The app itself is same-origin and needs nothing here. `*` is rejected. |
 | `PASSWORD_RESET_REDIRECT_URL` | Optional. Must also be on the Supabase redirect allowlist. |
-| `LOG_LEVEL`, `RATE_LIMIT_*` | Optional tuning |
-| `EMAIL_SERVICE`, `EMAIL_USER`, `SUPPORT_EMAIL` | Issue-report email |
-| `EMAIL_PASS` | Sensitive |
-| `OPENWEATHER_API_KEY` | Sensitive |
+| `LOG_LEVEL`, `RATE_LIMIT_*` | Optional tuning. |
+| `EMAIL_SERVICE`, `EMAIL_USER`, `SUPPORT_EMAIL` | Issue-report email. |
+| `EMAIL_PASS` | Sensitive. |
+| `OPENWEATHER_API_KEY` | Sensitive. |
 
-`TRUST_PROXY` defaults to `1` on Vercel. Vercel overwrites `X-Forwarded-For`,
-so `req.ip` is the real client.
+`TRUST_PROXY` defaults to `1` on Vercel. Vercel overwrites `X-Forwarded-For`, so the client address used for rate limiting is the real one.
 
-Never set these on Vercel. They are only for migration and provisioning
-scripts, which run from a trusted machine or CI:
+Never prefix a secret with `NEXT_PUBLIC_`. Everything with that prefix ships to the browser.
+
+Never set these on Vercel. They are only for migration and provisioning scripts, which run from a trusted machine or CI:
 `DATABASE_URL`, `DIRECT_URL`, `BOOTSTRAP_ADMIN_EMAILS`,
-`BOOTSTRAP_MODERATOR_EMAILS`, `PRIVILEGED_ACCOUNTS_FILE`. The API project's
-`.vercelignore` keeps `scripts/` and `supabase/` out of the function bundle.
-
-### Client project
-
-| Variable | Notes |
-|---|---|
-| `VITE_API_BASE_URL` | Absolute API base, for example `https://api.example.com/api`. The build fails on Vercel without it. |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Public by design |
-
-Never prefix a secret with `VITE_`. Everything with that prefix ships to the
-browser.
+`BOOTSTRAP_MODERATOR_EMAILS`, `PRIVILEGED_ACCOUNTS_FILE`.
 
 ## Security headers
 
-- API: helmet sets CSP, `nosniff`, `frame-ancestors` and so on per response.
-- Client: `vercel.json` sends `frame-ancestors 'none'`, `X-Frame-Options`,
-  `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP and HSTS. The
-  build adds a `<meta>` CSP that names the exact API and Supabase origins from
-  the build environment and pins the inline theme script by hash. Browsers
-  enforce both policies.
+- `next.config.ts` sends `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, COOP and HSTS on every response. API responses also carry a locked-down `Content-Security-Policy` and `Cache-Control: no-store`.
+- `src/proxy.ts` gives every page a `Content-Security-Policy` with a per-request nonce (`script-src 'self' 'nonce-…' 'strict-dynamic'`) that names the Supabase project from `NEXT_PUBLIC_SUPABASE_URL` as the only external origin. The nonce is why pages are rendered per request instead of being statically cached. It is enforced on production builds only, because the development server needs `eval`.
 
 ## Uploads
 
@@ -92,10 +69,14 @@ never pass through the API function:
    it deletes the object.
 
 Multipart uploads still work for small files. Purposes and limits are defined
-in `server/src/services/uploadIntentService.js`.
+in `src/server/services/uploadIntentService.ts`.
 
-The client's meta CSP already allows `connect-src` to the Supabase origin, so
-the signed upload needs no extra configuration.
+The page CSP already allows `connect-src` to the Supabase origin, so the signed
+upload needs no extra configuration.
+
+## Self-hosting
+
+`docker-compose.yml` runs the whole stack locally (Supabase services, Redis, and the app). For your own server, build the `web` image target, run it with the variables above, and put it behind a TLS-terminating reverse proxy. Set `TRUST_PROXY` to the number of proxies in front of the app so rate limiting sees real client addresses, and make sure the proxy passes `Host` (or `X-Forwarded-Host`) unchanged, because same-origin checks compare it with the browser's `Origin`.
 
 ## Known limits
 
@@ -104,4 +85,4 @@ the signed upload needs no extra configuration.
   each bucket's type and size rules. Clean these up periodically: anything
   older than a day that no row references.
 - Vercel WAF rate-limit rules are a useful second layer in front of the
-  Express limiters, especially for `/api/auth/*` and `/api/uploads`.
+  in-app limiters, especially for `/api/auth/*` and `/api/uploads`.

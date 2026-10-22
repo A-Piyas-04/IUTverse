@@ -44,7 +44,7 @@ private columns should be scheduled only after one stable production release.
 Do not insert users directly into `auth.users` with SQL. Supabase Auth owns that schema, including identities and password bookkeeping. Use the service-role provisioning command instead.
 
 1. Apply the critical security migration first.
-2. Copy `server/scripts/privileged-accounts.example.json` to `server/scripts/privileged-accounts.local.json`.
+2. Copy `scripts/privileged-accounts.example.json` to `scripts/privileged-accounts.local.json`.
 3. Replace every placeholder. Use real `@iut-dhaka.edu` inboxes and unique passwords of at least 12 characters. `departmentId`, `batch`, and `studentId` may be `null` for service accounts; if supplied, they must match real data and student IDs must be unique.
 4. From `server`, run `npm run security:provision-accounts`.
 5. Sign in to both accounts, enable MFA in Supabase if the project supports it, and delete `privileged-accounts.local.json`.

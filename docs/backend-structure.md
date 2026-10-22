@@ -1,529 +1,168 @@
 # IUTverse Backend Structure
 
-This document describes the current backend structure for IUTverse. The active backend is the Supabase-first Express application under `server/src`. Older Prisma files and legacy root folders may still exist as historical artifacts, but active request handling should be understood from `src`.
+IUTverse is one Next.js application. The pages and the HTTP API are served by the same server, under the same origin. The API is the former Express application, ported route for route: the same URLs, the same request and response bodies, the same authentication and authorization rules. Supabase remains the foundation for authentication, the database and file storage.
+
+This document describes the API half. The pages live in `src/app` (routes), `src/views` (page components), `src/components`, `src/features` and `src/lib`.
 
 ## Runtime Overview
 
-The backend is a Node.js Express API. The entry point is `server/server.js`, which imports the Express app from `server/src/app.js`, starts the HTTP server, logs startup state, and handles graceful shutdown on `SIGINT` and `SIGTERM`.
+- `next dev` / `next start` serve everything. `next build` produces a standalone server (`output: "standalone"`), which the Docker image runs. On Vercel the same project deploys as pages plus one function per API route.
+- API requests are handled by Route Handlers in `src/app/api/**/route.ts`.
+- `src/proxy.ts` runs before every request: CORS for `/api/*`, and a nonce-based Content-Security-Policy for pages (production builds).
+- The server uses Supabase for authentication and token validation, database reads and writes, Storage-backed uploads, and Realtime-ready chat tables.
+- The server does not use Prisma, does not serve local upload folders, and does not hash passwords itself.
 
-The backend uses Supabase for:
-
-- Authentication and token validation.
-- Database reads and writes through Supabase tables.
-- Storage-backed uploads for avatars, covers, post media, lost-and-found media, cat posts, and academic resource PDFs.
-- Realtime-ready chat tables.
-
-The active backend does not instantiate Prisma in `src`, does not serve local `/uploads` or `/files` directories, and does not use local password hashing for the active auth flow.
-
-## Top-Level Server Layout
+## Layout
 
 ```text
-server/
-  server.js
-  package.json
-  .env.example
-  src/
-    app.js
-    config/
-    controllers/
-    middleware/
-    routes/
-    services/
-    utils/
-  supabase/
-    migrations/
-    README.md
-  scripts/
-  test/
-    unit/
+src/
+  proxy.ts                   CORS for /api, CSP for pages
+  app/
+    api/**/route.ts          one file per URL, exporting GET/POST/PUT/PATCH/DELETE
+    (auth)/  (app)/          pages (see the frontend notes in the README)
+  server/                    server-only code (imports "server-only")
+    kit.ts                   everything a route file imports, in one place
+    http/                    the Express middleware stack, rebuilt
+    config/                  environment, Supabase, Redis, email
+    middleware/              authentication, roles, upload claims, confession validation
+    controllers/             one file per feature area
+    services/                domain logic and Supabase calls
+    utils/                   validation, file signatures, logging, shared mappers
+supabase/                    migrations, seed data, pgTAP tests, config.toml
+scripts/                     migration and provisioning jobs (run from a trusted machine)
+tests/                       server tests (Vitest) and their helpers
 ```
 
-### `server.js`
+## Route files
 
-`server.js` is intentionally small. It imports `src/app.js`, listens on `config.port`, logs the active environment, and closes the HTTP server cleanly during shutdown. Business logic should not be added here.
+A route file describes its middleware chain in the order Express did:
 
-### `src/app.js`
-
-`src/app.js` creates and configures the Express app. Its responsibilities are:
-
-- Disable `x-powered-by`.
-- Apply Helmet security headers.
-- Apply the production `5xx` response sanitizer.
-- Apply JSON and URL-encoded body parsers with `1mb` limits.
-- Enforce CORS origin allowlisting.
-- Apply API-wide rate limiting.
-- Attach request logging.
-- Mount all routes from `src/routes`.
-- Convert malformed JSON and oversized bodies into stable error responses.
-- Handle uncaught request errors.
-
-Important behavior:
-
-- Oversized JSON returns `413` with `Request body too large`.
-- Malformed JSON returns `400` with `Malformed JSON request body`.
-- In production, `5xx` responses are stripped to a generic `Internal server error` body even if a controller accidentally includes internal details.
-
-## Configuration Layer
-
-Configuration lives in `src/config`.
-
-### `config.js`
-
-Centralizes environment-driven settings:
-
-- `PORT`
-- `NODE_ENV`
-- legacy `JWT_SECRET` fallback support for non-Supabase local compatibility
-- CORS settings
-- rate-limit settings
-- Supabase URL and keys
-- email credentials
-- database URL for migration tooling
-
-The active auth path uses Supabase Auth. `JWT_SECRET` is not given a hardcoded fallback.
-
-### `supabase.js`
-
-Creates Supabase clients when the required environment variables exist:
-
-- `supabase`: anon-key client for auth operations such as signup/login/password reset.
-- `supabaseAdmin`: service-role client for trusted backend operations.
-
-It also exports booleans describing whether each client is configured.
-
-### `email.js`
-
-Creates the Nodemailer transport only when email credentials are configured. It intentionally does not fall back to placeholder credentials.
-
-### `database.js`
-
-Exports the Supabase admin client for compatibility with older imports. It is not a Prisma client.
-
-## Route Layer
-
-Routes live in `src/routes`. `src/routes/index.js` is the route aggregator.
-
-Current mount map:
-
-```text
-GET /                         -> health/root message
-/api/auth                     -> authRoutes
-/api                          -> userRoutes
-/api                          -> jobRoutes
-/api/lost-and-found           -> lostAndFoundRoutes
-/api                          -> confessionRoutes
-/api/cat-posts                -> catPostRoutes
-/api/cat-qa                   -> catQARoutes
-/api                          -> postRoutes
-/api/chat                     -> chatRoutes
-/api/academic                 -> academicResourceRoutes
+```ts
+// src/app/api/posts/route.ts
+export const GET = route([authenticateToken], getPosts);
+export const POST = route(
+  [authenticateToken, createLimiter, imageUpload(), acceptStoredUpload("post")],
+  createPost
+);
 ```
 
-Route modules should remain thin. Their job is to declare URLs, middleware order, upload handlers, and controller functions. Validation, database access, and mapping should live in controllers/services/helpers.
+`route(steps, handler)` (in `src/server/http/route.ts`) builds the Route Handler. For every request it:
 
-### Auth Routes
+1. builds the context (`ctx.params`, `ctx.query`, `ctx.ip`, ...);
+2. parses a JSON or urlencoded body (1 MB limit: `413 Request body too large`, malformed input `400 Malformed JSON request body`);
+3. applies the general API rate limit;
+4. runs each step in order. A step ends the request by returning a `Response`, otherwise it may fill `ctx.user`, `ctx.body`, `ctx.file`;
+5. runs the handler;
+6. turns a thrown `PublicError` into its status and anything else into a generic `500`;
+7. replaces any `5xx` body with `Internal server error` unless `EXPOSE_ERRORS=true` outside production;
+8. adds the rate-limit headers and logs the request.
 
-File: `src/routes/authRoutes.js`
+Handlers are `(ctx) => Response`. The helpers in `http/responses.ts` build the standard envelopes (`success`, `created`, `badRequest`, `forbidden`, ...), and `json(status, body)` is used where an endpoint has always answered with its own shape.
 
-Prefix: `/api/auth`
+Dynamic segment names must match among siblings in the Next.js file system, so job and post sub-resources use `[id]` (the Express routers used `:jobId` and `:postId` there).
 
-Main endpoints:
+## Steps
 
-- `POST /signup`
-- `POST /login`
-- `POST /password/reset-request`
-- `PUT /password`
-- `GET /validate`
-- `GET /users`
+| Step | Purpose |
+|---|---|
+| `authenticateToken` | Reads `Authorization: Bearer <token>`, validates it with Supabase Auth, loads role and membership from the protected tables, and rejects anyone who is not an active member. Sets `ctx.user` with both `id` and `userId`. |
+| `optionalAuth` | The same, but only when an `Authorization` header is present. |
+| `requireAdmin`, `requireRole("admin", "mod")` | Role checks. |
+| `authLimiter`, `createLimiter`, `lookupLimiter` | Fixed-window rate limits (see below). |
+| `imageUpload()`, `profilePictureUpload()`, `coverPictureUpload()`, `pdfUpload()`, `attachmentUpload()` | Read a multipart body into `ctx.body` and one in-memory `ctx.file`, with the size caps, declared-type filter and error messages the multer setup had. |
+| `acceptStoredUpload(purpose)` | Accepts `uploadPath`, an object the browser already put in Storage through `POST /api/uploads`, after re-checking owner folder, size, magic bytes and declared type. |
+| `validate*` (confessions) | Parameter and body validation for the confession endpoints. |
 
-Security details:
+## Rate limiting
 
-- Signup/login/password reset are auth-rate-limited.
-- Password change and token validation require authentication.
-- User enumeration requires authentication and admin role.
+`src/server/http/rateLimit.ts` implements the same fixed-window limits as before, with the draft-6 `RateLimit-*` headers:
 
-### User/Profile Routes
+- general API limit per client address (all `/api` routes except `/api/health`);
+- `authLimiter` for credential endpoints (fails closed if the shared store is down);
+- `createLimiter` for writes;
+- `lookupLimiter` per signed-in member for the student-ID existence check (fails closed).
 
-File: `src/routes/userRoutes.js`
+Counters live in Redis when `REDIS_URL` is set (a Lua script keeps increment and expiry atomic) and in process memory otherwise, which on serverless means per instance. IPv6 clients share a bucket per /56.
 
-Prefix: `/api`
+The client address comes from `X-Forwarded-For` only when `TRUST_PROXY` (hops) is set; on Vercel it defaults to 1. Without a trusted proxy the header is ignored and all clients share the `unknown` bucket, so deployments behind your own reverse proxy should set `TRUST_PROXY=1`.
 
-Main areas:
+## CORS and headers
 
-- Current profile/dashboard compatibility routes.
-- Public profile lookup by Supabase UUID.
-- Authenticated profile create/update.
-- Display-name update.
-- User search for chat.
-- Student ID update/read/delete/check.
-- Profile picture and cover picture upload/read/delete.
+The app and its API share an origin, so a browser request whose `Origin` is this server's own host is always allowed. `CORS_ORIGINS` lists additional exact origins; `*` is rejected. Any other browser origin gets `403 CORS origin is not allowed`, and preflights are answered by `src/proxy.ts`.
 
-Security details:
+`next.config.ts` sends the security headers (`nosniff`, `X-Frame-Options`, HSTS, `Permissions-Policy`, COOP, ...). API responses additionally carry `Content-Security-Policy: default-src 'none'` and `Cache-Control: no-store`. Pages get their CSP from `src/proxy.ts`, with a per-request nonce, in production builds.
 
-- Mutations require `authenticateToken`.
-- Public profile responses are intentionally minimized and should not expose email, role, student ID, department, or batch through shared public mappers.
-- Upload routes use multer memory storage and shared upload error handlers.
+## Endpoints
 
-### Post Routes
+All paths are under `/api`. "Members" means `authenticateToken`: an active IUTverse member.
 
-File: `src/routes/postRoutes.js`
+| Area | Endpoints | Access |
+|---|---|---|
+| Health | `GET /health` | Open, not rate limited |
+| Auth | `POST /auth/signup`, `POST /auth/login`, `POST /auth/password/reset-request` | Open, auth-limited |
+| | `PUT /auth/password`, `GET /auth/validate`, `GET /auth/me` | Members |
+| | `GET /auth/users` | Admin |
+| Profile | `GET/POST/PUT /profile`, `GET/PATCH /profile/me`, `GET /profile/:userId`, `GET /profile-reference-data`, picture and cover upload/read/delete | Members |
+| Users | `PUT /user`, `GET /users/search`, `GET/PUT/DELETE /user/student-id`, `GET /user/student-id/check/:studentId` (lookup-limited), `GET /user/:userId`, `GET /dashboard` | Members |
+| | `GET /user/by-student-id/:studentId` | Admin |
+| Posts | `GET/POST /posts`, `GET/PUT/DELETE /posts/:id`, `POST /posts/:id/react`, `GET /feed`, comments under `/posts/:id/comments` and `/comments/:commentId` | Members; writes are create-limited |
+| Jobs | `GET/POST /jobs`, `GET/PUT/DELETE /jobs/:id`, comments, replies, `POST/DELETE /jobs/:id/apply`, application status, count and list | Members; the application list is for the poster or a moderator |
+| Lost and found | `GET /lost-and-found`, `GET /lost-and-found/:postId` | Open; signed-in callers also see poster details |
+| | create, update, delete, `PATCH .../resolve`, `PATCH .../activate` | Members, owner only |
+| Confessions | `GET /confessions`, `/confessions/random`, `/confessions/analytics`, `/confessions/:id` | Open (anonymous content, no stored author) |
+| | create, reactions, poll votes, `user-reactions`, `polls/:pollId/user-voted` | Members |
+| Cat corner | `/cat-posts` (list, detail, create, delete, like, comment), `/cat-qa/questions` and `/cat-qa/answers` | Members |
+| Academic | `GET /academic/departments` | Open |
+| | `POST /academic/departments` | Admin |
+| | `/academic/resources` (list, detail, create, update, delete), `POST .../:id/helpful`, `GET .../:id/file` (signed redirect) | Members |
+| Chat | `/chat/conversations`, `/chat/messages`, `/chat/conversations/:id/messages`, `PUT .../read`, `GET /chat/attachments/:messageId` (signed redirect) | Members; participants only |
+| Community | `/saved-items/:kind/:id`, `/reports`, `/events`, `/events/:id`, `PUT /events/:id/rsvp`, `POST /issue-reports` | Members |
+| | `GET /reports`, `PATCH /reports/:id` | Moderators and admins |
+| | `GET /campus/weather` | Open (cached proxy) |
+| Security | `PATCH /admin/users/:userId/role`, `POST /moderation/posts/:postId/identity-disclosures` | Admin, and moderators for disclosures |
+| Uploads | `POST /uploads` | Members |
 
-Prefix: `/api`
+`tests/server/api-surface.test.ts` pins this list against the endpoints the Express routers exposed, and checks that every endpoint not listed as open answers `401` to an anonymous caller.
 
-Main endpoints:
+## Controllers and services
 
-- `POST /posts`
-- `GET /posts`
-- `GET /posts/:id`
-- `PUT /posts/:id`
-- `DELETE /posts/:id`
-- `POST /posts/:id/react`
-- `GET /feed`
-- Comment endpoints under `/posts/:postId/comments` and `/comments/:commentId`.
+Controllers (`src/server/controllers`) do the HTTP-specific work: read params, query and body, validate with the shared helpers, call services, choose status codes, and shape the response. Services (`src/server/services`) hold domain logic, Supabase calls, ownership checks, payload whitelisting and Storage integration. Post and comment logic still lives in their controllers, as before.
 
-Security details:
+Public profile responses are minimized (`mapProfile`): no email, role or student ID.
 
-- Creating, updating, deleting, reacting, personalized feed, and comment mutations require auth.
-- Write routes use `createLimiter`.
-- Post image uploads use memory storage, upload error handling, signature validation, and Supabase Storage.
+## Uploads
 
-### Job Routes
+Small files can be sent as multipart. Larger ones go straight to Supabase Storage with a signed upload URL (`POST /api/uploads`, see `docs/vercel-deployment.md`), and the route that uses them receives `uploadPath`. Either way `storageService.uploadObject` and `uploadIntentService.claimUpload` verify magic bytes and derive the stored extension and content type from the content, never from the client's header.
 
-File: `src/routes/jobRoutes.js`
+## Tests
 
-Prefix: `/api`
+Server tests run with Vitest (`npm run test:server`). They call the real `proxy` and Route Handlers through `tests/helpers/dispatch.ts`, with Supabase and `securityService` stubbed by `tests/helpers/stubs.ts`, so nothing reaches a real project.
 
-Main areas:
+- `authorization-behavior`: role matrix for the privileged endpoints.
+- `uploads-behavior`: upload intents, claims, and multipart limits.
+- `api-surface`: endpoint inventory and anonymous access.
+- `route-pipeline`, `rate-limit`, `cors-and-headers`, `client-ip`: the rebuilt middleware.
+- `backend-audit`: regression checks for the original audit findings (`BUG-001` to `BUG-062`, `NEW-001` to `NEW-005`).
+- `critical-security-remediation`, `frontend-contracts`: migrations and client/server agreement.
 
-- Public job listing/detail.
-- Public job comments.
-- Protected job create/update/delete.
-- Protected job comment create/reply/update/delete.
-- Protected job apply/remove/status.
-- Job application count remains public.
-- Job application details require authentication and are restricted by service ownership checks.
+Verification commands:
 
-Security details:
-
-- Job updates require the poster.
-- Job delete supports poster or moderator/admin soft delete.
-- Job applicant details are visible only to the job poster or a moderator/admin.
-
-### Lost And Found Routes
-
-File: `src/routes/lostAndFoundRoutes.js`
-
-Prefix: `/api/lost-and-found`
-
-Main endpoints:
-
-- Public list/detail reads.
-- Protected create/update/delete.
-- Protected resolve/activate status changes.
-
-The active controller validates type, status, text fields, IDs, and image upload errors. The service enforces ownership and stores image metadata in Supabase Storage.
-
-### Confession Routes
-
-File: `src/routes/confessionRoutes.js`
-
-Prefix: `/api`
-
-Main endpoints:
-
-- Public confession list/random/analytics/detail.
-- Protected confession creation.
-- Protected reactions.
-- Protected poll voting and vote status.
-
-Validation middleware enforces allowed tags, reaction types, poll structure, pagination bounds, and ID formats.
-
-### Cat Post Routes
-
-File: `src/routes/catPostRoutes.js`
-
-Prefix: `/api/cat-posts`
-
-Main endpoints:
-
-- Public list/detail reads.
-- Protected create/delete/like/comment.
-
-Cat post media is uploaded to Supabase Storage with verified image signatures.
-
-### Cat Q&A Routes
-
-File: `src/routes/catQARoutes.js`
-
-Prefix: `/api/cat-qa`
-
-Main endpoints:
-
-- Public question list/detail.
-- Protected question creation.
-- Protected answer creation.
-- Protected question/answer deletion.
-
-The service enforces ownership on delete and paginates question lists.
-
-### Chat Routes
-
-File: `src/routes/chatRoutes.js`
-
-Prefix: `/api/chat`
-
-All routes require authentication through `router.use(authenticateToken)`.
-
-Main endpoints:
-
-- `POST /conversations`
-- `GET /conversations`
-- `POST /messages`
-- `GET /conversations/:conversationId/messages`
-- `PUT /conversations/:conversationId/read`
-
-The service uses `direct_key` to prevent duplicate direct conversations and checks conversation membership before reading, sending, or marking messages as read.
-
-### Academic Resource Routes
-
-File: `src/routes/academicResourceRoutes.js`
-
-Prefix: `/api/academic`
-
-Main areas:
-
-- Public department reads.
-- Admin-only department creation.
-- Public resource listing/detail.
-- Protected academic resource create/update/delete.
-
-Academic resources can reference either an uploaded PDF or an external link. PDF uploads are validated by MIME type and file signature before storage.
-
-## Middleware Layer
-
-Middleware lives in `src/middleware`.
-
-### Authentication
-
-File: `src/middleware/auth.js`
-
-`authenticateToken` supports the active Supabase Auth path and a legacy JWT fallback if Supabase Admin is not configured. In the Supabase path:
-
-- It extracts the bearer token.
-- It verifies the token through `supabaseAdmin.auth.getUser`.
-- It fetches profile role/display name.
-- It sets both `req.user.id` and `req.user.userId` to the Supabase UUID for compatibility.
-
-### Authorization
-
-File: `src/middleware/authorization.js`
-
-Provides:
-
-- `requireRole(...roles)`
-- `requireAdmin`
-- `canModerate(user)`
-
-These helpers keep role decisions consistent across routes and services.
-
-### Security
-
-File: `src/middleware/security.js`
-
-Provides:
-
-- Helmet middleware.
-- CORS origin allowlist guard.
-- CORS options for Express CORS.
-- API-wide limiter.
-- Auth-specific limiter.
-- Create/write limiter.
-
-Default development origins include common local Vite and localhost ports. Production should set `CORS_ORIGINS`.
-
-### Logging
-
-File: `src/middleware/logging.js`
-
-Logs method, path, status, and duration through the shared logger. Request bodies and user-generated content should not be logged.
-
-### Upload Middleware
-
-Upload middleware uses multer memory storage:
-
-- `upload.js`: cat post image uploads.
-- `uploadMiddleware.js`: regular post image uploads.
-- `profilePictureUpload.js`: profile picture uploads.
-- `coverPictureUpload.js`: cover image uploads.
-- `uploadPdf.js`: academic PDF uploads.
-- `uploadErrors.js`: shared multer error response helpers.
-
-Multer filters perform early MIME-family checks. Final trust is established by `storageService.uploadObject`, which validates magic bytes and derives the stored extension/content type from detected file content.
-
-## Controller Layer
-
-Controllers live in `src/controllers`. They are responsible for HTTP-specific work:
-
-- Read params/query/body.
-- Call validation helpers.
-- Call services.
-- Choose status codes.
-- Format response envelopes.
-- Log safe metadata.
-
-Controllers should not contain direct SQL strings, storage path construction, or broad field mass assignment. That logic belongs in services and helpers.
-
-Active controllers:
-
-- `authController.js`
-- `userController.js`
-- `profileController.js`
-- `postController.js`
-- `commentController.js`
-- `jobController.js`
-- `jobCommentController.js`
-- `jobApplicationController.js`
-- `lostAndFoundController.js`
-- `confessionController.js`
-- `catPostController.js`
-- `catQAController.js`
-- `chatController.js`
-- `academicResourceController.js`
-
-## Service Layer
-
-Services live in `src/services`. They contain domain logic, Supabase calls, ownership checks, database payload mapping, and storage integration.
-
-Active services:
-
-- `userService.js`: profiles, public/current-user mapping, student IDs, user search.
-- `storageService.js`: Supabase Storage uploads/removals/public URLs.
-- `postController.js` and `commentController.js`: post/comment logic currently lives in controllers rather than a separate service.
-- `jobService.js`: jobs, job ownership, soft delete.
-- `jobCommentService.js`: threaded job comments.
-- `jobApplicationService.js`: applications, owner/admin applicant visibility.
-- `lostAndFoundService.js`: lost/found posts and ownership.
-- `confessionService.js`: confessions, reactions, polls, analytics.
-- `chatService.js`: conversations, participants, messages.
-- `catPostService.js`: cat posts, likes, comments.
-- `catQAService.js`: cat questions and answers.
-- `academicResourceService.js`: departments and resources.
-- `emailService.js`: optional welcome email helper.
-
-## Utility Layer
-
-Utilities live in `src/utils`.
-
-### `responses.js`
-
-Defines the standard JSON response helpers:
-
-- `success`
-- `created`
-- `badRequest`
-- `unauthorized`
-- `forbidden`
-- `notFound`
-- `conflict`
-- `payloadTooLarge`
-- `serverError`
-
-`serverError` includes internal error details outside production only.
-
-### `validation.js`
-
-Shared validation and sanitization helpers:
-
-- HTML stripping and whitespace normalization.
-- Required and optional plain text fields.
-- Plain text arrays.
-- Positive integer parsing.
-- Supabase UUID validation.
-- Enum validation.
-- Pagination clamping.
-
-### `supabaseData.js`
-
-Shared Supabase data helpers:
-
-- `ensureSupabaseAdmin`
-- `pageRange`
-- public `mapProfile`
-- ownership helper
-- storage upload helper
-- public URL helper
-
-The shared `mapProfile` is intentionally public/minimal.
-
-### `fileValidation.js`
-
-Detects file type from content signatures and validates uploads. Supported types:
-
-- JPEG
-- PNG
-- WebP
-- GIF
-- PDF
-
-It rejects mismatches between declared MIME type and detected file content.
-
-### `logger.js`
-
-Level-aware logger controlled by `LOG_LEVEL` and `NODE_ENV`. Production defaults to less verbose logging.
-
-## Request Flow
-
-A typical protected write request flows like this:
-
-1. Request enters `src/app.js`.
-2. Helmet, body limits, CORS, rate limiting, and request logging run.
-3. Route module matches the URL.
-4. `authenticateToken` verifies the Supabase access token.
-5. Optional role middleware such as `requireAdmin` runs.
-6. Optional upload middleware parses multipart data into memory.
-7. Optional upload error middleware normalizes multer errors.
-8. Controller validates params/body/query.
-9. Service performs ownership checks, sanitizes payloads, calls Supabase, and maps data.
-10. Controller sends a JSON response.
-11. Global error handler catches uncaught parser/public/internal errors.
-
-## Testing Structure
-
-Active unit tests live in `server/test/unit`.
-
-Important test files:
-
-- `backend-audit.test.js`: regression checks for the original backend audit issues `BUG-001` through `BUG-062`, plus newer hardening checks.
-- `responses.test.js`: response helper behavior.
-- `security-scan.test.js`: secret scanner self-test.
-- `validation.test.js`: validation and sanitization helpers.
-
-Current required verification commands:
-
-```powershell
-cd server
-npm.cmd test
-npm.cmd run security:scan-env
-npm.cmd audit --omit=dev
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run security:scan-env
+npm audit --omit=dev
 ```
 
-Syntax check:
+## Rules for future backend work
 
-```powershell
-$files = Get-ChildItem -Path 'src' -Recurse -Filter '*.js'
-foreach ($file in $files) { node --check $file.FullName }
-node --check 'server.js'
-```
-
-## Refactor Rules For Future Backend Work
-
-- Use Supabase Auth, Supabase tables, and Supabase Storage as the active backend foundation.
-- Keep `server.js` small.
-- Put HTTP concerns in controllers and business/data concerns in services.
-- Use shared validation and response helpers.
-- Keep public profile responses minimized unless a route is explicitly current-user/admin-only.
-- Use `authenticateToken` plus role/ownership checks for protected data.
-- Do not reintroduce PrismaClient into `src`.
-- Do not serve local upload folders as static public paths.
-- Do not trust client MIME headers alone for uploads.
-- Add or update regression tests for every security or data-shape change.
+- Use Supabase Auth, Supabase tables and Supabase Storage as the foundation.
+- Put HTTP concerns in controllers and data concerns in services; keep route files to their middleware chain.
+- Use `authenticateToken` plus role and ownership checks for protected data.
+- Use the shared validation and response helpers.
+- Keep public profile responses minimal unless a route is explicitly current-user or admin only.
+- Never trust client MIME headers alone for uploads.
+- Keep `import "server-only"` at the top of server modules so they cannot reach a browser bundle.
+- Add or update a regression test for every security or data-shape change.

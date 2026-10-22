@@ -1,5 +1,7 @@
 # Backend Refactoring Log
 
+> **Historical.** This log records the Prisma-to-Supabase refactor of the Express backend. The code it describes now lives in Next.js Route Handlers under `src/app/api` and `src/server`, with the same behavior; paths below refer to the former `server/src` layout. See `docs/backend-structure.md` for the current structure.
+
 This is the living refactoring record for IUTverse.
 
 Before starting any future refactor, quickly read this file to understand what has already changed and what assumptions are now true. After finishing any future refactor, update this file with the date, scope, files or subsystems touched, verification run, and any known follow-up work.
@@ -339,3 +341,33 @@ Verification:
 Known follow-up:
 
 - If a post upload still fails, inspect the backend JSON response body in the browser Network tab; remaining likely causes are file size over 5MB, non-image MIME type, missing auth session, or Supabase Storage/RLS configuration.
+
+### 2026-10-22 - Migration to a single Next.js application
+
+Goal: replace the Express API (`server/`) and the Vite/React client (`client/`) with one Next.js 16 App Router application that serves both, without changing the API contract, authentication rules, or any visible behavior.
+
+Changed:
+
+- API: every Express route became a Route Handler under `src/app/api/**/route.ts` with the same URL, method, middleware order and response body. Controllers and services were ported to TypeScript under `src/server`. The Express middleware stack was rebuilt in `src/server/http` (request pipeline, JSON/urlencoded/multipart parsing with the same limits and error messages, fixed-window rate limiting with draft-6 headers and an atomic Redis script, CORS, 5xx sanitizing). CORS for `/api` and a nonce-based CSP for pages live in `src/proxy.ts`; security headers in `next.config.ts`.
+- Client: React Router pages became App Router routes (`src/app`) over the existing page components (`src/views`). Navigation, guards and the post-login return path moved to `next/navigation` (`Protected`, `NavLink`, a `next` query parameter restricted to same-site paths). Raw `.txt` content became TypeScript modules.
+- Repository: `supabase/`, `scripts/`, `e2e/` moved to the root; `server/` and `client/` removed; one `Dockerfile` (targets `web` and `migrate`), `docker-compose.yml` runs one app service; CI, hooks and docs updated.
+- Dropped as no longer applicable: Express, helmet, cors, multer, express-rate-limit, rate-limit-redis, dotenv, bcrypt, jsonwebtoken (the last two were already unused), the Vite build, nginx and the second Vercel project.
+- Added: `GET /api/health` (Docker health check), `TRUST_PROXY` guidance for self-hosting.
+
+Behavior notes:
+
+- Multipart upload failures that previously fell through to a 500 (events, chat attachment over 10 MB) now answer 400 with the same messages as the other upload routes.
+- CORS: the app's own origin is always allowed; `CORS_ORIGINS` is no longer required in production.
+- Redirects (`302`) carry no body text; the unknown-route 404 is Next.js's page instead of Express's.
+
+Verification:
+
+- Typecheck, lint, 248 Vitest tests (server and client), production build, Playwright smoke test (Edge).
+- Live parity: the legacy Express API (branch `development`) and the new Docker image were run through the same 390-request scripted scenario against identical fresh local Supabase stacks (real Auth, PostgREST, Storage, pgTAP-tested RPCs). After masking random values (UUIDs, timestamps, tokens, upload names) all 390 responses matched.
+- That run found one defect the stubbed tests could not: awaiting `reader.cancel()` on a response or request body never settles inside Next's runtime, which hung every `uploadPath` claim. Fixed, with regression tests that simulate a stream whose cancel never settles.
+- Browser check of the production image: login, return-to-page after login, feed, posting, theme persistence, chat with Realtime, role-gated page, legacy route aliases; no console errors under the production CSP.
+
+Known follow-up:
+
+- Sessions still live in browser storage, so page protection is client-side (the API enforces access either way). Moving to cookie sessions (`@supabase/ssr`) would allow server-side redirects.
+- `npm audit` reports a dev-only advisory chain under `@next/eslint-plugin-next` (no patched `braces` release); production dependencies are clean.

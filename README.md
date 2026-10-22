@@ -16,22 +16,30 @@ IUTverse is a comprehensive campus-centric platform designed to streamline commu
 
 
 ## Tech Stack
-- **Languages:** JavaScript, SQL (PostgreSQL)
-- **Frontend:** React, Vite, Tailwind CSS, Axios, React Router, date-fns
-- **Backend:** Node.js, Express.js, Prisma ORM, PostgreSQL
-- **Auth & Security:** JWT, bcrypt, cors, dotenv
-- **File & Email:** multer, nodemailer
-- **Tools:** ESLint, PostCSS, Autoprefixer, Firebase/Vercel/Railway
-- **Offline & APIs:** Service Workers, LocalStorage, IndexedDB, OpenWeatherMap API
+- **Framework:** Next.js 16 (App Router) with React 19 and TypeScript. One app serves the pages and the API.
+- **Frontend:** React, CSS Modules, TanStack Query, React Hook Form + Zod, lucide-react
+- **Backend:** Next.js Route Handlers (`src/app/api`), Supabase (Auth, PostgreSQL, Storage, Realtime)
+- **Security:** nonce-based CSP, CORS allowlist, Redis-backed rate limiting, magic-byte upload validation, row-level security
+- **Testing:** Vitest + Testing Library, Playwright, pgTAP, Stryker
+- **Tools:** ESLint, Docker Compose, Vercel
+- **APIs:** OpenWeatherMap
 
-## Detailed Dependencies
-### Client
-- **Core**: react, react-dom, react-router-dom, axios, date-fns
-- **Dev**: vite, @vitejs/plugin-react, tailwindcss, postcss, autoprefixer, eslint, @types/react, @types/react-dom, eslint-plugin-react, eslint-plugin-react-hooks, eslint-plugin-react-refresh, @tailwindcss/postcss
+## Project layout
 
-### Server
-- **Core**: express, cors, dotenv, jsonwebtoken, bcrypt, multer, nodemailer, @prisma/client, pg, pg-promise
-- **Dev**: prisma
+```text
+src/
+  app/            routes: pages in (auth) and (app), the API in api/
+  views/          page components
+  components/     shell, navigation, UI kit
+  features/       auth and theme providers, shared actions
+  lib/            API client, Supabase client, helpers
+  server/         server-only code: HTTP layer, controllers, services
+  proxy.ts        CORS for /api, Content-Security-Policy for pages
+supabase/         migrations, seed data, pgTAP tests
+scripts/          migration and provisioning jobs (trusted machines only)
+tests/            server tests         e2e/   Playwright tests
+docs/             backend, database, deployment and security notes
+```
 
 ## Getting Started
 
@@ -50,25 +58,41 @@ The first start takes a minute or two while it sets up the database. When it is 
 
 | What | Address |
 |---|---|
-| Web app | http://localhost:8080 |
-| API | http://localhost:3100/api |
+| Web app and API | http://localhost:8080 (API under `/api`) |
 | Supabase gateway (auth, database API, storage, realtime) | http://localhost:8000 |
 
-What runs: the React client (nginx), the Express API, Redis, and a complete local Supabase stack (Postgres, Auth, PostgREST, Storage, Realtime, Kong). On first start a one-off `migrate` container applies every migration in `server/supabase/migrations` and loads the starter content from `seed_iutverse.sql`.
+What runs: the Next.js app, Redis, and a complete local Supabase stack (Postgres, Auth, PostgREST, Storage, Realtime, Kong). On first start a one-off `migrate` container applies every migration in `supabase/migrations` and loads the starter content from `seed_iutverse.sql`.
 
 Useful commands:
 
 - `docker-compose down` stops everything and keeps your data.
 - `docker-compose down -v` also deletes the database and uploaded files, for a clean start.
-- `docker-compose logs -f api` follows one service's logs.
-- If a port is taken, set `CLIENT_PORT`, `API_PORT` or `SUPABASE_PORT` before `docker-compose build` and `docker-compose up`. The client is built with these addresses, so rebuild after changing them.
+- `docker-compose logs -f web` follows the app's logs.
+- If a port is taken, set `WEB_PORT` or `SUPABASE_PORT` before `docker-compose build` and `docker-compose up`. The page build contains the Supabase address, so rebuild after changing them.
 - Set `SEED_DEMO_DATA=false` to start with an empty database.
 
 The keys in `docker-compose.yml` are Supabase's public demo keys for local development. They only work against this local stack. Never use them, or this compose file, for a hosted deployment; see `docs/vercel-deployment.md`.
 
 ### Run without Docker
 
-See `server/supabase/README.md` for the Supabase setup, then run `npm install` and `npm run dev` in `server/` and `client/`.
+1. Set up Supabase (see `supabase/README.md`), either a local stack (`npx supabase start`) or a project of your own.
+2. Copy `.env.example` to `.env.local` and fill in the `SUPABASE_*` and `NEXT_PUBLIC_SUPABASE_*` values. **Use a local or throwaway project**: the API holds the service-role key and writes to whatever it points at.
+3. `npm install`, then `npm run dev`, and open http://localhost:3000.
+
+### Quality commands
+
+| Command | What it does |
+|---|---|
+| `npm run typecheck` | Generates route types and runs `tsc` |
+| `npm run lint` | ESLint, no warnings allowed |
+| `npm test` | Server and client Vitest projects (`test:server`, `test:client` for one) |
+| `npm run build` | Production build |
+| `npm run test:e2e` | Playwright (install browsers once with `npx playwright install`) |
+| `npm run test:db` | pgTAP tests against a local Supabase stack |
+| `npm run test:mutation` | Stryker mutation testing of the security-critical modules |
+| `npm run security:scan-env` | Secret scan of tracked files |
+
+Enable the commit hook once per clone with `git config core.hooksPath .githooks`.
 
 ## Contribution Guidelines
 1. Fork the repository and create your feature branch (`git checkout -b feature/YourFeature`).

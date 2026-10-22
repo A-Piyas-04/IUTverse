@@ -1,6 +1,6 @@
 # IUTverse Database Structure
 
-This document describes the current Supabase database structure used by the IUTverse backend. The active schema is defined by SQL migrations in `server/supabase/migrations`, especially:
+This document describes the current Supabase database structure used by the IUTverse backend. The active schema is defined by SQL migrations in `supabase/migrations`, especially:
 
 - `202605280001_supabase_native_schema.sql`
 - `202605280002_rls_and_storage.sql`
@@ -762,7 +762,7 @@ Confessions themselves are anonymous and do not reference `profiles`; only react
 
 ## Migration And Operational Notes
 
-Migrations are applied by `server/scripts/applySupabaseMigrations.js`.
+Migrations are applied by `scripts/applySupabaseMigrations.js`.
 
 Expected environment variables:
 
@@ -771,7 +771,7 @@ Expected environment variables:
 
 The migration runner:
 
-- Loads `server/.env`.
+- Loads the repository-root `.env`.
 - Rejects obvious placeholder Supabase URLs.
 - Records applied files in `public.iutverse_schema_migrations`.
 - Applies migration files in sorted order inside transactions.
