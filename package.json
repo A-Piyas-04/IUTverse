@@ -5,7 +5,7 @@
   "description": "IUTverse: campus platform for the IUT community. One Next.js app serves the UI and the API.",
   "license": "MIT",
   "engines": {
-    "node": ">=20.9.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",

@@ -4,25 +4,65 @@ IUTverse deploys as **one** Vercel project: a Next.js app that serves the pages 
 
 The repository-root `.vercelignore` keeps docs, Docker files, migration scripts and local tooling out of a CLI deployment.
 
-## Before the first deploy
+## First deploy, step by step
 
-1. Apply `supabase/migrations/202610160001_security_audit_remediation.sql`
-   to the hosted project from a trusted machine (`npm run migrate:supabase`).
-2. In the Supabase dashboard, under Auth → URL Configuration:
-   - Set **Site URL** to the production URL.
-   - Set **Redirect URLs** to exact URLs only: the production URL and
-     each stable preview alias. Do not use `**` wildcards.
-3. In the Supabase dashboard, under Auth → Rate Limits, review the sign-in,
-   sign-up and reset limits. The browser signs in with Supabase directly, so the
-   API's own auth limiter never sees those attempts. Enable CAPTCHA for sign-up
-   and password reset.
-4. Use a separate Supabase project for Preview deployments. Otherwise every
-   preview runs with production service-role access.
-5. Create a Redis database (for example Upstash) and copy its `rediss://` URL.
+1. **Pick the branch to deploy.** Vercel builds the repository's default
+   branch unless told otherwise, and on GitHub that is still the old `master`.
+   Bring `production` up to date with `development` and deploy `production`:
+   `git push origin development:production` (a fast-forward). Optionally make
+   `production` the default branch on GitHub (Settings → General → Default
+   branch), so the very first import builds it.
+2. **Update the hosted database.** From a trusted machine whose repository-root
+   `.env` has the hosted `DIRECT_URL`, run `npm run migrate:supabase`. It applies
+   only the files in `supabase/migrations` that are not applied yet and lists
+   them. If `202607030001_critical_security_remediation.sql` is among them, run
+   `npm run security:bootstrap-roles` right after
+   (`docs/critical-security-rollout.md`).
+3. **Create Redis.** In Vercel, Storage → Marketplace → Upstash for Redis (or an
+   Upstash account directly). Copy the `rediss://` URL. Without it, rate
+   limits are per function instance and easy to get around.
+4. **Import the project.** Vercel → Add New → Project → import the GitHub
+   repository. Leave Root Directory empty and the build settings at their
+   defaults (Framework Preset *Next.js* is detected). Before the first build,
+   open *Environment Variables* and add the variables from the table below.
+   Use **Production** scope only for now.
+5. **Set the production branch.** Project → Settings → Git → Production Branch:
+   `production`. Then Deployments → the latest deployment of `production` →
+   Redeploy (or push to `production`). Unless you have a separate Supabase
+   project for previews (step 9), set Settings → Git → *Ignored Build Step* to
+   "Only build production". Preview builds would otherwise fail without
+   variables, or run with production keys.
+6. **Point Supabase at the site.** In the Supabase dashboard, under
+   Authentication → URL Configuration:
+   - Set **Site URL** to the production URL, e.g.
+     `https://<project>.vercel.app` or your own domain. Emails and OAuth fall
+     back to it.
+   - Add `https://<production-host>/reset-password` to **Redirect URLs**. Also
+     add `https://<host>/reset-password` and `https://<host>/auth/callback` for
+     every *other* host you serve from (custom domain plus `vercel.app`, stable
+     preview aliases). Use exact URLs only, no `**` wildcards.
+7. **Google sign-in.** Follow `docs/oauth-setup.md`. In short: the Google client's
+   redirect URI is the Supabase callback, Google is enabled in Supabase, and
+   `NEXT_PUBLIC_OAUTH_PROVIDERS=google` is set here. That variable is inlined at
+   build time, so redeploy after changing it.
+8. **Check the deployment.** `GET https://<host>/api/health` returns 200. Then:
+   log in with a password and with Google, open the feed, and upload an image.
+   In Supabase → Authentication → Users, the new Google user's provider is
+   `google`.
+9. **Later: previews.** Give Preview deployments their own Supabase project and
+   Preview-scoped variables. Otherwise every preview runs with production
+   service-role access.
+
+Also review, in Supabase → Authentication → Rate Limits, the sign-in, sign-up
+and reset limits. The browser signs in with Supabase directly, so the API's own
+auth limiter never sees those attempts. Do **not** enable Supabase CAPTCHA yet.
+The app does not send CAPTCHA tokens, so password sign-up, login and reset
+would all fail. Google sign-in is not affected.
 
 ## Environment variables
 
-Scope Production and Preview separately.
+Scope Production and Preview separately. The values are the hosted project's:
+Supabase → Project Settings → API (URL, `anon` key, `service_role` key).
 
 | Variable | Notes |
 |---|---|
