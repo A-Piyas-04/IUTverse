@@ -36,6 +36,7 @@ const mapConversation = (conversation: any, currentUserId: string | null = null)
   return {
     id: conversation.id,
     conversationType: conversation.conversation_type,
+    title: conversation.title || null,
     directKey: conversation.direct_key,
     createdAt: conversation.created_at,
     updatedAt: conversation.updated_at,
@@ -55,11 +56,12 @@ export interface Attachment {
 }
 
 class ChatService {
+  // userId1 is the member asking; the result's otherUser is userId2.
   async getOrCreateConversation(userId1: string, userId2: string) {
     const supabase = ensureSupabaseAdmin();
     const key = directKey(userId1, userId2);
 
-    const existing = await this.getConversationByDirectKey(key);
+    const existing = await this.getConversationByDirectKey(key, userId1);
     if (existing) return existing;
 
     const { data: conversation, error } = await supabase
@@ -73,7 +75,7 @@ class ChatService {
 
     if (error) {
       if (error.code === "23505") {
-        return this.getConversationByDirectKey(key);
+        return this.getConversationByDirectKey(key, userId1);
       }
       throw error;
     }
@@ -86,7 +88,7 @@ class ChatService {
       ]);
 
     if (participantsError) throw participantsError;
-    return this.getConversationByDirectKey(key);
+    return this.getConversationByDirectKey(key, userId1);
   }
 
   async sendMessage(conversationId: number, senderId: string, _receiverId: unknown, content: string, attachment: Attachment | null = null) {
@@ -217,7 +219,7 @@ class ChatService {
     return Boolean(data);
   }
 
-  async getConversationByDirectKey(key: string) {
+  async getConversationByDirectKey(key: string, currentUserId: string | null = null) {
     const supabase = ensureSupabaseAdmin();
     const { data, error } = await supabase
       .from("conversations")
@@ -226,7 +228,7 @@ class ChatService {
       .maybeSingle();
 
     if (error) throw error;
-    return data ? this.getConversationById(data.id) : null;
+    return data ? this.getConversationById(data.id, currentUserId) : null;
   }
 
   async getConversationById(id: number, currentUserId: string | null = null) {

@@ -182,6 +182,9 @@ export interface EventItem {
 
 export interface Conversation {
   id: number;
+  conversationType?: "direct" | "group";
+  /** Set on group conversations, which have no single other member. */
+  title?: string | null;
   otherUser?: Profile;
   participants?: Profile[];
   lastMessage?: Message | null;

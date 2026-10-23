@@ -18,9 +18,12 @@
 .navLink:hover, .navButton:hover { background: var(--surface-2); color: var(--fg); }
 .navActive { color: var(--fg); background: var(--accent-soft); }
 .navActive svg { color: var(--accent); }
-.sidebarProfile { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 13px; border: 1px solid var(--border); border-radius: 14px; }
-.sidebarProfile strong, .sidebarProfile span { display: block; max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sidebarProfile span { color: var(--muted); font-size: 12px; }
+.sidebarProfile { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; color: var(--fg); text-decoration: none; }
+.sidebarProfile:hover { background: var(--surface-2); }
+.sidebarProfileActive { border-color: color-mix(in srgb, var(--accent), transparent 55%); background: var(--accent-soft); }
+.sidebarProfileText { min-width: 0; }
+.sidebarProfileText strong, .sidebarProfileText small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebarProfileText small { color: var(--muted); font-size: 12px; }
 .main { min-width: 0; border-right: 1px solid var(--border); }
 .gridNoRail .main { border-right: 0; }
 .right { position: sticky; top: 64px; align-self: start; max-height: calc(100vh - 64px); padding: 18px; overflow-y: auto; }

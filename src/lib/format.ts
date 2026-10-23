@@ -9,6 +9,11 @@ export function dateLabel(value?: string) {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
 }
 
+/** What to call a conversation: the other member, or a group's title. */
+export function conversationName(conversation: { otherUser?: { displayName?: string } | null; title?: string | null }) {
+  return conversation.otherUser?.displayName || conversation.title || "IUT member";
+}
+
 export function queryString(values: Record<string, string | number | boolean | undefined>) {
   const params = new URLSearchParams();
   Object.entries(values).forEach(([key, value]) => { if (value !== undefined && value !== "" && value !== false) params.set(key, String(value)); });

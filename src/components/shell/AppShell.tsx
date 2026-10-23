@@ -6,8 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, BriefcaseBusiness, CalendarDays, Cat, CircleUserRound, CloudSun, Feather, Home, Info, LogOut, Menu, MessageSquare, Moon, Plus, Search, ShieldCheck, Sun, UsersRound, MapPin } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTheme } from "@/features/theme/ThemeProvider";
-import { apiPage, mediaUrl } from "@/lib/api";
-import type { Conversation } from "@/lib/types";
+import { apiPage, apiRequest, mediaUrl } from "@/lib/api";
+import { conversationName } from "@/lib/format";
+import type { Conversation, Profile } from "@/lib/types";
 import { Avatar, Button } from "@/components/ui/Ui";
 import { CampusUtilitiesDialog } from "@/components/shell/CampusUtilities";
 import { NavLink } from "./NavLink";
@@ -16,7 +17,7 @@ import styles from "./Shell.module.css";
 const groups = [
   { label: "Main", items: [{ to: "/", text: "Home", icon: Home, end: true }, { to: "/community", text: "Community", icon: UsersRound }] },
   { label: "Learn & Work", items: [{ to: "/academic", text: "Academics", icon: BookOpen }, { to: "/jobs", text: "Jobs", icon: BriefcaseBusiness }] },
-  { label: "Account", items: [{ to: "/messages", text: "Messages", icon: MessageSquare }, { to: "/profile", text: "Profile", icon: CircleUserRound }, { to: "/about", text: "About Us", icon: Info }] },
+  { label: "Account", items: [{ to: "/messages", text: "Messages", icon: MessageSquare }, { to: "/about", text: "About Us", icon: Info }] },
   { label: "Campus", items: [{ to: "/lost-and-found", text: "LostAndFound", icon: MapPin }, { to: "/events", text: "EventHub", icon: CalendarDays }, { to: "/cat-corner", text: "CatCorner", icon: Cat }, { to: "/confessions", text: "Confessions", icon: Feather }] },
 ];
 
@@ -54,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>)}
           {isAdmin && <NavLink href="/admin/moderation" className={navClass}><ShieldCheck size={21} />Moderation</NavLink>}
         </nav>
-        <div className={styles.sidebarProfile}><Avatar name={user?.displayName} size={40} /><div><strong>{user?.displayName || "IUT member"}</strong><span>{user?.email}</span></div></div>
+        <SidebarProfile onNavigate={() => setOpen(false)} />
         <Button variant="ghost" onClick={() => void signOut()}><LogOut size={17} />Logout</Button>
       </aside>
       <main id="main-content" className={styles.main}>{children}</main>
@@ -67,6 +68,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   </div>;
 }
 
+// The sidebar's one way to the member's own profile: their photo, name and email.
+function SidebarProfile({ onNavigate }: { onNavigate(): void }) {
+  const { user } = useAuth();
+  // Same query as the profile page, so a new photo or name shows here right after an edit.
+  const profile = useQuery({ queryKey: ["profile", user?.id], queryFn: ({ signal }) => apiRequest<Profile>("/profile/me", {}, signal), enabled: Boolean(user?.id), staleTime: 60_000 });
+  const me = profile.data?.data;
+  const name = me?.displayName || user?.displayName || "IUT member";
+  return <NavLink href="/profile" end className={({ isActive }) => `${styles.sidebarProfile} ${isActive ? styles.sidebarProfileActive : ""}`} onClick={onNavigate}>
+    <Avatar name={name} src={mediaUrl(me?.profilePictureUrl)} size={40} />
+    <span className={styles.sidebarProfileText}><strong>{name}</strong><small>{user?.email}</small></span>
+  </NavLink>;
+}
+
 function RecentMessagesRail() {
   const router = useRouter();
   const conversations = useQuery({ queryKey: ["conversations", "recent"], queryFn: ({ signal }) => apiPage<Conversation>("/chat/conversations?limit=4", signal), staleTime: 30_000 });
@@ -76,8 +90,8 @@ function RecentMessagesRail() {
     {conversations.isLoading && <p className={styles.railStatus}>Loading recent conversations…</p>}
     {conversations.isError && <div className={styles.railStatus}><p>Recent messages could not load.</p><Button variant="secondary" onClick={() => void conversations.refetch()}>Retry</Button></div>}
     {!conversations.isError && <div className={styles.recentList}>{recent.map(conversation => <button type="button" className={styles.recentPerson} key={conversation.id} onClick={() => router.push(`/messages?conversation=${conversation.id}`)}>
-      <Avatar size={42} name={conversation.otherUser?.displayName} src={mediaUrl(conversation.otherUser?.profilePictureUrl)} />
-      <span className={styles.recentCopy}><strong>{conversation.otherUser?.displayName || "IUT member"}</strong><small>{conversation.lastMessage?.content || "Start the conversation"}</small></span>
+      <Avatar size={42} name={conversationName(conversation)} src={mediaUrl(conversation.otherUser?.profilePictureUrl)} />
+      <span className={styles.recentCopy}><strong>{conversationName(conversation)}</strong><small>{conversation.lastMessage?.content || "Start the conversation"}</small></span>
       {Boolean(conversation.unreadCount) && <span className={styles.unread} aria-label={`${conversation.unreadCount} unread messages`}>{conversation.unreadCount}</span>}
     </button>)}</div>}
     {!conversations.isLoading && recent.length < 4 && <button type="button" className={styles.startChat} onClick={() => router.push("/messages?new=1")}><Plus size={18} /><span><strong>Start a new chat</strong><small>Find another IUT member</small></span></button>}
