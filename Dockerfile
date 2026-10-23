@@ -19,12 +19,15 @@ FROM base AS build
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Inlined into the browser bundle at build time. Both are public by design (the
-# project URL and the anon key); server secrets are supplied at run time only.
+# Inlined into the browser bundle at build time. All are public by design (the
+# project URL, the anon key and the sign-in providers to offer); server secrets
+# are supplied at run time only.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_OAUTH_PROVIDERS
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_OAUTH_PROVIDERS=$NEXT_PUBLIC_OAUTH_PROVIDERS
 RUN npm run build
 
 # One-off job: applies supabase/migrations and loads the starter data.

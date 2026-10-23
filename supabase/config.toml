@@ -2,6 +2,17 @@ project_id = "iutverse"
 
 [auth]
 enabled = true
+site_url = "http://localhost:3000"
+# OAuth returns to /auth/callback (PKCE); password-reset emails to /reset-password.
+additional_redirect_urls = ["http://localhost:3000/auth/callback", "http://localhost:3000/reset-password"]
+
+# Google sign-in for `supabase start`. Set enabled = true after exporting the two
+# variables (docs/oauth-setup.md); the CLI refuses to start with empty values.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = false
 
 [auth.hook.before_user_created]
 enabled = true

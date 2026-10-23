@@ -23,7 +23,8 @@ const inert = () =>
           signUp: async () => ({ data: { user: null, session: null }, error: unavailable() }),
           signOut: async () => ({ error: null }),
           resetPasswordForEmail: async () => ({ data: {}, error: unavailable() }),
-          updateUser: async () => ({ data: { user: null }, error: unavailable() })
+          updateUser: async () => ({ data: { user: null }, error: unavailable() }),
+          exchangeCodeForSession: async () => ({ data: { user: null, session: null }, error: unavailable() })
         };
       }
       return undefined;
@@ -34,6 +35,42 @@ const inert = () =>
 export const authLinkHash = typeof window !== "undefined" ? window.location.hash : "";
 export const authLinkIntent: AuthLinkIntent = readAuthLinkIntent(authLinkHash);
 
+// The main client keeps the implicit flow: a password-reset email must work on
+// any device, and PKCE would tie it to the browser that asked for it.
 export const supabase: SupabaseClient = url && key && typeof window !== "undefined"
   ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
   : inert();
+
+const CODE_VERIFIER_SUFFIX = "-code-verifier";
+const ownsKey = (storageKey: string) => storageKey.endsWith(CODE_VERIFIER_SUFFIX);
+
+// Lets the PKCE client below store its code verifier and nothing else, so it
+// never reads, refreshes or overwrites the session the main client holds.
+const codeVerifierStorage = {
+  getItem: (storageKey: string) => (ownsKey(storageKey) ? window.localStorage.getItem(storageKey) : null),
+  setItem: (storageKey: string, value: string) => {
+    if (ownsKey(storageKey)) window.localStorage.setItem(storageKey, value);
+  },
+  removeItem: (storageKey: string) => {
+    if (ownsKey(storageKey)) window.localStorage.removeItem(storageKey);
+  },
+};
+
+/**
+ * Sends the browser to the provider's sign-in page. OAuth uses PKCE, so the
+ * session never travels in a URL: Supabase returns a one-time code that only
+ * this browser, holding the code verifier, can exchange. Both clients are built
+ * from the same project URL and so share a storage key; that is how the main
+ * client finds the verifier when the callback page calls exchangeCodeForSession.
+ */
+export const redirectToOAuthProvider = async (
+  provider: string,
+  options: { redirectTo: string; queryParams?: Record<string, string> },
+) => {
+  if (!url || !key || typeof window === "undefined") throw unavailable();
+  const pkce = createClient(url, key, {
+    auth: { flowType: "pkce", storage: codeVerifierStorage, persistSession: true, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const { error } = await pkce.auth.signInWithOAuth({ provider: provider as never, options });
+  if (error) throw error;
+};

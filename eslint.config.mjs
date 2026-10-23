@@ -43,5 +43,10 @@ export default tseslint.config(
     files: ["scripts/**/*.js"],
     languageOptions: { globals: globals.node, sourceType: "commonjs" },
     rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    // Test servers that run in Node, e.g. the mock OAuth provider.
+    files: ["e2e/**/*.mjs"],
+    languageOptions: { globals: globals.node },
   }
 );

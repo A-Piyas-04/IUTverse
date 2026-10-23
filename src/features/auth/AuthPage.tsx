@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button, Field, Input } from "@/components/ui/Ui";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { brand } from "@/content/siteContent";
+import { enabledOAuthProviders, OAUTH_PROVIDERS, type OAuthProvider } from "@/lib/oauth";
 import { safeDestination } from "@/lib/redirect";
 import styles from "./AuthPage.module.css";
 
@@ -37,6 +38,8 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
     params.get("reset") === "success" ? "Password updated. Log in with your new password." : "",
   );
   const [resetting, setResetting] = useState(false);
+  const [redirecting, setRedirecting] = useState<OAuthProvider | null>(null);
+  const oauthProviders = enabledOAuthProviders();
   const login = useForm<LoginData>({ resolver: zodResolver(loginSchema) });
   const signup = useForm<SignupData>({ resolver: zodResolver(signupSchema) });
   const signedIn = !auth.loading && Boolean(auth.session);
@@ -67,6 +70,17 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
       );
     }
   });
+  const continueWith = async (provider: OAuthProvider) => {
+    setMessage("");
+    setRedirecting(provider);
+    try {
+      // Navigates away on success; returning here means the redirect never started.
+      await auth.signInWithProvider(provider, destination);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to start sign-in.");
+      setRedirecting(null);
+    }
+  };
   const reset = async () => {
     const value = login.getValues("email");
     const parsed = email.safeParse(value);
@@ -108,6 +122,23 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
               ? "Welcome back to your campus network."
               : "Create your IUTverse account with your IUT email."}
           </p>
+          {oauthProviders.length > 0 && (
+            <div className={styles.oauth}>
+              {oauthProviders.map((provider) => (
+                <Button
+                  key={provider}
+                  variant="secondary"
+                  onClick={() => void continueWith(provider)}
+                  disabled={redirecting !== null}
+                >
+                  {redirecting === provider
+                    ? "Redirecting…"
+                    : `Continue with ${OAUTH_PROVIDERS[provider].label}`}
+                </Button>
+              ))}
+              <div className={styles.divider}>or use your password</div>
+            </div>
+          )}
           {isLogin ? (
             <form className={styles.form} onSubmit={submitLogin} noValidate>
               <Field

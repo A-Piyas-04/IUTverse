@@ -73,6 +73,7 @@ Useful commands:
 - `docker-compose logs -f web` follows the app's logs.
 - If a port is taken, set `WEB_PORT` or `SUPABASE_PORT` before `docker-compose build` and `docker-compose up`. The page build contains the Supabase address, so rebuild after changing them.
 - Set `SEED_DEMO_DATA=false` to start with an empty database.
+- Google sign-in is off locally until you add a Google OAuth client; see `docs/oauth-setup.md`.
 
 The keys in `docker-compose.yml` are Supabase's public demo keys for local development. They only work against this local stack. Never use them, or this compose file, for a hosted deployment; see `docs/vercel-deployment.md`.
 
@@ -91,6 +92,7 @@ The keys in `docker-compose.yml` are Supabase's public demo keys for local devel
 | `npm test` | Server and client Vitest projects (`test:server`, `test:client` for one) |
 | `npm run build` | Production build |
 | `npm run test:e2e` | Playwright (install browsers once with `npx playwright install`) |
+| `npm run test:e2e:oauth` | OAuth sign-in end to end against a Docker stack with a mock provider (`docs/oauth-setup.md`) |
 | `npm run test:db` | pgTAP tests against a local Supabase stack |
 | `npm run test:mutation` | Stryker mutation testing of the security-critical modules |
 | `npm run security:scan-env` | Secret scan of tracked files |

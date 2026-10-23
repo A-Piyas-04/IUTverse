@@ -29,6 +29,7 @@ Scope Production and Preview separately.
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Server-side Supabase access. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Sensitive. |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Inlined into the browser bundle **at build time**, so they must be set before the build. Public by design. |
+| `NEXT_PUBLIC_OAUTH_PROVIDERS` | `google` shows "Continue with Google". Build time, like the two above. Google must be enabled in Supabase first: `docs/oauth-setup.md`. |
 | `REDIS_URL` | Shared rate-limit counters and weather cache. Without it, limits are per instance. Sensitive. |
 | `CORS_ORIGINS` | Optional. Extra exact browser origins allowed to call `/api`. The app itself is same-origin and needs nothing here. `*` is rejected. |
 | `PASSWORD_RESET_REDIRECT_URL` | Optional. Must also be on the Supabase redirect allowlist. |

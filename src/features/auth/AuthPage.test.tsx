@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthPage } from "./AuthPage";
 
 const auth = vi.hoisted(() => ({
@@ -8,6 +8,7 @@ const auth = vi.hoisted(() => ({
     loading: false,
     session: null as unknown,
     signIn: vi.fn(),
+    signInWithProvider: vi.fn(),
     signUp: vi.fn(),
     resetPassword: vi.fn(),
   },
@@ -25,11 +26,13 @@ describe("AuthPage", () => {
   beforeEach(() => {
     Object.assign(auth.value, { loading: false, session: null });
     auth.value.signIn.mockReset().mockResolvedValue(undefined);
+    auth.value.signInWithProvider.mockReset().mockResolvedValue(undefined);
     auth.value.signUp.mockReset().mockResolvedValue(undefined);
     auth.value.resetPassword.mockReset().mockResolvedValue(undefined);
     router.replace.mockReset();
     query.search = "";
   });
+  afterEach(() => vi.unstubAllEnvs());
 
   it("shows the IUT-only login screen and a link to sign up", () => {
     render(<AuthPage mode="login" />);
@@ -107,5 +110,36 @@ describe("AuthPage", () => {
     query.search = "reset=success";
     render(<AuthPage mode="login" />);
     expect(screen.getByRole("status")).toHaveTextContent("Password updated. Log in with your new password.");
+  });
+
+  it("offers no provider buttons unless the deployment enables them", () => {
+    render(<AuthPage mode="login" />);
+    expect(screen.queryByRole("button", { name: /Continue with/ })).not.toBeInTheDocument();
+  });
+
+  it("signs in with Google and keeps the page the member was heading for", async () => {
+    vi.stubEnv("NEXT_PUBLIC_OAUTH_PROVIDERS", "google");
+    query.search = "next=%2Fevents";
+    const user = userEvent.setup();
+    render(<AuthPage mode="login" />);
+    await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+    expect(auth.value.signInWithProvider).toHaveBeenCalledWith("google", "/events");
+    expect(screen.getByRole("button", { name: "Redirecting…" })).toBeDisabled();
+  });
+
+  it("offers Google on the sign-up page too, since it creates the account", () => {
+    vi.stubEnv("NEXT_PUBLIC_OAUTH_PROVIDERS", "google");
+    render(<AuthPage mode="signup" />);
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  });
+
+  it("explains why the provider redirect could not start", async () => {
+    vi.stubEnv("NEXT_PUBLIC_OAUTH_PROVIDERS", "google");
+    auth.value.signInWithProvider.mockRejectedValue(new Error("Unsupported provider: provider is not enabled"));
+    const user = userEvent.setup();
+    render(<AuthPage mode="login" />);
+    await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("provider is not enabled");
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
   });
 });

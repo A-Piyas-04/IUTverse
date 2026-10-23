@@ -1,0 +1,35 @@
+# Overlay for the OAuth end-to-end test (see docs/oauth-setup.md). Adds a mock
+# identity provider behind Supabase Auth's "keycloak" provider, and Google with
+# placeholder credentials so the redirect to Google can be checked (the test
+# never contacts Google). Use with its own project name and env file:
+#
+#   docker compose -p iutverse-oauth --env-file e2e/oauth/oauth.env \
+#     -f docker-compose.yml -f e2e/oauth/docker-compose.oauth.yml up -d --build
+
+services:
+  oidc-mock:
+    image: node:22-slim
+    command: ["node", "/srv/mock-oidc.mjs"]
+    environment:
+      PORT: 29090
+    volumes:
+      - ./e2e/oauth/mock-oidc.mjs:/srv/mock-oidc.mjs:ro
+    ports:
+      - "127.0.0.1:29090:29090"
+
+  auth:
+    depends_on:
+      oidc-mock:
+        condition: service_started
+    environment:
+      GOTRUE_EXTERNAL_KEYCLOAK_ENABLED: "true"
+      GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID: iutverse-e2e
+      GOTRUE_EXTERNAL_KEYCLOAK_SECRET: iutverse-e2e-secret
+      GOTRUE_EXTERNAL_KEYCLOAK_URL: http://oidc-mock:29090/realms/iut
+      GOTRUE_EXTERNAL_KEYCLOAK_REDIRECT_URI: http://localhost:${SUPABASE_PORT:-8000}/auth/v1/callback
+
+  web:
+    environment:
+      # The test signs in many times from one address.
+      RATE_LIMIT_AUTH_MAX: 1000
+      RATE_LIMIT_GENERAL_MAX: 10000
