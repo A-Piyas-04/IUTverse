@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { brand } from "@/content/siteContent";
+import { AuthScene } from "./AuthScene";
 import { readOAuthCallback, takeOAuthDestination } from "@/lib/oauth";
 import { authLinkHash } from "@/lib/supabase";
 import styles from "./AuthPage.module.css";
@@ -38,15 +39,10 @@ export function OAuthCallbackPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.story}>
-        <div className={styles.brand}>{brand.name} / IUT community</div>
-        <div className={styles.copy}>
-          <h1>{brand.loginTitle}</h1>
-        </div>
-        <small>Verified IUT members only</small>
-      </section>
+      <AuthScene lead={brand.loginLead} />
       <section className={styles.formSide}>
         <div className={styles.panel}>
+          <p className={styles.kicker}>Verified IUT members only</p>
           <h2>{error ? "Sign-in failed" : "Signing you in"}</h2>
           {error ? (
             <>

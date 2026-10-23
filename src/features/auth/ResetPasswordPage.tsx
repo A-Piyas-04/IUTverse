@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button, Field, Input } from "@/components/ui/Ui";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { brand } from "@/content/siteContent";
+import { AuthScene } from "./AuthScene";
 import { authLinkIntent } from "@/lib/supabase";
 import styles from "./AuthPage.module.css";
 
@@ -80,16 +81,10 @@ export function ResetPasswordPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.story}>
-        <div className={styles.brand}>{brand.name} / IUT community</div>
-        <div className={styles.copy}>
-          <h1>{brand.loginTitle}</h1>
-          <p>{brand.loginLead}</p>
-        </div>
-        <small>Verified IUT members only</small>
-      </section>
+      <AuthScene lead={brand.loginLead} />
       <section className={styles.formSide}>
         <div className={styles.panel}>
+          <p className={styles.kicker}>Verified IUT members only</p>
           <h2>Reset password</h2>
           {panel}
         </div>

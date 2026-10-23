@@ -49,6 +49,8 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
+# Standalone output leaves public/ out; the server still serves it from here.
+COPY --from=build --chown=node:node /app/public ./public
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
