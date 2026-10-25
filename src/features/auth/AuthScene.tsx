@@ -30,11 +30,6 @@ export function AuthScene({ lead, line, notice }: { lead: string; line?: string;
         {line && <p className={styles.line}>{line}</p>}
         {notice && <p className={styles.notice}>{notice}</p>}
       </div>
-      <p className={styles.credit}>
-        <span>Lake &amp; auditorium, IUT campus.</span>{" "}
-        <a href={PHOTO.page} target="_blank" rel="noreferrer">Photo: {PHOTO.author}</a>,{" "}
-        <a href={PHOTO.licenseUrl} target="_blank" rel="noreferrer">{PHOTO.license}</a>
-      </p>
     </section>
   );
 }
