@@ -73,7 +73,7 @@ describe("Content-Security-Policy", () => {
 
   it("names Supabase as the one external origin, for HTTP and WebSocket", () => {
     expect(policy).toContain("connect-src 'self' https://proj.supabase.co wss://proj.supabase.co");
-    expect(policy).toContain("img-src 'self' data: blob: https://proj.supabase.co");
+    expect(policy).toContain("img-src 'self' data: blob: https://proj.supabase.co https://static.klipy.com");
   });
 
   it("blocks plugins, framing and foreign form targets", () => {

@@ -20,6 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:oauth": "playwright test --config e2e/oauth/playwright.config.ts",
+    "test:e2e:chat": "playwright test --config e2e/chat/playwright.config.ts",
     "test:mutation": "stryker run",
     "test:db": "supabase test db",
     "migrate:supabase": "node scripts/applySupabaseMigrations.js",

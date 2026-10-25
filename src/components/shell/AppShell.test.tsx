@@ -13,6 +13,8 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePat
 vi.mock("@/features/auth/AuthProvider", () => ({
   useAuth: () => ({ user: { id: "me", displayName: "Nuren Fahmid", email: "nuren@iut-dhaka.edu", role: "user" }, signOut: vi.fn() }),
 }));
+// Realtime is not available in jsdom; the hook has its own tests.
+vi.mock("@/features/messages/useInboxReceipts", () => ({ useInboxReceipts: () => {} }));
 vi.mock("@/features/theme/ThemeProvider", () => ({ useTheme: () => ({ theme: "light", toggleTheme: vi.fn() }) }));
 
 const renderShell = () =>

@@ -6,6 +6,10 @@
 .search svg { position: absolute; left: 13px; top: 13px; color: var(--muted); }
 .search input { width: 100%; height: 42px; border: 1px solid transparent; border-radius: var(--pill); background: var(--surface-2); color: var(--fg); padding: 0 42px; }
 .search input:focus { border-color: var(--accent); }
+.mobileSearch { display: none; }
+.navBadge { margin-left: auto; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--pill); background: var(--danger); color: #fff; font-size: 11px; font-weight: 800; }
+.mobileIcon { position: relative; display: grid; place-items: center; }
+.mobileBadge { position: absolute; top: -6px; right: -10px; display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; border: 2px solid var(--bg); border-radius: var(--pill); background: var(--danger); color: #fff; font-size: 9.5px; font-weight: 800; }
 .topActions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .topTheme { color: var(--campus); }
 .menuButton { display: none; }
@@ -26,6 +30,9 @@
 .sidebarProfileText small { color: var(--muted); font-size: 12px; }
 .main { min-width: 0; border-right: 1px solid var(--border); }
 .gridNoRail .main { border-right: 0; }
+/* Messages fills the screen under the top bar: the chat scrolls inside and the
+   message box stays in view. */
+.mainFill { display: flex; flex-direction: column; height: calc(100dvh - 64px); overflow: hidden; }
 .right { position: sticky; top: 64px; align-self: start; max-height: calc(100vh - 64px); padding: 18px; overflow-y: auto; }
 .rightCard { margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 16px; }
 .rightCard h2 { margin-bottom: 12px; font-size: 17px; }
@@ -56,9 +63,12 @@
   .topbar { height: 58px; grid-template-columns: auto 1fr auto; gap: 10px; padding: 0 12px; }
   .brand span:last-child { display: none; }
   .search { display: none; }
+  .mobileSearch { display: inline-flex; }
   .menuButton { display: inline-flex; }
   .grid { display: block; min-height: calc(100vh - 58px); padding-bottom: 68px; }
   .main { border: 0; }
+  /* Minus the top bar and the space kept for the bottom navigation. */
+  .mainFill { height: calc(100dvh - 58px - 68px); }
   .sidebar { position: fixed; z-index: 60; top: 0; left: 0; width: min(310px, 88vw); height: 100vh; background: var(--bg); transform: translateX(-105%); transition: transform 220ms var(--ease); }
   .sidebarOpen { transform: none; }
   .menuButton { display: inline-flex; }

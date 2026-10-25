@@ -100,6 +100,10 @@ const bucketApi = (bucket: string) => ({
       : { data: null, error: new Error("Object not found") };
   },
   createSignedUrl: async (objectPath: string) => ({ data: { signedUrl: `${storage.url}/${bucket}/${objectPath}` }, error: null }),
+  createSignedUrls: async (objectPaths: string[]) => ({
+    data: objectPaths.map((objectPath) => ({ path: objectPath, signedUrl: `${storage.url}/${bucket}/${objectPath}`, error: null })),
+    error: null,
+  }),
   remove: async (paths: string[]) => {
     for (const objectPath of paths) storage.objects.delete(`${bucket}/${objectPath}`);
     storage.calls.push(["remove", bucket, ...paths]);

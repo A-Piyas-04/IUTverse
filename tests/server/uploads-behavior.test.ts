@@ -27,7 +27,11 @@ afterAll(stopStorageServer);
 beforeEach(() => {
   resetStubs();
   db.handler = (table, ops) => {
-    if (table === "conversation_participants") return { data: { id: 1 }, error: null };
+    if (table === "conversation_participants") {
+      // A membership check, or the list of people in the chat.
+      return ops.some(([name]) => name === "maybeSingle") ? { data: { id: 1 }, error: null } : { data: [{ user_id: USER }, { user_id: OTHER }], error: null };
+    }
+    if (table === "user_blocks") return { data: [], error: null };
     if (ops.some(([name]) => name === "insert")) return { data: { id: 77 }, error: null };
     return { data: [], error: null };
   };
@@ -138,6 +142,47 @@ describe("claiming a stored upload", () => {
     expect(row.attachment_size_bytes).toBe(9 * MB);
     expect(row.attachment_mime_type).toBe("application/pdf");
     expect(row.attachment_name).toBe("Lecture 4.pdf");
+  });
+
+  it("takes chat videos up to 50 MB but keeps photos and files at 10 MB", async () => {
+    let res = await intent({ purpose: "chat", mimeType: "video/mp4", size: 49 * MB, conversationId: 5 });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.maxBytes).toBe(50 * MB);
+    expect(res.body.data.path).toMatch(/\.mp4$/);
+    res = await intent({ purpose: "chat", mimeType: "video/mp4", size: 51 * MB, conversationId: 5 });
+    expect(res.status).toBe(400);
+    res = await intent({ purpose: "chat", mimeType: "image/jpeg", size: 11 * MB, conversationId: 5 });
+    expect(res.status).toBe(400);
+    res = await intent({ purpose: "chat", mimeType: "audio/webm", size: MB, conversationId: 5 });
+    expect(res.body.data.path).toMatch(/\.weba$/);
+  });
+
+  it("attaches a voice message with its length and waveform", async () => {
+    const WEBM = Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81, 0x01]);
+    const path = `${USER}/message-1700000000000-8.weba`;
+    storage.put("chat-attachments", path, padded(WEBM, 40_000), "audio/webm");
+    const res = await request("POST", "/api/chat/messages", {
+      token: "user-token",
+      body: { conversationId: 5, uploadPath: path, attachmentName: "voice-message.weba", attachmentDurationMs: "4200", attachmentWaveform: "[10,80,40]" },
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const row = insertedRow("chat_messages");
+    expect(row).toMatchObject({ kind: "audio", attachment_mime_type: "audio/webm", attachment_duration_ms: 4200, attachment_waveform: [10, 80, 40] });
+  });
+
+  it("accepts a video whose bytes match its declared type, and nothing pretending to be one", async () => {
+    const MP4 = Buffer.from([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 2, 0]);
+    const good = `${USER}/message-1700000000000-9.mp4`;
+    storage.put("chat-attachments", good, padded(MP4, 2 * MB), "video/mp4");
+    let res = await request("POST", "/api/chat/messages", { token: "user-token", body: { conversationId: 5, uploadPath: good, attachmentWidth: "1280", attachmentHeight: "720" } });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(insertedRow("chat_messages")).toMatchObject({ kind: "video", attachment_width: 1280, attachment_height: 720 });
+
+    const fake = `${USER}/message-1700000000000-10.mp4`;
+    storage.put("chat-attachments", fake, padded(PDF, MB), "video/mp4");
+    res = await request("POST", "/api/chat/messages", { token: "user-token", body: { conversationId: 5, uploadPath: fake } });
+    expect(res.status).toBe(400);
+    expect(storage.has("chat-attachments", fake)).toBe(false);
   });
 
   it("rejects objects outside the caller's folder or the route's purpose", async () => {

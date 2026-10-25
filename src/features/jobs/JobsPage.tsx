@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BriefcaseBusiness, CalendarClock, MapPin, MessageCircle, Plus, UsersRound } from "lucide-react";
 import { apiPage, apiRequest, jsonBody } from "@/lib/api";
@@ -14,7 +15,7 @@ import styles from "@/styles/pages.module.css";
 const jobTypes = ["All Jobs", "Internship", "Job", "Research", "Project", "ClubRole", "Competition", "Freelance", "PartTime", "Volunteer"];
 
 export function JobsPage() {
-  const [type, setType] = useState("All Jobs"); const [search, setSearch] = useState(""); const [createOpen, setCreateOpen] = useState(false);
+  const [type, setType] = useState("All Jobs"); const [search, setSearch] = useState(useSearchParams().get("q") ?? ""); const [createOpen, setCreateOpen] = useState(false);
   const jobs = useQuery({ queryKey: ["jobs", type, search], queryFn: ({ signal }) => apiPage<Job>(`/jobs${queryString({ type: type === "All Jobs" ? undefined : type, search })}`, signal) });
   return <PageFrame title="Job Board" eyebrow="Learn & Work" action={<Button onClick={() => setCreateOpen(true)}><Plus size={17} />Post a Job</Button>} tabs={jobTypes.map(item => <Chip key={item} active={item === type} onClick={() => setType(item)}>{item.replace("ClubRole","Club roles").replace("PartTime","Part-time")}</Chip>)}><div className={styles.toolbar}><Input className={styles.toolbarGrow} value={search} onChange={e => setSearch(e.target.value)} placeholder="Search jobs and opportunities" aria-label="Search job board" /></div><div className={styles.stack}>{jobs.isLoading && <Card padded>Loading jobs…</Card>}{jobs.isError && <EmptyState title="Job Board could not load" body={jobs.error.message} action={<Button onClick={() => void jobs.refetch()}>Try again</Button>} />}{jobs.data?.data.length === 0 && <EmptyState title="No jobs at this moment" body="Change the selected filters or post an opportunity for the IUT community." />}{jobs.data?.data.map(job => <JobCard key={job.id} job={job} />)}</div><JobDialog open={createOpen} onClose={() => setCreateOpen(false)} /></PageFrame>;
 }

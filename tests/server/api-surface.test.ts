@@ -18,6 +18,24 @@ const exportedEndpoints = async () => {
   return endpoints;
 };
 
+// Endpoints added since the move off Express. Each must still require sign-in
+// (checked below) unless it is listed in PUBLIC_ENDPOINTS.
+const ADDED_ENDPOINTS = [
+  "GET /api/health",
+  "DELETE /api/chat/blocks/:p",
+  "GET /api/chat/conversations/:p/media",
+  "GET /api/chat/conversations/:p/search",
+  "GET /api/chat/gifs",
+  "GET /api/search",
+  "PATCH /api/chat/conversations/:p/settings",
+  "POST /api/chat/blocks/:p",
+  "POST /api/chat/conversations/:p/clear",
+  "PATCH /api/chat/messages/:p",
+  "POST /api/chat/delivered",
+  "POST /api/chat/messages/:p/reactions",
+  "POST /api/chat/share",
+].sort();
+
 // Reachable without signing in. Everything else must answer 401 to an anonymous caller.
 const PUBLIC_ENDPOINTS = new Set([
   "GET /api/health",
@@ -36,9 +54,9 @@ const PUBLIC_ENDPOINTS = new Set([
 ]);
 
 describe("API surface", () => {
-  it("serves every endpoint the Express API did, and only the health probe more", async () => {
+  it("serves every endpoint the Express API did, plus only the endpoints added since", async () => {
     const served = (await exportedEndpoints()).map((endpoint) => endpoint.shape).sort();
-    expect(served.filter((entry) => !LEGACY_API_SURFACE.includes(entry))).toEqual(["GET /api/health"]);
+    expect(served.filter((entry) => !LEGACY_API_SURFACE.includes(entry))).toEqual(ADDED_ENDPOINTS);
     expect(LEGACY_API_SURFACE.filter((entry) => !served.includes(entry))).toEqual([]);
     expect(new Set(served).size).toBe(served.length);
   });

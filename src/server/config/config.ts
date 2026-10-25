@@ -50,6 +50,10 @@ const config = {
     // Must also be on the Supabase Auth redirect allowlist (exact URL).
     passwordResetRedirectUrl: process.env.PASSWORD_RESET_REDIRECT_URL || null,
   },
+  gifs: {
+    // KLIPY API key (docs.klipy.com). Server-only: browsers search through /api/chat/gifs.
+    klipyApiKey: process.env.KLIPY_API_KEY || null,
+  },
   email: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,

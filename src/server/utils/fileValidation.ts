@@ -2,6 +2,10 @@ import { PublicError } from "../http/errors";
 
 export const imageMimeTypes: ReadonlySet<string> = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 export const pdfMimeTypes: ReadonlySet<string> = new Set(["application/pdf"]);
+// Chat media. Containers are shared (WebM and MP4 hold audio or video), so
+// these are checked against the declared type rather than detected outright.
+export const videoMimeTypes: ReadonlySet<string> = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+export const audioMimeTypes: ReadonlySet<string> = new Set(["audio/webm", "audio/ogg", "audio/mp4"]);
 
 interface Signature {
   mimeType: string;
@@ -51,9 +55,30 @@ const signatures: Signature[] = [
   },
 ];
 
+// ISO base media (MP4, MOV, M4A): a box whose type is "ftyp" right at the start.
+const isIsoMedia = (buffer: Buffer) => buffer.length >= 12 && buffer.subarray(4, 8).toString("ascii") === "ftyp";
+// Matroska / WebM: the EBML magic number.
+const isEbml = (buffer: Buffer) => buffer.length >= 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3;
+const isOgg = (buffer: Buffer) => buffer.length >= 4 && buffer.subarray(0, 4).toString("ascii") === "OggS";
+
+// Listed after the single-type signatures, so detectFileType keeps returning
+// the same answer for images and PDFs.
+signatures.push(
+  { mimeType: "video/mp4", extension: ".mp4", matches: isIsoMedia },
+  { mimeType: "video/quicktime", extension: ".mov", matches: isIsoMedia },
+  { mimeType: "audio/mp4", extension: ".m4a", matches: isIsoMedia },
+  { mimeType: "video/webm", extension: ".webm", matches: isEbml },
+  { mimeType: "audio/webm", extension: ".weba", matches: isEbml },
+  { mimeType: "audio/ogg", extension: ".ogg", matches: isOgg },
+);
+
+/** Whether the bytes are a valid start for a file of this declared type. */
+export const contentMatchesType = (buffer: Buffer | null | undefined, mimeType: unknown) =>
+  signatures.find((signature) => signature.mimeType === String(mimeType || "").toLowerCase())?.matches(buffer || Buffer.alloc(0)) ?? false;
+
 const allowedForBucket = (bucket?: string): ReadonlySet<string> => {
   if (bucket === "academic-resources") return pdfMimeTypes;
-  if (bucket === "chat-attachments") return new Set([...imageMimeTypes, ...pdfMimeTypes]);
+  if (bucket === "chat-attachments") return new Set([...imageMimeTypes, ...pdfMimeTypes, ...videoMimeTypes, ...audioMimeTypes]);
   return imageMimeTypes;
 };
 
@@ -81,16 +106,17 @@ export const validateUploadedFile = (
   }
 
   const detected = detectFileType(file.buffer);
-  if (!detected || !allowedMimeTypes.has(detected.mimeType)) {
+  if (!detected || ![...allowedMimeTypes].some((type) => contentMatchesType(file.buffer, type))) {
     throw publicFileError("Uploaded file content does not match an allowed file type");
   }
 
   const declaredMime = String(file.mimetype || "").toLowerCase();
-  if (declaredMime && declaredMime !== detected.mimeType) {
+  if (!declaredMime) return detected;
+  if (!allowedMimeTypes.has(declaredMime) || !contentMatchesType(file.buffer, declaredMime)) {
     throw publicFileError("Uploaded file content does not match its declared content type");
   }
 
-  return detected;
+  return { mimeType: declaredMime, extension: extensionForMime(declaredMime) || detected.extension };
 };
 
 export const extensionForMime = (mimeType: unknown) =>

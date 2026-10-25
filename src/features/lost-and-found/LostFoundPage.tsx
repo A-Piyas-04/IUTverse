@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ImagePlus, MapPin, MessageSquare, Plus, Search } from "lucide-react";
 import { apiPage, apiRequest, mediaUrl } from "@/lib/api";
@@ -17,7 +18,7 @@ type Draft = { type:"lost"|"found"; title:string; category:string; occurredAt:st
 const initial: Draft = { type:"lost",title:"",category:"",occurredAt:"",location:"",description:"",contactPreference:"message",contactNote:"",returnLocation:"",availability:"",privacyAccepted:false };
 
 export function LostFoundPage() {
-  const [type,setType]=useState("all");const[search,setSearch]=useState("");const[report,setReport]=useState(false);const[detail,setDetail]=useState<LostFoundItem|null>(null);
+  const [type,setType]=useState("all");const initialSearch=useSearchParams().get("q")??"";const[search,setSearch]=useState(initialSearch);const[report,setReport]=useState(false);const[detail,setDetail]=useState<LostFoundItem|null>(null);
   const items=useQuery({queryKey:["lost-found",type,search],queryFn:({signal})=>apiPage<LostFoundItem>(`/lost-and-found${queryString({type:type==="all"||type==="resolved"?undefined:type,status:type==="resolved"?"resolved":"active",search})}`,signal)});
   return <PageFrame title="Lost & Found" eyebrow="Campus" action={<Button onClick={()=>setReport(true)}><Plus size={17}/>Add New Post</Button>} tabs={["all","lost","found","resolved"].map(x=><Chip key={x} active={type===x} onClick={()=>setType(x)}>{x[0].toUpperCase()+x.slice(1)}</Chip>)}><div className={styles.toolbar}><Search size={18}/><Input className={styles.toolbarGrow} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search items, locations, descriptions…" aria-label="Search Lost and Found"/></div><div className={styles.gridCards}>{items.isLoading&&<Card padded>Loading reports…</Card>}{items.isError&&<EmptyState title="Lost & Found could not load" body={items.error.message}/>} {items.data?.data.length===0&&<EmptyState title="No matching items" body="Clear filters or report an item."/>}{items.data?.data.map(item=><LostCard key={item.id} item={item} onOpen={()=>setDetail(item)}/>)}</div><ReportWizard open={report} onClose={()=>setReport(false)}/><ItemDialog item={detail} onClose={()=>setDetail(null)}/></PageFrame>;
 }

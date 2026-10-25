@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Download, ExternalLink, Plus, ThumbsUp } from "lucide-react";
 import { apiPage, apiRequest, resolveApiLink } from "@/lib/api";
@@ -15,7 +16,7 @@ import styles from "@/styles/pages.module.css";
 const types = ["All", "QUESTION", "NOTE", "BOOK", "OTHER", "CLASS_LECTURE", "PDF", "SLIDES", "LAB_MANUAL", "QUESTION_SOLUTION", "LINK", "VIDEO", "DATASET"];
 
 export function ResourcesPage() {
-  const [type, setType] = useState("All"); const [search, setSearch] = useState(""); const [course, setCourse] = useState(""); const [upload, setUpload] = useState(false);
+  const [type, setType] = useState("All"); const [search, setSearch] = useState(useSearchParams().get("q") ?? ""); const [course, setCourse] = useState(""); const [upload, setUpload] = useState(false);
   const resources = useQuery({ queryKey: ["resources", type, search, course], queryFn: ({ signal }) => apiPage<Resource>(`/academic/resources${queryString({ type: type === "All" ? undefined : type, search, courseCode: course })}`, signal) });
   return <PageFrame title="Academic Resource Hub" eyebrow="Learn & Work" action={<Button onClick={() => setUpload(true)}><Plus size={17} />Share resource</Button>} tabs={types.slice(0,8).map(item => <Chip key={item} active={item === type} onClick={() => setType(item)}>{item.replaceAll("_", " ")}</Chip>)}><div className={styles.toolbar}><Input className={styles.toolbarGrow} value={search} onChange={e => setSearch(e.target.value)} placeholder="Search resources…" aria-label="Search resources" /><Input value={course} onChange={e => setCourse(e.target.value)} placeholder="Course code" aria-label="Filter by course code" /></div><div className={styles.stack}>{resources.isLoading && <Card padded>Loading resources…</Card>}{resources.isError && <EmptyState title="Academic Resources could not load" body={resources.error.message} action={<Button onClick={() => void resources.refetch()}>Try again</Button>} />}{resources.data?.data.length === 0 && <EmptyState title="No resources found" body="Clear filters or share the first resource." />}{resources.data?.data.map(resource => <ResourceCard key={resource.id} resource={resource} />)}</div><ResourceDialog open={upload} onClose={() => setUpload(false)} /></PageFrame>;
 }

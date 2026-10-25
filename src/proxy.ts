@@ -14,7 +14,8 @@ const unique = (values: Array<string | null | undefined>) => [...new Set(values.
 /**
  * Content-Security-Policy for pages. The nonce lets Next's own scripts and the
  * theme bootstrap run while everything else inline stays blocked. Supabase
- * (auth, REST, Storage, Realtime) is the only external origin pages talk to.
+ * (auth, REST, Storage, Realtime) is the only external origin pages talk to;
+ * chat GIFs are shown from KLIPY's CDN.
  */
 export const contentSecurityPolicy = (nonce: string, env: Record<string, string | undefined> = process.env) => {
   const supabaseOrigins = unique([originOf(env.NEXT_PUBLIC_SUPABASE_URL), originOf(env.SUPABASE_PUBLIC_URL)]);
@@ -25,7 +26,7 @@ export const contentSecurityPolicy = (nonce: string, env: Record<string, string 
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob: ${supabaseHttp.join(" ")}`,
+    `img-src 'self' data: blob: ${supabaseHttp.join(" ")} https://static.klipy.com`,
     `media-src 'self' blob: ${supabaseHttp.join(" ")}`,
     `connect-src 'self' ${[...supabaseHttp, ...supabaseWs].join(" ")}`,
     "font-src 'self' data:",

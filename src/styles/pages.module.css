@@ -80,17 +80,11 @@
 .profileName p { color: var(--muted); }
 .metrics { display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted-2); font-size: 13px; }
 .metrics strong { color: var(--fg); font-size: 16px; }
-.chat { height: calc(100vh - 64px); display: grid; grid-template-columns: minmax(250px, 330px) 1fr; }
+.chat { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(250px, 330px) 1fr; grid-template-rows: minmax(0, 1fr); }
 .conversationList { border-right: 1px solid var(--border); overflow-y: auto; }
 .conversation { width: 100%; display: flex; gap: 10px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); padding: 13px; text-align: left; cursor: pointer; }
 .conversation:hover, .conversationActive { background: var(--surface-2); }
-.chatPane { min-width: 0; display: grid; grid-template-rows: auto 1fr auto; }
-.chatHeader { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-bottom: 1px solid var(--border); }
-.messages { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px; }
-.bubble { max-width: min(76%, 540px); border-radius: 15px 15px 15px 4px; background: var(--surface-3); padding: 9px 12px; line-height: 1.45; }
-.bubbleOwn { align-self: flex-end; border-radius: 15px 15px 4px; background: var(--accent); color: var(--on-accent); }
-.messageForm { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
-.messageForm input { flex: 1; }
+.chatPane { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); }
 .utilityGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .utility { min-height: 140px; text-align: left; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); color: var(--fg); padding: 16px; cursor: pointer; }
 .utility:hover { border-color: var(--accent); transform: translateY(-2px); }
@@ -105,7 +99,7 @@
   .split { display: block; }
   .detail { position: static; margin-top: 14px; }
   .gridCards, .formGrid, .utilityGrid { grid-template-columns: 1fr; }
-  .chat { height: calc(100vh - 122px); grid-template-columns: 1fr; }
+  .chat { grid-template-columns: 1fr; }
   .conversationList.chatHidden, .chatPane.chatHidden { display: none; }
   .profileActions { margin-top: 8px; justify-content: flex-start; }
   .cover { height: 150px; }

@@ -186,21 +186,58 @@ export interface Conversation {
   /** Set on group conversations, which have no single other member. */
   title?: string | null;
   otherUser?: Profile;
-  participants?: Profile[];
+  /** What this chat calls the other person, if anyone set a nickname. */
+  otherNickname?: string | null;
+  participants?: { userId: string; nickname?: string | null; user: Profile | null }[];
   lastMessage?: Message | null;
   updatedAt?: string;
   unreadCount?: number;
+  /** The member's own settings for this chat. */
+  settings?: { muted: boolean; mutedUntil: string | null; markedUnread: boolean; clearedAt: string | null };
+  blocked?: { byMe: boolean; byThem: boolean };
+}
+
+export type MessageKind = "text" | "image" | "video" | "audio" | "file" | "gif" | "post";
+
+export interface MessageAttachment {
+  /** Signed link, valid for about an hour. */
+  url: string | null;
+  name?: string | null;
+  mimeType?: string | null;
+  size?: number | null;
+  width?: number | null;
+  height?: number | null;
+  durationMs?: number | null;
+  /** Voice messages: loudness bars from 0 to 100. */
+  waveform?: number[] | null;
+}
+
+export interface SharedPostPreview {
+  id: number | null;
+  available: boolean;
+  content?: string;
+  imageUrl?: string | null;
+  isAnonymous?: boolean;
+  author?: Profile | null;
+  createdAt?: string;
 }
 
 export interface Message {
   id: number;
   conversationId: number;
   senderId: string;
+  kind?: MessageKind;
   content: string;
   sentAt: string;
-  readAt?: string;
-  attachmentUrl?: string;
-  attachmentName?: string;
+  deliveredAt?: string | null;
+  readAt?: string | null;
+  editedAt?: string | null;
+  attachment?: MessageAttachment | null;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
+  gif?: { url: string; width: number; height: number } | null;
+  sharedPost?: SharedPostPreview | null;
+  reactions?: { emoji: string; userId: string }[];
 }
 
 export interface ReportItem {

@@ -1,21 +1,131 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ImagePlus, MessageSquarePlus, Search, Send } from "lucide-react";
-import { apiPage, apiRequest } from "@/lib/api";
-import { uploadDirect } from "@/lib/uploads";
-import { supabase } from "@/lib/supabase";
-import type { Conversation, Message, Profile } from "@/lib/types";
+import { BellOff, Check, CheckCheck, MessageSquarePlus, Search } from "lucide-react";
+import { apiPage, apiRequest, mediaUrl } from "@/lib/api";
+import type { Conversation, Profile } from "@/lib/types";
 import { Avatar, Button, Dialog, DialogActions, EmptyState, Input } from "@/components/ui/Ui";
 import { PageFrame } from "@/components/shell/AppShell";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { conversationName, dateLabel } from "@/lib/format";
-import styles from "@/styles/pages.module.css";
+import { deliveryStatus, messagePreview } from "./chatModel";
+import { ChatPane } from "./ChatPane";
+import pageStyles from "@/styles/pages.module.css";
+import styles from "./Chat.module.css";
 
-export function MessagesPage(){const[active,setActive]=useState<Conversation|null>(null);const[search,setSearch]=useState("");const[newOpen,setNewOpen]=useState(false);const params=useSearchParams();const router=useRouter();const pathname=usePathname();const setParams=(next:Record<string,string>)=>{const query=new URLSearchParams(next).toString();router.replace(query?`${pathname}?${query}`:pathname)};const list=useQuery({queryKey:["conversations"],queryFn:({signal})=>apiPage<Conversation>("/chat/conversations",signal),refetchInterval:30000});const filtered=useMemo(()=>list.data?.data.filter(c=>conversationName(c).toLowerCase().includes(search.toLowerCase()))||[],[list.data,search]);useEffect(()=>{if(params.get("new")==="1")setNewOpen(true);const id=Number(params.get("conversation"));if(id&&list.data?.data.length){const selected=list.data.data.find(item=>item.id===id);if(selected)setActive(selected)}},[list.data,params]);const select=(conversation:Conversation)=>{setActive(conversation);setParams({conversation:String(conversation.id)})};const closeNew=()=>{setNewOpen(false);if(params.get("new"))setParams({})};return <PageFrame title="Messages" eyebrow="Private conversations" action={<Button onClick={()=>{setNewOpen(true);setParams({new:"1"})}}><MessageSquarePlus size={17}/>New message</Button>}><div className={styles.chat}><section className={`${styles.conversationList} ${active?styles.chatHidden:""}`}><div className={styles.toolbar}><Search size={17}/><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search people or conversations" aria-label="Search conversations"/></div>{list.isError&&<EmptyState title="Messages could not load" body={list.error.message}/>} {filtered.length===0&&!list.isLoading&&<EmptyState title="No conversations found" body="Start a new message with a verified IUT member."/>}{filtered.map(c=><button key={c.id} className={`${styles.conversation} ${active?.id===c.id?styles.conversationActive:""}`} onClick={()=>select(c)}><Avatar name={conversationName(c)}/><div className={styles.authorMeta}><strong>{conversationName(c)}</strong><span>{c.lastMessage?.content||"Start the conversation"}</span></div><small>{dateLabel(c.updatedAt)}</small></button>)}</section><section className={`${styles.chatPane} ${!active?styles.chatHidden:""}`}>{active?<ChatPane conversation={active} onBack={()=>{setActive(null);setParams({})}}/>:<EmptyState title="Select a conversation" body="Your messages will appear here."/>}</section></div><NewConversation open={newOpen} onClose={closeNew} onStarted={c=>{setActive(c);setNewOpen(false);setParams({conversation:String(c.id)})}}/></PageFrame>}
+export function MessagesPage() {
+  const { user } = useAuth();
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [started, setStarted] = useState<Conversation | null>(null);
+  const [search, setSearch] = useState("");
+  const [newOpen, setNewOpen] = useState(false);
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const setParams = (next: Record<string, string>) => {
+    const query = new URLSearchParams(next).toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+  const list = useQuery({ queryKey: ["conversations"], queryFn: ({ signal }) => apiPage<Conversation>("/chat/conversations", signal), refetchInterval: 30_000 });
+  const filtered = useMemo(
+    () => list.data?.data.filter((conversation) => conversationName(conversation).toLowerCase().includes(search.toLowerCase())) || [],
+    [list.data, search],
+  );
+  // The list is the source of truth once it has the conversation, so names and
+  // unread counts stay current; a just-started chat shows until it does.
+  const active = list.data?.data.find((conversation) => conversation.id === activeId) ?? (started?.id === activeId ? started : null);
 
-function ChatPane({conversation,onBack}:{conversation:Conversation;onBack():void}){const{user}=useAuth();const[text,setText]=useState("");const[file,setFile]=useState<File|null>(null);const cache=useQueryClient();const messages=useQuery({queryKey:["messages",conversation.id],queryFn:({signal})=>apiPage<Message>(`/chat/conversations/${conversation.id}/messages?page=1&limit=50`,signal),refetchInterval:10000});useEffect(()=>{const channel=supabase.channel(`conversation:${conversation.id}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_messages",filter:`conversation_id=eq.${conversation.id}`},()=>void cache.invalidateQueries({queryKey:["messages",conversation.id]})).subscribe();return()=>{void supabase.removeChannel(channel)}},[cache,conversation.id]);const send=useMutation({mutationFn:async()=>{const body=new FormData();body.append("conversationId",String(conversation.id));body.append("receiverId",conversation.otherUser?.id||"");body.append("content",text);if(file){body.append("uploadPath",await uploadDirect("chat",file,{conversationId:conversation.id}));body.append("attachmentName",file.name)}return apiRequest("/chat/messages",{method:"POST",body})},onSuccess:()=>{setText("");setFile(null);void cache.invalidateQueries({queryKey:["messages",conversation.id]});void cache.invalidateQueries({queryKey:["conversations"]})}});return <><header className={styles.chatHeader}><Button variant="ghost" iconOnly aria-label="Back to conversations" onClick={onBack}><ArrowLeft/></Button><Avatar name={conversationName(conversation)}/><div><strong>{conversationName(conversation)}</strong><div className={styles.meta}>{conversation.otherUser?.department||"Verified IUT member"}</div></div></header><div className={styles.messages}>{messages.isLoading&&<p>Loading messages…</p>}{messages.data?.data.length===0&&<EmptyState title="Start the conversation" body="Messages are private between verified IUT members."/>}{messages.data?.data.map(m=><div key={m.id} className={`${styles.bubble} ${m.senderId===user?.id?styles.bubbleOwn:""}`}><div>{m.content}</div>{m.attachmentUrl&&<a href={m.attachmentUrl} target="_blank" rel="noreferrer">{m.attachmentName||"Attachment"}</a>}<small style={{display:"block",opacity:.7,marginTop:4}}>{dateLabel(m.sentAt)}</small></div>)}</div><form className={styles.messageForm} onSubmit={e=>{e.preventDefault();send.mutate()}}><label><span className="sr-only">Attach image or file</span><input className="sr-only" type="file" onChange={e=>setFile(e.target.files?.[0]||null)}/><Button variant="ghost" iconOnly aria-label={file?`Attached ${file.name}`:"Attach file"}><ImagePlus/></Button></label><Input value={text} onChange={e=>setText(e.target.value)} placeholder={`Message ${conversationName(conversation)}…`}/><Button type="submit" iconOnly aria-label="Send message" disabled={send.isPending||(!text.trim()&&!file)}><Send/></Button></form></>}
+  useEffect(() => {
+    if (params.get("new") === "1") setNewOpen(true);
+    const id = Number(params.get("conversation"));
+    if (id) setActiveId(id);
+  }, [params]);
 
-function NewConversation({open,onClose,onStarted}:{open:boolean;onClose():void;onStarted(c:Conversation):void}){const[search,setSearch]=useState("");const users=useQuery({queryKey:["user-search",search],queryFn:({signal})=>apiPage<Profile>(`/users/search?q=${encodeURIComponent(search)}`,signal),enabled:search.trim().length>=2});const start=useMutation({mutationFn:(id:string)=>apiRequest<Conversation>("/chat/conversations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({otherUserId:id})}),onSuccess:r=>onStarted(r.data)});return <Dialog title="New message" open={open} onClose={onClose}><Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Enter name or email…" autoFocus/>{users.data?.data.map(user=><button key={user.id} className={styles.conversation} onClick={()=>start.mutate(user.id)}><Avatar name={user.displayName}/><div><strong>{user.displayName}</strong><div className={styles.meta}>{user.department}{user.batch?` ${user.batch}`:""}</div></div></button>)}{search.length<2&&<EmptyState title="Find an IUT member" body="Type at least two characters."/>}<DialogActions><Button variant="secondary" onClick={onClose}>Cancel</Button></DialogActions></Dialog>}
+  const select = (conversation: Conversation) => {
+    setActiveId(conversation.id);
+    setParams({ conversation: String(conversation.id) });
+  };
+  const closeNew = () => {
+    setNewOpen(false);
+    if (params.get("new")) setParams({});
+  };
+
+  return (
+    <PageFrame title="Messages" eyebrow="Private conversations" action={<Button onClick={() => { setNewOpen(true); setParams({ new: "1" }); }}><MessageSquarePlus size={17} />New message</Button>}>
+      <div className={pageStyles.chat}>
+        <section className={`${pageStyles.conversationList} ${active ? pageStyles.chatHidden : ""}`} aria-label="Conversations">
+          <div className={pageStyles.toolbar}>
+            <Search size={17} />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search people or conversations" aria-label="Search conversations" />
+          </div>
+          {list.isError && <EmptyState title="Messages could not load" body={list.error.message} />}
+          {filtered.length === 0 && !list.isLoading && <EmptyState title="No conversations found" body="Start a new message with a verified IUT member." />}
+          {filtered.map((conversation) => {
+            const last = conversation.lastMessage;
+            const mine = last && last.senderId === user?.id;
+            const unread = Boolean(conversation.unreadCount);
+            const muted = Boolean(conversation.settings?.muted);
+            return (
+              <button key={conversation.id} className={`${pageStyles.conversation} ${active?.id === conversation.id ? pageStyles.conversationActive : ""}`} onClick={() => select(conversation)}>
+                <Avatar name={conversationName(conversation)} src={mediaUrl(conversation.otherUser?.profilePictureUrl)} />
+                <div className={pageStyles.authorMeta} style={{ minWidth: 0, flex: 1 }}>
+                  <strong>{conversationName(conversation)}</strong>
+                  <span className={`${styles.listPreview} ${unread && !muted ? styles.listPreviewUnread : ""}`}>
+                    {mine && (deliveryStatus(last) === "sent" ? <Check size={14} aria-label="Sent" /> : <CheckCheck size={14} aria-label={deliveryStatus(last) === "read" ? "Read" : "Delivered"} color={deliveryStatus(last) === "read" ? "var(--accent)" : undefined} />)}
+                    <span>{messagePreview(last, user?.id)}</span>
+                  </span>
+                </div>
+                <span className={styles.listSide}>
+                  <small>{dateLabel(conversation.updatedAt)}</small>
+                  {muted && <BellOff size={13} aria-label="Muted" className={styles.listMuted} />}
+                  {unread && <span className={`${styles.unread} ${muted ? styles.unreadMuted : ""}`} aria-label={`${conversation.unreadCount} unread`}>{conversation.unreadCount}</span>}
+                </span>
+              </button>
+            );
+          })}
+        </section>
+        <section className={`${pageStyles.chatPane} ${!active ? pageStyles.chatHidden : ""}`}>
+          {active ? (
+            <ChatPane key={active.id} conversation={active} onBack={() => { setActiveId(null); setParams({}); }} />
+          ) : (
+            <EmptyState title="Select a conversation" body="Your messages will appear here." />
+          )}
+        </section>
+      </div>
+      <NewConversation
+        open={newOpen}
+        onClose={closeNew}
+        onStarted={(conversation) => {
+          setStarted(conversation);
+          setActiveId(conversation.id);
+          setNewOpen(false);
+          setParams({ conversation: String(conversation.id) });
+        }}
+      />
+    </PageFrame>
+  );
+}
+
+function NewConversation({ open, onClose, onStarted }: { open: boolean; onClose(): void; onStarted(conversation: Conversation): void }) {
+  const [search, setSearch] = useState("");
+  const users = useQuery({ queryKey: ["user-search", search], queryFn: ({ signal }) => apiPage<Profile>(`/users/search?q=${encodeURIComponent(search)}`, signal), enabled: search.trim().length >= 2 });
+  const start = useMutation({
+    mutationFn: (id: string) => apiRequest<Conversation>("/chat/conversations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ otherUserId: id }) }),
+    onSuccess: (result) => onStarted(result.data),
+  });
+  return (
+    <Dialog title="New message" open={open} onClose={onClose}>
+      <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Enter name or email…" autoFocus />
+      {users.data?.data.map((profile) => (
+        <button key={profile.id} className={pageStyles.conversation} onClick={() => start.mutate(profile.id)}>
+          <Avatar name={profile.displayName} src={mediaUrl(profile.profilePictureUrl)} />
+          <div><strong>{profile.displayName}</strong><div className={pageStyles.meta}>{profile.department}{profile.batch ? ` ${profile.batch}` : ""}</div></div>
+        </button>
+      ))}
+      {search.length < 2 && <EmptyState title="Find an IUT member" body="Type at least two characters." />}
+      <DialogActions><Button variant="secondary" onClick={onClose}>Cancel</Button></DialogActions>
+    </Dialog>
+  );
+}

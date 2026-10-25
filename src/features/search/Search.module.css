@@ -1,0 +1,58 @@
+/* Navbar search dropdown and the /search page. */
+
+.global { position: relative; min-width: 0; }
+.global > label { display: block; }
+.dropdown {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 8px);
+  left: 0;
+  width: max(100%, 420px);
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.groupLabel { margin: 10px 8px 4px; color: var(--muted); font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.note { margin: 0; padding: 14px 10px; color: var(--muted); font-size: 14px; }
+
+.hit { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 12px; color: var(--fg); text-decoration: none; }
+.hit:hover, .hitActive { background: var(--surface-2); }
+.hitMedia { flex: none; display: grid; place-items: center; }
+.hitText { min-width: 0; display: grid; gap: 2px; }
+.hitText strong { overflow: hidden; font-size: 14.5px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.hitText small { overflow: hidden; color: var(--muted); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.hit mark { border-radius: 3px; background: color-mix(in srgb, var(--accent), transparent 72%); color: inherit; font-weight: 800; }
+.clamp { display: -webkit-box; overflow: hidden; white-space: normal; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.kindIcon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+
+.recent { display: flex; align-items: center; }
+.recent button { border: 0; background: none; color: var(--fg); font: inherit; cursor: pointer; }
+.recent button:first-child { flex: 1; display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 10px; text-align: left; }
+.recent button:first-child svg { color: var(--muted); }
+.recent button:last-child { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--muted); }
+.recent button:hover { background: var(--surface-2); }
+
+.seeAll { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 6px; padding: 11px 10px; border: 0; border-top: 1px solid var(--border); border-radius: 0 0 10px 10px; background: none; color: var(--accent); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.seeAll:hover { background: var(--surface-2); }
+
+/* /search */
+.pageForm { display: flex; align-items: center; gap: 10px; margin: 14px 20px 0; padding: 4px 4px 4px 16px; border: 1px solid var(--border); border-radius: var(--pill); background: var(--surface-2); }
+.pageForm svg { color: var(--muted); }
+.pageForm input { flex: 1; min-width: 0; min-height: 40px; border: 0; background: none; color: var(--fg); font: inherit; outline: none; }
+.page { display: grid; gap: 14px; padding: 16px 20px 40px; }
+.card { padding: 10px 10px 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.card h2 { margin: 6px 8px 8px; font-size: 17px; }
+.more { display: block; margin: 4px 0 4px; padding: 10px 8px; border-top: 1px solid var(--border); color: var(--accent); font-weight: 700; text-align: center; text-decoration: none; }
+.more:hover { text-decoration: underline; }
+.moreRow { display: flex; justify-content: center; padding: 10px; }
+
+@media (max-width: 760px) {
+  /* Phones use the search button in the top bar, which opens /search. */
+  .global { display: none; }
+  .pageForm { margin: 12px 12px 0; }
+  .page { padding: 12px 12px 32px; }
+}

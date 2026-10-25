@@ -9,9 +9,9 @@ export function dateLabel(value?: string) {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
 }
 
-/** What to call a conversation: the other member, or a group's title. */
-export function conversationName(conversation: { otherUser?: { displayName?: string } | null; title?: string | null }) {
-  return conversation.otherUser?.displayName || conversation.title || "IUT member";
+/** What to call a conversation: the other member's nickname or name, or a group's title. */
+export function conversationName(conversation: { otherNickname?: string | null; otherUser?: { displayName?: string } | null; title?: string | null }) {
+  return conversation.otherNickname || conversation.otherUser?.displayName || conversation.title || "IUT member";
 }
 
 export function queryString(values: Record<string, string | number | boolean | undefined>) {

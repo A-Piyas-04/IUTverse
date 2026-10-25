@@ -77,6 +77,7 @@ Supabase → Project Settings → API (URL, `anon` key, `service_role` key).
 | `EMAIL_SERVICE`, `EMAIL_USER`, `SUPPORT_EMAIL` | Issue-report email. |
 | `EMAIL_PASS` | Sensitive. |
 | `OPENWEATHER_API_KEY` | Sensitive. |
+| `KLIPY_API_KEY` | GIF search in chat (`docs/messaging.md`). Sensitive. Without it the GIF picker says GIFs are not set up. |
 
 `TRUST_PROXY` defaults to `1` on Vercel. Vercel overwrites `X-Forwarded-For`, so the client address used for rate limiting is the real one.
 

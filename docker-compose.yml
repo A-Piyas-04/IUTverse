@@ -249,6 +249,7 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: *service-key
       REDIS_URL: redis://redis:6379
       OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      KLIPY_API_KEY: ${KLIPY_API_KEY:-}
       EMAIL_USER: ""
       EMAIL_PASS: ""
 

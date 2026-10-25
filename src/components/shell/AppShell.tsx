@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, BriefcaseBusiness, CalendarDays, Cat, CircleUserRound, CloudSun, Feather, Home, Info, LogOut, Menu, MessageSquare, Moon, Plus, Search, ShieldCheck, Sun, UsersRound, MapPin } from "lucide-react";
@@ -8,6 +8,9 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { useTheme } from "@/features/theme/ThemeProvider";
 import { apiPage, apiRequest, mediaUrl } from "@/lib/api";
 import { conversationName } from "@/lib/format";
+import { messagePreview } from "@/features/messages/chatModel";
+import { useInboxReceipts } from "@/features/messages/useInboxReceipts";
+import { GlobalSearch } from "@/features/search/GlobalSearch";
 import type { Conversation, Profile } from "@/lib/types";
 import { Avatar, Button } from "@/components/ui/Ui";
 import { CampusUtilitiesDialog } from "@/components/shell/CampusUtilities";
@@ -27,6 +30,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [campusOpen, setCampusOpen] = useState(false);
   const { user, signOut } = useAuth();
+  useInboxReceipts(user?.id);
+  const unread = useUnreadTotal(Boolean(user));
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -38,8 +43,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <a href="#main-content" className="skip-link">Skip to content</a>
     <header className={styles.topbar}>
       <NavLink className={styles.brand} href="/"><span className={styles.brandMark}>I</span><span>IUTverse</span></NavLink>
-      <label className={styles.search}><Search size={18} /><span className="sr-only">Search IUTverse</span><input type="search" placeholder="Search campus content" onKeyDown={event => { if (event.key === "Enter") router.push(`/community?q=${encodeURIComponent(event.currentTarget.value)}`); }} /></label>
+      <GlobalSearch className={styles.search} />
       <div className={styles.topActions}>
+        <Button className={styles.mobileSearch} variant="ghost" iconOnly aria-label="Search" onClick={() => router.push("/search")}><Search /></Button>
         <Button className={styles.topTheme} variant="ghost" iconOnly aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`} aria-pressed={theme === "dark"} onClick={toggleTheme}>{theme === "light" ? <Moon /> : <Sun />}</Button>
         <Button variant="primary" onClick={() => router.push("/community?compose=1")}><Plus size={18} />Post</Button>
         <Button className={styles.menuButton} variant="secondary" iconOnly aria-label="Open navigation" onClick={() => setOpen(true)}><Menu /></Button>
@@ -50,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ""}`} aria-label="Primary navigation">
         <nav>{groups.map(group => <div className={styles.navGroup} key={group.label}>
           <div className={styles.navLabel}>{group.label}</div>
-          {group.items.map(({ icon: Icon, ...item }) => <NavLink key={item.to} href={item.to} end={item.end} className={navClass} onClick={() => setOpen(false)}><Icon size={21} /><span>{item.text}</span></NavLink>)}
+          {group.items.map(({ icon: Icon, ...item }) => <NavLink key={item.to} href={item.to} end={item.end} className={navClass} onClick={() => setOpen(false)}><Icon size={21} /><span>{item.text}</span>{item.to === "/messages" && unread > 0 && <span className={styles.navBadge} aria-label={`${unread} unread`}>{unread > 99 ? "99+" : unread}</span>}</NavLink>)}
           {group.label === "Campus" && <button type="button" className={styles.navButton} onClick={openCampusInfo}><CloudSun size={21} /><span>Daily campus info</span></button>}
         </div>)}
           {isAdmin && <NavLink href="/admin/moderation" className={navClass}><ShieldCheck size={21} />Moderation</NavLink>}
@@ -58,14 +64,27 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarProfile onNavigate={() => setOpen(false)} />
         <Button variant="ghost" onClick={() => void signOut()}><LogOut size={17} />Logout</Button>
       </aside>
-      <main id="main-content" className={styles.main}>{children}</main>
+      <main id="main-content" className={`${styles.main} ${isMessages ? styles.mainFill : ""}`}>{children}</main>
       {!isMessages && <aside className={styles.right} aria-label="Recent messages"><RecentMessagesRail /></aside>}
     </div>
     <nav className={styles.mobileNav} aria-label="Mobile navigation">
-      {[{ to: "/", text: "Home", icon: Home }, { to: "/community", text: "Community", icon: UsersRound }, { to: "/academic", text: "Learn", icon: BookOpen }, { to: "/messages", text: "Messages", icon: MessageSquare }, { to: "/profile", text: "Profile", icon: CircleUserRound }].map(({ icon: Icon, ...item }) => <NavLink key={item.to} href={item.to} className={navClass}><Icon size={21} /><span>{item.text}</span></NavLink>)}
+      {[{ to: "/", text: "Home", icon: Home }, { to: "/community", text: "Community", icon: UsersRound }, { to: "/academic", text: "Learn", icon: BookOpen }, { to: "/messages", text: "Messages", icon: MessageSquare }, { to: "/profile", text: "Profile", icon: CircleUserRound }].map(({ icon: Icon, ...item }) => <NavLink key={item.to} href={item.to} className={navClass}><span className={styles.mobileIcon}><Icon size={21} />{item.to === "/messages" && unread > 0 && <span className={styles.mobileBadge} aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</span>}</span><span>{item.text}</span></NavLink>)}
     </nav>
     <CampusUtilitiesDialog open={campusOpen} onClose={() => setCampusOpen(false)} />
   </div>;
+}
+
+// Unread messages across chats, leaving out muted ones, for the Messages badge
+// and the tab title. Shares the Messages page's query, which Realtime refreshes.
+function useUnreadTotal(enabled: boolean) {
+  const conversations = useQuery({ queryKey: ["conversations"], queryFn: ({ signal }) => apiPage<Conversation>("/chat/conversations", signal), enabled, refetchInterval: 60_000, staleTime: 15_000 });
+  const total = (conversations.data?.data || []).reduce((sum, conversation) => sum + (conversation.settings?.muted ? 0 : conversation.unreadCount || 0), 0);
+  const pathname = usePathname();
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\+?\) /, "");
+    document.title = total ? `(${total > 99 ? "99+" : total}) ${base}` : base;
+  }, [total, pathname]);
+  return total;
 }
 
 // The sidebar's one way to the member's own profile: their photo, name and email.
@@ -83,6 +102,7 @@ function SidebarProfile({ onNavigate }: { onNavigate(): void }) {
 
 function RecentMessagesRail() {
   const router = useRouter();
+  const { user } = useAuth();
   const conversations = useQuery({ queryKey: ["conversations", "recent"], queryFn: ({ signal }) => apiPage<Conversation>("/chat/conversations?limit=4", signal), staleTime: 30_000 });
   const recent = conversations.data?.data.slice(0, 4) ?? [];
   return <section className={styles.rightCard} aria-labelledby="recent-messages-title">
@@ -91,7 +111,7 @@ function RecentMessagesRail() {
     {conversations.isError && <div className={styles.railStatus}><p>Recent messages could not load.</p><Button variant="secondary" onClick={() => void conversations.refetch()}>Retry</Button></div>}
     {!conversations.isError && <div className={styles.recentList}>{recent.map(conversation => <button type="button" className={styles.recentPerson} key={conversation.id} onClick={() => router.push(`/messages?conversation=${conversation.id}`)}>
       <Avatar size={42} name={conversationName(conversation)} src={mediaUrl(conversation.otherUser?.profilePictureUrl)} />
-      <span className={styles.recentCopy}><strong>{conversationName(conversation)}</strong><small>{conversation.lastMessage?.content || "Start the conversation"}</small></span>
+      <span className={styles.recentCopy}><strong>{conversationName(conversation)}</strong><small>{messagePreview(conversation.lastMessage, user?.id)}</small></span>
       {Boolean(conversation.unreadCount) && <span className={styles.unread} aria-label={`${conversation.unreadCount} unread messages`}>{conversation.unreadCount}</span>}
     </button>)}</div>}
     {!conversations.isLoading && recent.length < 4 && <button type="button" className={styles.startChat} onClick={() => router.push("/messages?new=1")}><Plus size={18} /><span><strong>Start a new chat</strong><small>Find another IUT member</small></span></button>}

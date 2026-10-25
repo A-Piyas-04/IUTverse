@@ -17,17 +17,21 @@ import { PublicError } from "../http/errors";
 import type { UploadedFile } from "../http/context";
 import { buildObjectPath } from "./storageService";
 import chatService from "./chatService";
-import { detectFileType, extensionForMime, imageMimeTypes, pdfMimeTypes, publicFileError } from "../utils/fileValidation";
+import { audioMimeTypes, contentMatchesType, detectFileType, extensionForMime, imageMimeTypes, pdfMimeTypes, publicFileError, videoMimeTypes } from "../utils/fileValidation";
 
 const MB = 1024 * 1024;
 const IMAGES: readonly string[] = Object.freeze([...imageMimeTypes]);
 const PDF: readonly string[] = Object.freeze([...pdfMimeTypes]);
+const VIDEO: readonly string[] = Object.freeze([...videoMimeTypes]);
+const AUDIO: readonly string[] = Object.freeze([...audioMimeTypes]);
 
 interface PurposeSpec {
   bucket: string;
   prefix: string;
   maxBytes: number;
   mimeTypes: readonly string[];
+  /** Larger caps for some types (chat videos); everything else gets maxBytes. */
+  maxBytesByType?: Readonly<Record<string, number>>;
 }
 
 // One entry per consuming route. Bucket, prefix and size cap match what the
@@ -40,10 +44,18 @@ export const UPLOAD_PURPOSES = Object.freeze({
   catPost: { bucket: "cat-posts", prefix: "cat-post", maxBytes: 5 * MB, mimeTypes: IMAGES },
   event: { bucket: "event-images", prefix: "event", maxBytes: 5 * MB, mimeTypes: IMAGES },
   resource: { bucket: "academic-resources", prefix: "resource", maxBytes: 10 * MB, mimeTypes: PDF },
-  chat: { bucket: "chat-attachments", prefix: "message", maxBytes: 10 * MB, mimeTypes: [...IMAGES, ...PDF] },
+  chat: {
+    bucket: "chat-attachments",
+    prefix: "message",
+    maxBytes: 10 * MB,
+    mimeTypes: [...IMAGES, ...PDF, ...VIDEO, ...AUDIO],
+    maxBytesByType: Object.fromEntries(VIDEO.map((type) => [type, 50 * MB])),
+  },
 } satisfies Record<string, PurposeSpec>);
 
 export type UploadPurpose = keyof typeof UPLOAD_PURPOSES;
+
+const maxBytesFor = (spec: PurposeSpec, mimeType: string) => spec.maxBytesByType?.[mimeType] ?? spec.maxBytes;
 
 // Enough bytes for every signature in fileValidation.ts.
 const HEAD_BYTES = 32;
@@ -82,7 +94,8 @@ export const createUploadIntent = async ({
   if (!spec.mimeTypes.includes(type)) throw publicFileError("This file type is not allowed here");
   const bytes = Number(size);
   if (!Number.isInteger(bytes) || bytes <= 0) throw publicFileError("File size is required");
-  if (bytes > spec.maxBytes) throw publicFileError(`File is too large. Maximum size is ${spec.maxBytes / MB} MB.`);
+  const limit = maxBytesFor(spec, type);
+  if (bytes > limit) throw publicFileError(`File is too large. Maximum size is ${limit / MB} MB.`);
 
   if (purpose === "chat") {
     const conversation = Number(conversationId);
@@ -93,7 +106,7 @@ export const createUploadIntent = async ({
   const path = buildObjectPath(userId, spec.prefix, extensionForMime(type));
   const { data, error } = await admin.storage.from(spec.bucket).createSignedUploadUrl(path);
   if (error) throw error;
-  return { purpose, bucket: spec.bucket, path: data.path || path, token: data.token, signedUrl: data.signedUrl, mimeType: type, maxBytes: spec.maxBytes };
+  return { purpose, bucket: spec.bucket, path: data.path || path, token: data.token, signedUrl: data.signedUrl, mimeType: type, maxBytes: limit };
 };
 
 type BucketApi = ReturnType<SupabaseClient["storage"]["from"]>;
@@ -129,7 +142,7 @@ export const claimUpload = async ({ userId, purpose, path }: { userId: string; p
   const admin = ensureStorage();
   const spec = purposeSpec(purpose);
   // Only objects the API named for this user and purpose: <userId>/<prefix>-<ts>-<rand>.<ext>
-  const shape = new RegExp(`^${escapeRegExp(userId)}/${escapeRegExp(spec.prefix)}-\\d+-\\d+\\.[a-z]+$`);
+  const shape = new RegExp(`^${escapeRegExp(userId)}/${escapeRegExp(spec.prefix)}-\\d+-\\d+\\.[a-z0-9]+$`);
   if (typeof path !== "string" || !shape.test(path)) throw publicFileError("Invalid upload reference");
 
   const storage = admin.storage.from(spec.bucket);
@@ -141,14 +154,18 @@ export const claimUpload = async ({ userId, purpose, path }: { userId: string; p
     throw publicFileError(message);
   };
 
+  const declared = String(info.contentType || (info.metadata as { mimetype?: string } | undefined)?.mimetype || "").toLowerCase();
   const size = Number(info.size);
   if (!Number.isInteger(size) || size <= 0) return reject("Uploaded file is empty or invalid");
-  if (size > spec.maxBytes) return reject(`File is too large. Maximum size is ${spec.maxBytes / MB} MB.`);
+  const limit = maxBytesFor(spec, declared);
+  if (size > limit) return reject(`File is too large. Maximum size is ${limit / MB} MB.`);
 
-  const detected = detectFileType(await readHead(storage, path));
-  if (!detected || !spec.mimeTypes.includes(detected.mimeType)) return reject("Uploaded file content does not match an allowed file type");
-  const declared = String(info.contentType || (info.metadata as { mimetype?: string } | undefined)?.mimetype || "").toLowerCase();
-  if (declared !== detected.mimeType || !path.endsWith(detected.extension)) {
+  const head = await readHead(storage, path);
+  if (!detectFileType(head) || !spec.mimeTypes.some((type) => contentMatchesType(head, type))) {
+    return reject("Uploaded file content does not match an allowed file type");
+  }
+  const extension = extensionForMime(declared);
+  if (!spec.mimeTypes.includes(declared) || !contentMatchesType(head, declared) || !extension || !path.endsWith(extension)) {
     return reject("Uploaded file content does not match its declared content type");
   }
 
@@ -156,7 +173,7 @@ export const claimUpload = async ({ userId, purpose, path }: { userId: string; p
     stored: true,
     bucket: spec.bucket,
     path,
-    mimetype: detected.mimeType,
+    mimetype: declared,
     size,
     originalname: path.slice(path.lastIndexOf("/") + 1),
   };

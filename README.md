@@ -92,6 +92,7 @@ The keys in `docker-compose.yml` are Supabase's public demo keys for local devel
 | `npm test` | Server and client Vitest projects (`test:server`, `test:client` for one) |
 | `npm run build` | Production build |
 | `npm run test:e2e` | Playwright (install browsers once with `npx playwright install`) |
+| `npm run test:e2e:chat` | Messaging end to end, two members in two browsers on the same Docker stack (`docs/messaging.md`) |
 | `npm run test:e2e:oauth` | OAuth sign-in end to end against a Docker stack with a mock provider (`docs/oauth-setup.md`) |
 | `npm run test:db` | pgTAP tests against a local Supabase stack |
 | `npm run test:mutation` | Stryker mutation testing of the security-critical modules |
