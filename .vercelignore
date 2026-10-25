@@ -5,10 +5,10 @@
 # Migration and provisioning scripts use DATABASE_URL / DIRECT_URL /
 # BOOTSTRAP_* / PRIVILEGED_ACCOUNTS_FILE and must run from a trusted machine or
 # CI, never from the deployed functions.
-scripts/
-supabase/
-docs/
-docker/
+/scripts/
+/supabase/
+/docs/
+/docker/
 docker-compose.yml
 Dockerfile
 node_modules/
@@ -16,8 +16,8 @@ node_modules/
 .claude/
 .agents/
 # Local leftovers of the pre-Next.js layout
-client/
-server/
+/client/
+/server/
 *.md
 .env
 .env.*
