@@ -94,7 +94,7 @@ The app and its API share an origin, so a browser request whose `Origin` is this
 
 ## Endpoints
 
-All paths are under `/api`. "Members" means `authenticateToken`: an active IUTverse member.
+All paths are under `/api`. "Members" means `authenticateToken`: an active IUTverse member. The machine-readable contract for these endpoints, with its generation and publication rules, is in [`docs/api`](api/README.md).
 
 | Area | Endpoints | Access |
 |---|---|---|

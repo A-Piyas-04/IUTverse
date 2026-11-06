@@ -15,7 +15,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin, isSupabaseAdminConfigured } from "../config/supabase";
 import { PublicError } from "../http/errors";
 import type { UploadedFile } from "../http/context";
-import { buildObjectPath } from "./storageService";
+import { browserUrl, buildObjectPath } from "./storageService";
 import chatService from "./chatService";
 import { audioMimeTypes, contentMatchesType, detectFileType, extensionForMime, imageMimeTypes, pdfMimeTypes, publicFileError, videoMimeTypes } from "../utils/fileValidation";
 
@@ -75,6 +75,15 @@ const purposeSpec = (purpose: unknown): PurposeSpec => {
   return spec;
 };
 
+const tokenExpiry = (token: unknown): string | null => {
+  try {
+    const payload = JSON.parse(Buffer.from(String(token).split(".")[1] ?? "", "base64url").toString("utf8"));
+    return typeof payload.exp === "number" ? new Date(payload.exp * 1000).toISOString() : null;
+  } catch {
+    return null;
+  }
+};
+
 export const createUploadIntent = async ({
   userId,
   purpose,
@@ -106,7 +115,19 @@ export const createUploadIntent = async ({
   const path = buildObjectPath(userId, spec.prefix, extensionForMime(type));
   const { data, error } = await admin.storage.from(spec.bucket).createSignedUploadUrl(path);
   if (error) throw error;
-  return { purpose, bucket: spec.bucket, path: data.path || path, token: data.token, signedUrl: data.signedUrl, mimeType: type, maxBytes: limit };
+  return {
+    purpose,
+    bucket: spec.bucket,
+    path: data.path || path,
+    token: data.token,
+    // Like every other storage URL given to a client, this must use the client-facing Storage address (SUPABASE_PUBLIC_URL
+    // when the server reaches Supabase on an internal one, as in the Docker stack), not the server's own.
+    signedUrl: browserUrl(data.signedUrl) as string,
+    mimeType: type,
+    maxBytes: limit,
+    // The signed-upload token is a JWT; its exp is the exact moment the upload slot closes. Null if it cannot be read.
+    expiresAt: tokenExpiry(data.token),
+  };
 };
 
 type BucketApi = ReturnType<SupabaseClient["storage"]["from"]>;

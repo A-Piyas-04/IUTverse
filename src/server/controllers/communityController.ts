@@ -215,7 +215,10 @@ export const resourceFile: Handler = async (ctx) => {
     const { data, error } = await ensureSupabaseAdmin().from("academic_resources").select("file_bucket,file_path,status,uploaded_by_id").eq("id", Number(ctx.params.id)).maybeSingle();
     if (error) throw error;
     if (!data?.file_path || !canViewContent({ status: data.status, ownerId: data.uploaded_by_id, viewer: ctx.user })) return response.notFound("Resource file not found");
-    return redirect((await storageService.signedUrl(data.file_bucket, data.file_path, 300)) as string);
+    const signed = await storageService.signedUrlWithExpiry(data.file_bucket, data.file_path, 300);
+    // ?redirect=false answers JSON { url, expiresAt } instead of a 302, for native clients that refresh an expired link.
+    if (ctx.query.redirect === "false") return response.success(signed);
+    return redirect(signed.url);
   } catch (error: any) { logger.error("resourceFile failed", error); return response.serverError("Could not open resource", error.message); }
 };
 

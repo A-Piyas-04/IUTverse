@@ -88,6 +88,12 @@ export const publicUrl = (bucket?: string | null, objectPath?: string | null): s
   return browserUrl(data.publicUrl) as string;
 };
 
+/** A signed URL together with the moment it stops working, for clients that cannot follow a redirect or need to refresh it. */
+export const signedUrlWithExpiry = async (bucket: string | null | undefined, objectPath: string | null | undefined, expiresIn = 300) => {
+  const url = await signedUrl(bucket, objectPath, expiresIn);
+  return { url: url as string, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() };
+};
+
 export const signedUrl = async (bucket?: string | null, objectPath?: string | null, expiresIn = 300): Promise<string | null> => {
   const storage = ensureStorage();
   if (!bucket || !objectPath) return null;

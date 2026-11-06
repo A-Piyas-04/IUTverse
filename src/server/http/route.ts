@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import config from "../config/config";
 import logger from "../utils/logger";
 import { clientIp } from "./clientIp";
+import { parseClientInfo } from "./clientInfo";
 import type { ApiContext, Handler, Step } from "./context";
 import { isPublicError } from "./errors";
 import { parseBody, parseQuery } from "./request";
@@ -12,7 +13,7 @@ import { exposeInternalErrors, failure, serverError } from "./responses";
 type Segment = { params?: Promise<Record<string, string | string[] | undefined>> } | undefined;
 
 const errorResponse = (error: unknown) => {
-  if (isPublicError(error)) return failure(error.statusCode, error.message);
+  if (isPublicError(error)) return failure(error.statusCode, error.message, undefined, error.code ? { code: error.code } : {});
   logger.error("Unhandled request error", error);
   return serverError("Unexpected server error", (error as Error)?.message);
 };
@@ -34,6 +35,14 @@ const finalize = (ctx: ApiContext, response: Response) => {
 
 const flattenParams = (params: Record<string, string | string[] | undefined> = {}) =>
   Object.fromEntries(Object.entries(params).map(([key, value]) => [key, Array.isArray(value) ? value.join("/") : (value ?? "")]));
+
+// A caller-supplied correlation id is echoed only when it is short and made of safe characters, so it
+// cannot inject anything into logs or headers. Otherwise the server generates one.
+const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{8,128}$/;
+const requestIdOf = (headers: Headers) => {
+  const supplied = headers.get("x-request-id")?.trim();
+  return supplied && SAFE_REQUEST_ID.test(supplied) ? supplied : crypto.randomUUID();
+};
 
 export interface RouteOptions {
   /** Skip the general per-IP API limiter (health checks only). */
@@ -59,6 +68,9 @@ export const route =
       ip: clientIp(request.headers, config.trustProxy),
       responseHeaders: new Headers(),
     };
+    const requestId = requestIdOf(request.headers);
+    ctx.responseHeaders.set("X-Request-Id", requestId);
+    ctx.client = parseClientInfo(request.headers);
 
     let response: Response;
     try {
@@ -80,6 +92,10 @@ export const route =
       method: request.method,
       path: `${url.pathname}${url.search}`,
       status: finalized.status,
+      requestId,
+      // Diagnostic only (validated closed set / strict pattern, see clientInfo.ts); absent for clients that do not send them.
+      ...(ctx.client?.platform ? { clientPlatform: ctx.client.platform } : {}),
+      ...(ctx.client?.version ? { clientVersion: ctx.client.version } : {}),
       durationMs: Date.now() - startedAt,
     });
     return finalized;

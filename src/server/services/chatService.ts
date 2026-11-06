@@ -1,8 +1,9 @@
 import "server-only";
 import { PublicError } from "../http/errors";
+import { isUniqueViolation, keyReusedError } from "../http/idempotency";
 import { ensureSupabaseAdmin, mapProfile, profileSelect, publicUrl } from "../utils/supabaseData";
 import { sanitizePlainText } from "../utils/validation";
-import { browserUrl } from "./storageService";
+import { browserUrl, removeObject } from "./storageService";
 
 const directKey = (userId1: string, userId2: string) => [userId1, userId2].sort().join(":");
 // Wildcards typed into a search are matched literally (as spaces) rather than as patterns.
@@ -41,6 +42,17 @@ export interface OutgoingMessage {
   attachment?: Attachment | null;
   gif?: Gif | null;
   sharedPostId?: number | null;
+}
+
+/** Retry protection for one send. See sendMessageOnce. */
+export interface IdempotentSend {
+  clientRequestId: string;
+  /** Identifies the attachment without storing it: the Storage path of an uploaded object, or the size of a multipart file. */
+  attachmentRef?: { path?: string; size?: number } | null;
+  /** Stores the attachment. Called only when the message is new. */
+  storeAttachment?: () => Promise<Attachment | null>;
+  /** True when storeAttachment creates the object itself (multipart), so a losing racer may delete its copy. */
+  ownsAttachment?: boolean;
 }
 
 interface Hydration {
@@ -237,6 +249,49 @@ class ChatService {
   }
 
   async sendMessage(conversationId: number, senderId: string, outgoing: OutgoingMessage) {
+    return (await this.deliver(conversationId, senderId, outgoing)).message;
+  }
+
+  /**
+   * Like sendMessage, for a client that retries. With the same `clientRequestId` the message is created once: a retry
+   * (even a concurrent one) returns the existing message with `replayed: true`. The attachment is stored lazily, only
+   * when the message is new, so a retried upload does not leave a second copy in Storage.
+   */
+  async sendMessageOnce(conversationId: number, senderId: string, outgoing: OutgoingMessage, idempotency: IdempotentSend) {
+    return this.deliver(conversationId, senderId, outgoing, idempotency);
+  }
+
+  private async findByClientRequestId(senderId: string, clientRequestId: string) {
+    const { data, error } = await ensureSupabaseAdmin()
+      .from("chat_messages")
+      .select(messageSelect)
+      .eq("sender_id", senderId)
+      .eq("client_request_id", clientRequestId)
+      .maybeSingle();
+    if (error) throw error;
+    return data as any;
+  }
+
+  /** Same key and the same content is a retry; the same key with different content is a mistake and is refused. */
+  private isSameRequest(existing: any, conversationId: number, outgoing: OutgoingMessage, idempotency: IdempotentSend) {
+    const ref = idempotency.attachmentRef ?? (outgoing.attachment ? { path: outgoing.attachment.path } : null);
+    const hadAttachment = Boolean(existing.attachment_path);
+    const sameAttachment = hadAttachment === Boolean(ref) && (!ref || (ref.path ? existing.attachment_path === ref.path : existing.attachment_size_bytes === ref.size));
+    return (
+      Number(existing.conversation_id) === Number(conversationId) &&
+      existing.content === sanitizePlainText(outgoing.content, { max: 4000 }) &&
+      (existing.shared_post_id ?? null) === (outgoing.sharedPostId ?? null) &&
+      (existing.gif_url ?? null) === (outgoing.gif?.url ?? null) &&
+      sameAttachment
+    );
+  }
+
+  private async replay(existing: any, conversationId: number, outgoing: OutgoingMessage, idempotency: IdempotentSend) {
+    if (!this.isSameRequest(existing, conversationId, outgoing, idempotency)) throw keyReusedError();
+    return { message: (await this.hydrate([existing]))[0], replayed: true };
+  }
+
+  private async deliver(conversationId: number, senderId: string, outgoing: OutgoingMessage, idempotency?: IdempotentSend) {
     const supabase = ensureSupabaseAdmin();
     const canAccess = await this.isParticipant(conversationId, senderId);
     if (!canAccess) throw new Error("Conversation not found or access denied");
@@ -244,13 +299,22 @@ class ChatService {
     if (blocked.byMe) throw new PublicError("You blocked this person. Unblock them to send messages.", 403);
     if (blocked.byThem) throw new PublicError("You can't message this person.", 403);
 
-    const { attachment, gif, sharedPostId } = outgoing;
+    // Authorization is settled above, so a key can never be used to read or repeat anything the caller may not do.
+    if (idempotency) {
+      const existing = await this.findByClientRequestId(senderId, idempotency.clientRequestId);
+      if (existing) return this.replay(existing, conversationId, outgoing, idempotency);
+    }
+
+    const stored = idempotency?.storeAttachment ? await idempotency.storeAttachment() : null;
+    const { gif, sharedPostId } = outgoing;
+    const attachment = outgoing.attachment ?? stored;
     const kind: MessageKind = sharedPostId ? "post" : gif ? "gif" : attachment ? kindForAttachment(attachment.mimeType) : "text";
     const { data: message, error } = await supabase
       .from("chat_messages")
       .insert({
         conversation_id: Number(conversationId),
         sender_id: senderId,
+        client_request_id: idempotency?.clientRequestId ?? null,
         kind,
         content: sanitizePlainText(outgoing.content, { max: 4000 }),
         attachment_path: attachment?.path || null,
@@ -270,14 +334,27 @@ class ChatService {
       .select(messageSelect)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Two requests with the same key raced and the other one won: return its message instead of failing.
+      if (idempotency && isUniqueViolation(error)) {
+        const winner = await this.findByClientRequestId(senderId, idempotency.clientRequestId);
+        if (winner) {
+          // This request may have stored its own copy of the attachment; the winner references a different object.
+          if (idempotency.ownsAttachment && stored?.path && stored.path !== winner.attachment_path) {
+            await removeObject({ bucket: stored.bucket, objectPath: stored.path }).catch(() => {});
+          }
+          return this.replay(winner, conversationId, outgoing, idempotency);
+        }
+      }
+      throw error;
+    }
 
     await supabase
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", Number(conversationId));
 
-    return (await this.hydrate([message]))[0];
+    return { message: (await this.hydrate([message]))[0], replayed: false };
   }
 
   /** Changes a message's text. Only its sender, only within EDIT_WINDOW_MS. */

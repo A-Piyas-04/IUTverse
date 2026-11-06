@@ -4,7 +4,8 @@
 export class PublicError extends Error {
   readonly isPublic = true;
 
-  constructor(message: string, readonly statusCode = 400) {
+  /** Optional stable machine-readable code, sent as `code` in the response body. */
+  constructor(message: string, readonly statusCode = 400, readonly code?: string) {
     super(message);
     this.name = "PublicError";
   }

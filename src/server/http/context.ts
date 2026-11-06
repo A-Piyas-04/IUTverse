@@ -40,6 +40,8 @@ export interface ApiContext {
   ip: string;
   /** Added to the final response (rate-limit headers). */
   responseHeaders: Headers;
+  /** Optional X-Client-Platform / X-Client-Version, validated. Diagnostic only, never used for authorization. */
+  client?: import("./clientInfo").ClientInfo;
 }
 
 /** One link of a route's chain, like an Express middleware. Returning a Response ends the chain. */

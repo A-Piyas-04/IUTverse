@@ -30,8 +30,8 @@ export const failure = (status: number, message: string, error?: string, extras:
   });
 
 export const badRequest = (message: string, extras: Record<string, unknown> = {}) => failure(400, message, undefined, extras);
-export const unauthorized = (message = "Unauthorized") => failure(401, message);
-export const forbidden = (message = "Forbidden") => failure(403, message);
+export const unauthorized = (message = "Unauthorized", extras: Record<string, unknown> = {}) => failure(401, message, undefined, extras);
+export const forbidden = (message = "Forbidden", extras: Record<string, unknown> = {}) => failure(403, message, undefined, extras);
 export const notFound = (message = "Not found") => failure(404, message);
 export const conflict = (message = "Conflict") => failure(409, message);
 export const payloadTooLarge = (message = "Request body too large") => failure(413, message);

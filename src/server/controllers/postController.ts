@@ -1,6 +1,9 @@
 import "server-only";
 import type { Handler } from "../http/context";
 import { badRequest, forbidden, json, notFound, serverError } from "../http/responses";
+import { isPublicError } from "../http/errors";
+import { isUniqueViolation, keyReusedError, publicErrorResponse, readIdempotencyKey, REPLAYED_HEADER } from "../http/idempotency";
+import { removeObject } from "../services/storageService";
 import logger from "../utils/logger";
 import { ensureSupabaseAdmin, mapProfile, pageRange, profileSelect, publicUrl, uploadToBucket } from "../utils/supabaseData";
 import { optionalText, positiveInt, requiredText } from "../utils/validation";
@@ -178,6 +181,30 @@ export const createPost: Handler = async (ctx) => {
     const category = optionalText(ctx.body.category, { max: 80 });
     const isAnonymous = ctx.body.isAnonymous;
     const userId = ctx.user!.id;
+
+    // Retry protection (docs/api/idempotency.md). A retry with the same Idempotency-Key returns the post that already
+    // exists instead of creating a second one. Without a key nothing changes.
+    const idempotency = readIdempotencyKey(ctx.request.headers);
+    if ("error" in idempotency) return idempotency.error;
+    const key = idempotency.key;
+    const wantsAnonymous = isAnonymous === "true" || isAnonymous === true;
+    const replay = async (existing: any) => {
+      const dto = await hydratePost(existing, 3, userId);
+      const sameImage = ctx.file ? (ctx.file.stored ? existing.image_path === ctx.file.path : existing.image_size_bytes === ctx.file.size) : !existing.image_path;
+      if (dto.content !== (content || "") || Boolean(dto.isAnonymous) !== wantsAnonymous || dto.category !== (category ?? null) || !sameImage) throw keyReusedError();
+      ctx.responseHeaders.set(REPLAYED_HEADER, "true");
+      return json(201, { success: true, data: dto });
+    };
+    const findExisting = async () => {
+      const { data, error } = await ensureSupabaseAdmin().from("posts").select(postSelect).eq("author_id", userId).eq("client_request_id", key).maybeSingle();
+      if (error) throw error;
+      return data;
+    };
+    if (key) {
+      const existing = await findExisting();
+      if (existing) return await replay(existing);
+    }
+
     const image = await uploadToBucket({
       bucket: "post-media",
       userId,
@@ -190,8 +217,9 @@ export const createPost: Handler = async (ctx) => {
       .from("posts")
       .insert({
         author_id: userId,
+        client_request_id: key,
         content: content || "",
-        is_anonymous: isAnonymous === "true" || isAnonymous === true,
+        is_anonymous: wantsAnonymous,
         image_path: image.path,
         image_bucket: image.bucket,
         image_mime_type: image.mimeType,
@@ -200,11 +228,22 @@ export const createPost: Handler = async (ctx) => {
       .select(postSelect)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // A concurrent retry with the same key won the race: return its post and drop the image this request stored.
+      if (key && isUniqueViolation(error)) {
+        const winner = await findExisting();
+        if (winner) {
+          if (ctx.file && !ctx.file.stored && image.path && image.path !== winner.image_path) await removeObject({ bucket: image.bucket, objectPath: image.path }).catch(() => {});
+          return await replay(winner);
+        }
+      }
+      throw error;
+    }
     await attachCategory(post.id, category);
 
     return json(201, { success: true, data: await hydratePost(post, 3, userId) });
   } catch (error: any) {
+    if (isPublicError(error)) return publicErrorResponse(error);
     logger.error("Error creating post:", error);
     return serverError("Failed to create post", error.message);
   }

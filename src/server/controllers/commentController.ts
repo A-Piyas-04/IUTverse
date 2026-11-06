@@ -1,6 +1,8 @@
 import "server-only";
 import type { Handler } from "../http/context";
 import { badRequest, forbidden, json, notFound, serverError } from "../http/responses";
+import { isPublicError } from "../http/errors";
+import { isUniqueViolation, keyReusedError, publicErrorResponse, readIdempotencyKey, REPLAYED_HEADER } from "../http/idempotency";
 import logger from "../utils/logger";
 import { ensureSupabaseAdmin, mapProfile, pageRange, profileSelect } from "../utils/supabaseData";
 import { positiveInt, requiredText } from "../utils/validation";
@@ -50,21 +52,56 @@ export const createComment: Handler = async (ctx) => {
       : ({ ok: true, value: null } as const);
     if (!parentResult.ok) return badRequest(parentResult.error);
 
+    // Retry protection (docs/api/idempotency.md): the same Idempotency-Key returns the comment that already exists.
+    const idempotency = readIdempotencyKey(ctx.request.headers);
+    if ("error" in idempotency) return idempotency.error;
+    const key = idempotency.key;
+    const anonymous = ctx.body.isAnonymous === true || ctx.body.isAnonymous === "true";
+    const replay = (existing: any) => {
+      if (
+        existing.post_id !== postIdResult.value ||
+        existing.content !== contentResult.value ||
+        (existing.parent_comment_id ?? null) !== parentResult.value ||
+        Boolean(existing.is_anonymous) !== anonymous
+      ) {
+        throw keyReusedError();
+      }
+      ctx.responseHeaders.set(REPLAYED_HEADER, "true");
+      return json(201, { success: true, data: mapComment(existing) });
+    };
+    const findExisting = async () => {
+      const { data, error } = await supabase.from("post_comments").select(commentSelect).eq("author_id", ctx.user!.id).eq("client_request_id", key).maybeSingle();
+      if (error) throw error;
+      return data;
+    };
+    if (key) {
+      const existing = await findExisting();
+      if (existing) return replay(existing);
+    }
+
     const { data, error } = await supabase
       .from("post_comments")
       .insert({
         post_id: postIdResult.value,
         author_id: ctx.user!.id,
+        client_request_id: key,
         content: contentResult.value,
         parent_comment_id: parentResult.value,
-        is_anonymous: ctx.body.isAnonymous === true || ctx.body.isAnonymous === "true",
+        is_anonymous: anonymous,
       })
       .select(commentSelect)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (key && isUniqueViolation(error)) {
+        const winner = await findExisting();
+        if (winner) return replay(winner);
+      }
+      throw error;
+    }
     return json(201, { success: true, data: mapComment(data) });
   } catch (error: any) {
+    if (isPublicError(error)) return publicErrorResponse(error);
     logger.error("Error creating comment:", error);
     return serverError("Failed to create comment", error.message);
   }

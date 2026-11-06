@@ -14,17 +14,17 @@ export const authenticateToken: Step = async (ctx) => {
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
   if (!token) {
-    return response.unauthorized("Access token required");
+    return response.unauthorized("Access token required", { code: "AUTH_TOKEN_REQUIRED" });
   }
 
   if (isSupabaseAdminConfigured && supabaseAdmin) {
     try {
       const { data, error } = await supabaseAdmin.auth.getUser(token);
-      if (error || !data?.user) return response.forbidden("Invalid Supabase token");
+      if (error || !data?.user) return response.forbidden("Invalid Supabase token", { code: "AUTH_TOKEN_INVALID" });
 
       const security = await securityService.getSecurityContext(data.user.id);
       if (security.membershipStatus !== "active") {
-        return response.forbidden("Active IUTverse membership required");
+        return response.forbidden("Active IUTverse membership required", { code: "MEMBERSHIP_REQUIRED" });
       }
 
       ctx.user = {

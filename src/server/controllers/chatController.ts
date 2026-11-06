@@ -7,6 +7,7 @@ import type { Attachment, Gif } from "../services/chatService";
 import { isGifUrl, searchGifs } from "../services/gifService";
 import * as storageService from "../services/storageService";
 import { PublicError } from "../http/errors";
+import { readIdempotencyKey, REPLAYED_HEADER } from "../http/idempotency";
 import logger from "../utils/logger";
 import { ensureSupabaseAdmin } from "../utils/supabaseData";
 import { optionalText, pagination, positiveInt, requiredText, uuid } from "../utils/validation";
@@ -92,6 +93,8 @@ export const sendMessage: Handler = async (ctx) => {
   try {
     const { conversationId, content } = ctx.body;
     const senderId = ctx.user!.userId;
+    const idempotency = readIdempotencyKey(ctx.request.headers);
+    if ("error" in idempotency) return idempotency.error;
 
     const conversationIdResult = positiveInt(conversationId, "Conversation ID");
     if (!conversationIdResult.ok) return response.badRequest(conversationIdResult.error);
@@ -112,10 +115,10 @@ export const sendMessage: Handler = async (ctx) => {
     }
     if (sharedPostId?.ok) await ensureShareablePost(sharedPostId.value);
 
-    let attachment: Attachment | null = null;
-    if (ctx.file) {
+    const storeAttachment = async (): Promise<Attachment | null> => {
+      if (!ctx.file) return null;
       const uploaded = await storageService.uploadObject({ bucket: "chat-attachments", userId: senderId, file: ctx.file, prefix: "message" });
-      attachment = {
+      return {
         path: uploaded.path,
         bucket: uploaded.bucket,
         name: ctx.file.originalname,
@@ -126,14 +129,24 @@ export const sendMessage: Handler = async (ctx) => {
         durationMs: boundedInt(ctx.body.attachmentDurationMs, "Duration", 0, 3600000),
         waveform: String(uploaded.mimeType).startsWith("audio/") ? waveform(ctx.body.attachmentWaveform) : null,
       };
-    }
+    };
+    const outgoing = { content: contentResult.value, gif, sharedPostId: sharedPostId?.ok ? sharedPostId.value : null };
 
-    const message = await chatService.sendMessage(conversationIdResult.value, senderId, {
-      content: contentResult.value,
-      attachment,
-      gif,
-      sharedPostId: sharedPostId?.ok ? sharedPostId.value : null,
-    });
+    // With an Idempotency-Key a retry returns the message that already exists instead of sending it twice.
+    // Without one the request behaves exactly as it always has.
+    let message;
+    if (idempotency.key) {
+      const sent = await chatService.sendMessageOnce(conversationIdResult.value, senderId, outgoing, {
+        clientRequestId: idempotency.key,
+        attachmentRef: ctx.file ? (ctx.file.stored ? { path: ctx.file.path } : { size: ctx.file.size }) : null,
+        storeAttachment,
+        ownsAttachment: Boolean(ctx.file && !ctx.file.stored),
+      });
+      if (sent.replayed) ctx.responseHeaders.set(REPLAYED_HEADER, "true");
+      message = sent.message;
+    } else {
+      message = await chatService.sendMessage(conversationIdResult.value, senderId, { ...outgoing, attachment: await storeAttachment() });
+    }
 
     return json(201, { message: "Message sent successfully", data: message });
   } catch (error: any) {
@@ -275,8 +288,10 @@ export const markAsRead: Handler = async (ctx) => {
 export const getAttachment: Handler = async (ctx) => {
   try {
     const message = await chatService.getAttachment(ctx.params.messageId, ctx.user!.userId);
-    const url = await storageService.signedUrl(message.attachment_bucket, message.attachment_path, 300);
-    return redirect(url as string);
+    const signed = await storageService.signedUrlWithExpiry(message.attachment_bucket, message.attachment_path, 300);
+    // ?redirect=false answers JSON { url, expiresAt } instead of a 302, for native clients that refresh an expired link.
+    if (ctx.query.redirect === "false") return response.success(signed);
+    return redirect(signed.url);
   } catch (error: any) {
     if (error.message.includes("access denied")) return response.forbidden(error.message);
     if (error.message.includes("not found")) return response.notFound(error.message);

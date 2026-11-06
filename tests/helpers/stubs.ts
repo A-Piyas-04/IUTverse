@@ -53,6 +53,8 @@ const from = (table: string) => {
 // Range requests, like Supabase Storage does.
 export const storage = {
   objects: new Map<string, { body: Buffer; contentType?: string }>(),
+  /** exp (seconds since the epoch) put into signed-upload tokens. */
+  tokenExpiry: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
   calls: [] as any[][],
   url: "",
   put(bucket: string, objectPath: string, body: Buffer | string, contentType?: string) {
@@ -91,7 +93,10 @@ export const stopStorageServer = () => new Promise<void>((resolve) => (objectSer
 const bucketApi = (bucket: string) => ({
   createSignedUploadUrl: async (objectPath: string) => {
     storage.calls.push(["createSignedUploadUrl", bucket, objectPath]);
-    return { data: { path: objectPath, token: `token-for-${objectPath}`, signedUrl: `${storage.url}/upload/${bucket}/${objectPath}` }, error: null };
+    // Like Supabase, the signed-upload token is a JWT whose exp (here two hours ahead) is when the upload slot closes.
+    const part = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
+    const token = `${part({ alg: "HS256", typ: "JWT" })}.${part({ url: `${bucket}/${objectPath}`, exp: storage.tokenExpiry })}.signature`;
+    return { data: { path: objectPath, token, signedUrl: `${storage.url}/upload/${bucket}/${objectPath}` }, error: null };
   },
   info: async (objectPath: string) => {
     const object = storage.objects.get(`${bucket}/${objectPath}`);
