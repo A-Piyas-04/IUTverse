@@ -1,0 +1,596 @@
+# Path items for the "jobs" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_jobs_id_application_status:
+  get:
+    operationId: jobs_getUserApplicationStatus
+    tags:
+      - Jobs
+    summary: Get User Application Status
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/application-status/route.ts -> src/server/controllers/jobApplicationController.ts#getUserApplicationStatus
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_id_applications_count:
+  get:
+    operationId: jobs_getApplicationCount
+    tags:
+      - Jobs
+    summary: Get Application Count
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/applications/count/route.ts -> src/server/controllers/jobApplicationController.ts#getApplicationCount
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_id_applications:
+  get:
+    operationId: jobs_getJobApplications
+    tags:
+      - Jobs
+    summary: Get Job Applications
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/applications/route.ts -> src/server/controllers/jobApplicationController.ts#getJobApplications
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_id_apply:
+  post:
+    operationId: jobs_applyToJob
+    tags:
+      - Jobs
+    summary: Apply To Job
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/apply/route.ts -> src/server/controllers/jobApplicationController.ts#applyToJob
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: jobs_removeApplication
+    tags:
+      - Jobs
+    summary: Remove Application
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/apply/route.ts -> src/server/controllers/jobApplicationController.ts#removeApplication
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_id_comments_commentId_reply:
+  post:
+    operationId: jobs_createReply
+    tags:
+      - Jobs
+    summary: Create Reply
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/comments/[commentId]/reply/route.ts -> src/server/controllers/jobCommentController.ts#createReply
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_id_comments:
+  get:
+    operationId: jobs_getCommentsByJobId
+    tags:
+      - Jobs
+    summary: Get Comments By Job Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/comments/route.ts -> src/server/controllers/jobCommentController.ts#getCommentsByJobId
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: jobs_createComment
+    tags:
+      - Jobs
+    summary: Create Comment
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/comments/route.ts -> src/server/controllers/jobCommentController.ts#createComment
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_id:
+  get:
+    operationId: jobs_getJobById
+    tags:
+      - Jobs
+    summary: Get Job By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/route.ts -> src/server/controllers/jobController.ts#getJobById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  put:
+    operationId: jobs_updateJob
+    tags:
+      - Jobs
+    summary: Update Job
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/route.ts -> src/server/controllers/jobController.ts#updateJob
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: jobs_deleteJob
+    tags:
+      - Jobs
+    summary: Delete Job
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/[id]/route.ts -> src/server/controllers/jobController.ts#deleteJob
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs_comments_commentId:
+  get:
+    operationId: jobs_getCommentById
+    tags:
+      - Jobs
+    summary: Get Comment By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/comments/[commentId]/route.ts -> src/server/controllers/jobCommentController.ts#getCommentById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  put:
+    operationId: jobs_updateComment
+    tags:
+      - Jobs
+    summary: Update Comment
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/comments/[commentId]/route.ts -> src/server/controllers/jobCommentController.ts#updateComment
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: jobs_deleteComment
+    tags:
+      - Jobs
+    summary: Delete Comment
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/comments/[commentId]/route.ts -> src/server/controllers/jobCommentController.ts#deleteComment
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_jobs:
+  get:
+    operationId: jobs_getAllJobs
+    tags:
+      - Jobs
+    summary: Get All Jobs
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/route.ts -> src/server/controllers/jobController.ts#getAllJobs
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: type
+        in: query
+        required: false
+        schema: {}
+      - name: search
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: jobs_createJob
+    tags:
+      - Jobs
+    summary: Create Job
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/jobs/route.ts -> src/server/controllers/jobController.ts#createJob
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

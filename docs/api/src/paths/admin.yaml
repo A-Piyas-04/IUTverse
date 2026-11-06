@@ -1,0 +1,101 @@
+# Path items for the "admin" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_admin_users_userId_role:
+  patch:
+    operationId: admin_updateUserRole
+    tags:
+      - Admin
+    summary: Update User Role
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/admin/users/[userId]/role/route.ts -> src/server/controllers/securityController.ts#updateUserRole
+    x-required-role:
+      - admin
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              role: {}
+              reason: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_moderation_posts_postId_identity_disclosures:
+  post:
+    operationId: moderation_disclosePostIdentity
+    tags:
+      - Admin
+    summary: Disclose Post Identity
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/moderation/posts/[postId]/identity-disclosures/route.ts -> src/server/controllers/securityController.ts#disclosePostIdentity
+    x-required-role:
+      - admin
+      - mod
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reportId: {}
+              justification: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

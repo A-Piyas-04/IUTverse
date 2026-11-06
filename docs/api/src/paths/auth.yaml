@@ -1,0 +1,230 @@
+# Path items for the "auth" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_auth_login:
+  post:
+    operationId: auth_login
+    tags:
+      - Auth
+    summary: Login
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/auth/login/route.ts -> src/server/controllers/authController.ts#login
+    x-rate-limit-class: authLimiter
+    security: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: {}
+              password: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_auth_me:
+  get:
+    operationId: auth_getMe
+    tags:
+      - Auth
+    summary: Current member (membership gate)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/auth/me/route.ts -> src/server/controllers/authController.ts#getMe
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/MeEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+    description: Call after sign-in. Succeeds only for an active IUTverse member; a valid Supabase session for a non-member gets 403.
+api_auth_password_reset_request:
+  post:
+    operationId: auth_requestPasswordReset
+    tags:
+      - Auth
+    summary: Request Password Reset
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/auth/password/reset-request/route.ts -> src/server/controllers/authController.ts#requestPasswordReset
+    x-rate-limit-class: authLimiter
+    security: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_auth_password:
+  put:
+    operationId: auth_changePassword
+    tags:
+      - Auth
+    summary: Change Password
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/auth/password/route.ts -> src/server/controllers/authController.ts#changePassword
+    x-rate-limit-class: authLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              password: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_auth_signup:
+  post:
+    operationId: auth_signup
+    tags:
+      - Auth
+    summary: Signup
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/auth/signup/route.ts -> src/server/controllers/authController.ts#signup
+    x-rate-limit-class: authLimiter
+    security: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: {}
+              password: {}
+              name: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_auth_users:
+  get:
+    operationId: auth_getAllUsers
+    tags:
+      - Auth
+    summary: Get All Users
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/auth/users/route.ts -> src/server/controllers/authController.ts#getAllUsers
+    x-required-role:
+      - admin
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_auth_validate:
+  get:
+    operationId: auth_validateToken
+    tags:
+      - Auth
+    summary: Validate the access token
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/auth/validate/route.ts -> src/server/controllers/authController.ts#validateToken
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ValidateTokenResponse
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

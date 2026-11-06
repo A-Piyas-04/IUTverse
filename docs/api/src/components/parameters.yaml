@@ -1,0 +1,42 @@
+# Shared parameters. Path parameters are declared per operation (their types differ by route).
+Page:
+  name: page
+  in: query
+  required: false
+  description: 1-based page number. Values below 1 or non-numeric values fall back to 1.
+  schema:
+    type: integer
+    minimum: 1
+    default: 1
+Limit:
+  name: limit
+  in: query
+  required: false
+  description: >-
+    Page size. The default and the maximum differ per endpoint (defaults 10 to 20, maximums 50 or 100);
+    out-of-range values are clamped by the server rather than rejected.
+  schema:
+    type: integer
+    minimum: 1
+IdempotencyKey:
+  name: Idempotency-Key
+  in: header
+  required: false
+  description: >-
+    Makes a retry safe. Send 16 to 64 characters of A-Z a-z 0-9 _ - (a UUID works) and send the SAME value when you
+    retry the same action, for example after a timeout. A retry returns the resource that was already created and sets
+    the response header Idempotent-Replayed to true; the same key with different content is refused with 409
+    IDEMPOTENCY_KEY_REUSED. Keys are scoped to the signed-in member. Omit it for the previous behavior.
+  schema:
+    type: string
+    pattern: "^[A-Za-z0-9_-]{16,64}$"
+RedirectFlag:
+  name: redirect
+  in: query
+  required: false
+  description: >-
+    Send redirect=false to receive the signed URL as JSON (url and expiresAt) instead of a 302 redirect. The same
+    authorization applies. Any other value keeps the redirect.
+  schema:
+    type: string
+    enum: ["false"]

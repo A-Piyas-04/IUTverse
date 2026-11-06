@@ -1,0 +1,392 @@
+# Path items for the "academic" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_academic_departments:
+  get:
+    operationId: academic_getAllDepartments
+    tags:
+      - Academic
+    summary: Get All Departments
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/departments/route.ts -> src/server/controllers/academicResourceController.ts#getAllDepartments
+    security: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: academic_createDepartment
+    tags:
+      - Academic
+    summary: Create Department
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/departments/route.ts -> src/server/controllers/academicResourceController.ts#createDepartment
+    x-required-role:
+      - admin
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_academic_resources_id_file:
+  get:
+    operationId: academic_resourceFile
+    tags:
+      - Academic
+    summary: Open a resource file (302 to a signed URL, or JSON with redirect=false)
+    x-priority: P1
+    x-contract-status: verified
+    x-source: src/app/api/academic/resources/[id]/file/route.ts -> src/server/controllers/communityController.ts#resourceFile
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: ../components/parameters.yaml#/RedirectFlag
+    responses:
+      "200":
+        description: "With redirect=false: the signed URL and when it expires"
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SignedUrlEnvelope
+      "302":
+        description: Redirect to a signed or public file URL
+        headers:
+          Location:
+            schema:
+              type: string
+              format: uri
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_academic_resources_id_helpful:
+  post:
+    operationId: academic_toggleHelpful
+    tags:
+      - Academic
+    summary: Toggle Helpful
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/resources/[id]/helpful/route.ts -> src/server/controllers/communityController.ts#toggleHelpful
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_academic_resources_id:
+  get:
+    operationId: academic_getAcademicResourceById
+    tags:
+      - Academic
+    summary: Get Academic Resource By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/resources/[id]/route.ts -> src/server/controllers/academicResourceController.ts#getAcademicResourceById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  put:
+    operationId: academic_updateAcademicResource
+    tags:
+      - Academic
+    summary: Update Academic Resource
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/resources/[id]/route.ts -> src/server/controllers/academicResourceController.ts#updateAcademicResource
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title: {}
+              type: {}
+              departmentId: {}
+              externalLink: {}
+              courseCode: {}
+              description: {}
+              tags: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose resource); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title: {}
+              type: {}
+              departmentId: {}
+              externalLink: {}
+              courseCode: {}
+              description: {}
+              tags: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose resource); alternative to sending the file.
+              pdf:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: academic_deleteAcademicResource
+    tags:
+      - Academic
+    summary: Delete Academic Resource
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/resources/[id]/route.ts -> src/server/controllers/academicResourceController.ts#deleteAcademicResource
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_academic_resources:
+  get:
+    operationId: academic_getAllAcademicResources
+    tags:
+      - Academic
+    summary: Get All Academic Resources
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/resources/route.ts -> src/server/controllers/academicResourceController.ts#getAllAcademicResources
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: departmentId
+        in: query
+        required: false
+        schema: {}
+      - name: type
+        in: query
+        required: false
+        schema: {}
+      - name: courseCode
+        in: query
+        required: false
+        schema: {}
+      - name: search
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: academic_createAcademicResource
+    tags:
+      - Academic
+    summary: Create Academic Resource
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/academic/resources/route.ts -> src/server/controllers/academicResourceController.ts#createAcademicResource
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title: {}
+              type: {}
+              departmentId: {}
+              externalLink: {}
+              courseCode: {}
+              description: {}
+              tags: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose resource); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title: {}
+              type: {}
+              departmentId: {}
+              externalLink: {}
+              courseCode: {}
+              description: {}
+              tags: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose resource); alternative to sending the file.
+              pdf:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

@@ -1,0 +1,337 @@
+# Path items for the "confessions" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_confessions_id_polls_pollId_vote:
+  post:
+    operationId: confessions_voteOnPoll
+    tags:
+      - Confessions
+    summary: Vote On Poll
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/[id]/polls/[pollId]/vote/route.ts -> src/server/controllers/confessionController.ts#voteOnPoll
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: pollId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              optionId: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions_id_reactions:
+  post:
+    operationId: confessions_addReaction
+    tags:
+      - Confessions
+    summary: Add Reaction
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/[id]/reactions/route.ts -> src/server/controllers/confessionController.ts#addReaction
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reactionType: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: confessions_removeReaction
+    tags:
+      - Confessions
+    summary: Remove Reaction
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/[id]/reactions/route.ts -> src/server/controllers/confessionController.ts#removeReaction
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions_id:
+  get:
+    operationId: confessions_getConfessionById
+    tags:
+      - Confessions
+    summary: Get Confession By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/[id]/route.ts -> src/server/controllers/confessionController.ts#getConfessionById
+    security:
+      - {}
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions_id_user_reactions:
+  get:
+    operationId: confessions_getUserReactions
+    tags:
+      - Confessions
+    summary: Get User Reactions
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/[id]/user-reactions/route.ts -> src/server/controllers/confessionController.ts#getUserReactions
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions_analytics:
+  get:
+    operationId: confessions_getAnalytics
+    tags:
+      - Confessions
+    summary: Get Analytics
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/analytics/route.ts -> src/server/controllers/confessionController.ts#getAnalytics
+    security: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions_polls_pollId_user_voted:
+  get:
+    operationId: confessions_checkUserVoted
+    tags:
+      - Confessions
+    summary: Check User Voted
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/polls/[pollId]/user-voted/route.ts -> src/server/controllers/confessionController.ts#checkUserVoted
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: pollId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions_random:
+  get:
+    operationId: confessions_getRandomConfession
+    tags:
+      - Confessions
+    summary: Get Random Confession
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/random/route.ts -> src/server/controllers/confessionController.ts#getRandomConfession
+    security: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_confessions:
+  get:
+    operationId: confessions_getAllConfessions
+    tags:
+      - Confessions
+    summary: Get All Confessions
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/route.ts -> src/server/controllers/confessionController.ts#getAllConfessions
+    security: []
+    parameters:
+      - name: sortBy
+        in: query
+        required: false
+        schema: {}
+      - name: tag
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: confessions_createConfession
+    tags:
+      - Confessions
+    summary: Create Confession
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/confessions/route.ts -> src/server/controllers/confessionController.ts#createConfession
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              tags: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

@@ -1,0 +1,37 @@
+# Path items for the "uploads" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_uploads:
+  post:
+    operationId: uploads_createUploadIntent
+    tags:
+      - Uploads
+    summary: Prepare a direct upload to Storage
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/uploads/route.ts -> src/server/controllers/uploadController.ts#createUploadIntent
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/UploadIntentRequest
+    responses:
+      "201":
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/UploadIntentEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

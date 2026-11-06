@@ -1,0 +1,91 @@
+# Error responses. Every error body carries `message`; most also carry `success: false`.
+# 5xx bodies are always the generic text in production; internal detail is never exposed.
+E400:
+  description: Malformed or invalid request (validation failure, bad identifier, missing field).
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E401:
+  description: >-
+    No bearer token was sent (`code` AUTH_TOKEN_REQUIRED) or the endpoint rejected anonymous callers.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E403:
+  description: >-
+    The token is invalid or expired (`code` AUTH_TOKEN_INVALID), the account is not an active member
+    (`code` MEMBERSHIP_REQUIRED), or the caller lacks the role or ownership the operation needs.
+    Note that an expired access token is reported as 403, not 401.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E404:
+  description: The resource does not exist, or the caller is not allowed to know it exists.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E409:
+  description: >-
+    Conflict with current state (for example a duplicate), or `code` IDEMPOTENCY_KEY_REUSED when an Idempotency-Key
+    was already used for a different request.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E413:
+  description: Request body or uploaded file too large (JSON bodies are limited to 1 MB).
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E429:
+  description: Rate limit exceeded (fixed window, per client address; see the RateLimit headers).
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+    Retry-After:
+      description: Seconds until the window resets.
+      schema: { type: integer }
+    RateLimit-Limit: { schema: { type: integer } }
+    RateLimit-Remaining: { schema: { type: integer } }
+    RateLimit-Reset: { schema: { type: integer } }
+    RateLimit-Policy: { schema: { type: string } }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E500:
+  description: Unexpected server error. The body never contains internal detail in production.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E502:
+  description: An upstream service (for example the weather provider) failed.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+E503:
+  description: The feature is not configured or temporarily unavailable.
+  headers:
+    X-Request-Id: { $ref: "#/Headers/XRequestId" }
+  content:
+    application/json:
+      schema: { $ref: "./schemas.yaml#/ErrorBody" }
+Headers:
+  XRequestId:
+    description: >-
+      Correlation id for the request. The server echoes a client-supplied `X-Request-Id` when it is
+      well formed, otherwise it generates one. Quote it in bug reports.
+    schema: { type: string, maxLength: 128 }

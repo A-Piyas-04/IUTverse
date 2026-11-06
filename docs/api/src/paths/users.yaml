@@ -1,0 +1,276 @@
+# Path items for the "users" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_user_userId:
+  get:
+    operationId: user_getUserById
+    tags:
+      - Users
+    summary: Public member by id
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/user/[userId]/route.ts -> src/server/controllers/userController.ts#getUserById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PublicUserEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_user_by_student_id_studentId:
+  get:
+    operationId: user_getUserByStudentId
+    tags:
+      - Users
+    summary: Get User By Student Id
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/user/by-student-id/[studentId]/route.ts -> src/server/controllers/userController.ts#getUserByStudentId
+    x-required-role:
+      - admin
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: studentId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_user:
+  put:
+    operationId: user_updateUserName
+    tags:
+      - Users
+    summary: Change display name
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/user/route.ts -> src/server/controllers/userController.ts#updateUserName
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/UpdateUserNameRequest
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/UpdateUserNameResponse
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_user_student_id_check_studentId:
+  get:
+    operationId: user_checkStudentIdAvailability
+    tags:
+      - Users
+    summary: Check Student Id Availability
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/user/student-id/check/[studentId]/route.ts -> src/server/controllers/userController.ts#checkStudentIdAvailability
+    x-rate-limit-class: lookupLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: studentId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_user_student_id:
+  get:
+    operationId: user_getStudentId
+    tags:
+      - Users
+    summary: Get Student Id
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/user/student-id/route.ts -> src/server/controllers/userController.ts#getStudentId
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  put:
+    operationId: user_updateStudentId
+    tags:
+      - Users
+    summary: Update Student Id
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/user/student-id/route.ts -> src/server/controllers/userController.ts#updateStudentId
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              studentId: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: user_deleteStudentId
+    tags:
+      - Users
+    summary: Delete Student Id
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/user/student-id/route.ts -> src/server/controllers/userController.ts#deleteStudentId
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_users_search:
+  get:
+    operationId: users_searchUsers
+    tags:
+      - Users
+    summary: Search members by name (min 2 characters, max 20 results)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/users/search/route.ts -> src/server/controllers/userController.ts#searchUsers
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: q
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PublicUserListEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

@@ -1,0 +1,398 @@
+# Path items for the "community" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_campus_weather:
+  get:
+    operationId: campus_weather
+    tags:
+      - Community
+    summary: Weather
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/campus/weather/route.ts -> src/server/controllers/communityController.ts#weather
+    security: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+      "502":
+        $ref: ../components/responses.yaml#/E502
+      "503":
+        $ref: ../components/responses.yaml#/E503
+api_dashboard:
+  get:
+    operationId: dashboard_get
+    tags:
+      - Community
+    summary: GET /api/dashboard
+    x-priority: other
+    x-contract-status: inferred
+    x-source: src/app/api/dashboard/route.ts
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_issue_reports:
+  post:
+    operationId: issueReports_createIssueReport
+    tags:
+      - Community
+    summary: Create Issue Report
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/issue-reports/route.ts -> src/server/controllers/communityController.ts#createIssueReport
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name: {}
+              email: {}
+              issueType: {}
+              description: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_reports_id:
+  patch:
+    operationId: reports_reportUpdate
+    tags:
+      - Community
+    summary: Report Update
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/reports/[id]/route.ts -> src/server/controllers/communityController.ts#reportUpdate
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_reports:
+  post:
+    operationId: reports_reportCreate
+    tags:
+      - Community
+    summary: Report Create
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/reports/route.ts -> src/server/controllers/communityController.ts#reportCreate
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              entityId: {}
+              entityKind: {}
+              reason: {}
+              details: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  get:
+    operationId: reports_reportsList
+    tags:
+      - Community
+    summary: Reports List
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/reports/route.ts -> src/server/controllers/communityController.ts#reportsList
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: status
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_saved_items_kind_id:
+  post:
+    operationId: savedItems_savedCreate
+    tags:
+      - Community
+    summary: Saved Create
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/saved-items/[kind]/[id]/route.ts -> src/server/controllers/communityController.ts#savedCreate
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - post
+            - comment
+            - resource
+            - job
+            - lost_found
+            - confession
+            - cat_post
+            - event
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  get:
+    operationId: savedItems_savedStatus
+    tags:
+      - Community
+    summary: Saved Status
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/saved-items/[kind]/[id]/route.ts -> src/server/controllers/communityController.ts#savedStatus
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - post
+            - comment
+            - resource
+            - job
+            - lost_found
+            - confession
+            - cat_post
+            - event
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: savedItems_savedDelete
+    tags:
+      - Community
+    summary: Saved Delete
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/saved-items/[kind]/[id]/route.ts -> src/server/controllers/communityController.ts#savedDelete
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - post
+            - comment
+            - resource
+            - job
+            - lost_found
+            - confession
+            - cat_post
+            - event
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_search:
+  get:
+    operationId: search_search
+    tags:
+      - Community
+    summary: Search
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/search/route.ts -> src/server/controllers/searchController.ts#search
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: q
+        in: query
+        required: false
+        schema: {}
+      - name: type
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

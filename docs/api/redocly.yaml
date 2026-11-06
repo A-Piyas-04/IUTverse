@@ -1,0 +1,26 @@
+# Lint rules for the API contract. Run through `npm run contract:lint`.
+extends:
+  - recommended
+rules:
+  # Tags are navigation labels here; the operations carry the documentation.
+  tag-description: off
+  # Several bodies are intentionally `inferred` and loose until a conformance test pins them.
+  no-empty-servers: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-operationId-url-safe: error
+  no-unresolved-refs: error
+  no-unused-components: error
+  security-defined: error
+  # GET /api/jobs/{id}/application-status and /api/jobs/comments/{commentId} overlap when id is "comments";
+  # Next.js resolves static segments first, so the overlap is intentional.
+  no-ambiguous-paths: off
+  path-parameters-defined: error
+  no-path-trailing-slash: error
+  # Redirect-only operations (signed file URLs) answer 302; scripts/contract/check.mjs requires a 2xx or 3xx response.
+  operation-2xx-response: off
+  # The health check has no 4xx.
+  operation-4xx-response: off
+  # Not every error is described per operation; the shared E4xx/E5xx responses are referenced.
+  operation-description: off
+  info-license-strict: off

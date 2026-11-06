@@ -1,0 +1,462 @@
+# Path items for the "cat-corner" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_cat_posts_id_comment:
+  post:
+    operationId: catPosts_addComment
+    tags:
+      - Cat corner
+    summary: Add Comment
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-posts/[id]/comment/route.ts -> src/server/controllers/catPostController.ts#addComment
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_posts_id_like:
+  post:
+    operationId: catPosts_toggleLike
+    tags:
+      - Cat corner
+    summary: Toggle Like
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-posts/[id]/like/route.ts -> src/server/controllers/catPostController.ts#toggleLike
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_posts_id:
+  get:
+    operationId: catPosts_getPostById
+    tags:
+      - Cat corner
+    summary: Get Post By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-posts/[id]/route.ts -> src/server/controllers/catPostController.ts#getPostById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: catPosts_deletePost
+    tags:
+      - Cat corner
+    summary: Delete Post
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-posts/[id]/route.ts -> src/server/controllers/catPostController.ts#deletePost
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_posts:
+  get:
+    operationId: catPosts_getAllPosts
+    tags:
+      - Cat corner
+    summary: Get All Posts
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-posts/route.ts -> src/server/controllers/catPostController.ts#getAllPosts
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: category
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: catPosts_createPost
+    tags:
+      - Cat corner
+    summary: Create Post
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-posts/route.ts -> src/server/controllers/catPostController.ts#createPost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              caption: {}
+              category: {}
+              location: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose catPost); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              caption: {}
+              category: {}
+              location: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose catPost); alternative to sending the file.
+              image:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_qa_answers_answerId:
+  delete:
+    operationId: catQa_deleteAnswer
+    tags:
+      - Cat corner
+    summary: Delete Answer
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-qa/answers/[answerId]/route.ts -> src/server/controllers/catQAController.ts#deleteAnswer
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: answerId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_qa_questions_id_answers:
+  post:
+    operationId: catQa_addAnswer
+    tags:
+      - Cat corner
+    summary: Add Answer
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-qa/questions/[id]/answers/route.ts -> src/server/controllers/catQAController.ts#addAnswer
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              answer: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_qa_questions_id:
+  get:
+    operationId: catQa_getQuestionById
+    tags:
+      - Cat corner
+    summary: Get Question By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-qa/questions/[id]/route.ts -> src/server/controllers/catQAController.ts#getQuestionById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: catQa_deleteQuestion
+    tags:
+      - Cat corner
+    summary: Delete Question
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-qa/questions/[id]/route.ts -> src/server/controllers/catQAController.ts#deleteQuestion
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_cat_qa_questions:
+  get:
+    operationId: catQa_getAllQuestions
+    tags:
+      - Cat corner
+    summary: Get All Questions
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-qa/questions/route.ts -> src/server/controllers/catQAController.ts#getAllQuestions
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: catQa_createQuestion
+    tags:
+      - Cat corner
+    summary: Create Question
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/cat-qa/questions/route.ts -> src/server/controllers/catQAController.ts#createQuestion
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              question: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

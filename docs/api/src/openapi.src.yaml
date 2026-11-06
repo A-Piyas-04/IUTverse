@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: IUTverse API
+  version: 1.0.0
+  description: |-
+    HTTP API of the IUTverse web application, consumed by the web client and the IUTverse mobile app.
+
+    This document describes the API **as implemented** at the backend commit recorded in the published `contract-metadata.json`. Operations carry `x-priority` (P0 mobile foundation, P1 feature parity, other) and `x-contract-status` (`verified` = checked by a conformance test, `reviewed` = schema derived by reading the handler, `inferred` = status codes and field names scanned from the handler only).
+
+    Authentication: `Authorization: Bearer <Supabase access token>`. A missing token is 401; an invalid or expired token, a non-member, or insufficient role is 403.
+
+    Tracing: send `X-Request-Id`; the server echoes it (or generates one) on every response.
+  license:
+    name: MIT
+servers:
+  - url: "{origin}"
+    description: The IUTverse deployment; all paths below already include the /api prefix.
+    variables:
+      origin:
+        default: http://localhost:8080
+        description: Scheme and host, no trailing slash.
+tags:
+  - name: Health
+  - name: Auth
+  - name: Profile
+  - name: Users
+  - name: Posts
+  - name: Uploads
+  - name: Chat
+  - name: Jobs
+  - name: Events
+  - name: Lost and found
+  - name: Academic
+  - name: Cat corner
+  - name: Confessions
+  - name: Community
+  - name: Admin
+paths:
+  /api/academic/departments:
+    $ref: ./paths/academic.yaml#/api_academic_departments
+  /api/academic/resources:
+    $ref: ./paths/academic.yaml#/api_academic_resources
+  /api/academic/resources/{id}:
+    $ref: ./paths/academic.yaml#/api_academic_resources_id
+  /api/academic/resources/{id}/file:
+    $ref: ./paths/academic.yaml#/api_academic_resources_id_file
+  /api/academic/resources/{id}/helpful:
+    $ref: ./paths/academic.yaml#/api_academic_resources_id_helpful
+  /api/admin/users/{userId}/role:
+    $ref: ./paths/admin.yaml#/api_admin_users_userId_role
+  /api/auth/login:
+    $ref: ./paths/auth.yaml#/api_auth_login
+  /api/auth/me:
+    $ref: ./paths/auth.yaml#/api_auth_me
+  /api/auth/password:
+    $ref: ./paths/auth.yaml#/api_auth_password
+  /api/auth/password/reset-request:
+    $ref: ./paths/auth.yaml#/api_auth_password_reset_request
+  /api/auth/signup:
+    $ref: ./paths/auth.yaml#/api_auth_signup
+  /api/auth/users:
+    $ref: ./paths/auth.yaml#/api_auth_users
+  /api/auth/validate:
+    $ref: ./paths/auth.yaml#/api_auth_validate
+  /api/campus/weather:
+    $ref: ./paths/community.yaml#/api_campus_weather
+  /api/cat-posts:
+    $ref: ./paths/cat-corner.yaml#/api_cat_posts
+  /api/cat-posts/{id}:
+    $ref: ./paths/cat-corner.yaml#/api_cat_posts_id
+  /api/cat-posts/{id}/comment:
+    $ref: ./paths/cat-corner.yaml#/api_cat_posts_id_comment
+  /api/cat-posts/{id}/like:
+    $ref: ./paths/cat-corner.yaml#/api_cat_posts_id_like
+  /api/cat-qa/answers/{answerId}:
+    $ref: ./paths/cat-corner.yaml#/api_cat_qa_answers_answerId
+  /api/cat-qa/questions:
+    $ref: ./paths/cat-corner.yaml#/api_cat_qa_questions
+  /api/cat-qa/questions/{id}:
+    $ref: ./paths/cat-corner.yaml#/api_cat_qa_questions_id
+  /api/cat-qa/questions/{id}/answers:
+    $ref: ./paths/cat-corner.yaml#/api_cat_qa_questions_id_answers
+  /api/chat/attachments/{messageId}:
+    $ref: ./paths/chat.yaml#/api_chat_attachments_messageId
+  /api/chat/blocks/{userId}:
+    $ref: ./paths/chat.yaml#/api_chat_blocks_userId
+  /api/chat/conversations:
+    $ref: ./paths/chat.yaml#/api_chat_conversations
+  /api/chat/conversations/{conversationId}/clear:
+    $ref: ./paths/chat.yaml#/api_chat_conversations_conversationId_clear
+  /api/chat/conversations/{conversationId}/media:
+    $ref: ./paths/chat.yaml#/api_chat_conversations_conversationId_media
+  /api/chat/conversations/{conversationId}/messages:
+    $ref: ./paths/chat.yaml#/api_chat_conversations_conversationId_messages
+  /api/chat/conversations/{conversationId}/read:
+    $ref: ./paths/chat.yaml#/api_chat_conversations_conversationId_read
+  /api/chat/conversations/{conversationId}/search:
+    $ref: ./paths/chat.yaml#/api_chat_conversations_conversationId_search
+  /api/chat/conversations/{conversationId}/settings:
+    $ref: ./paths/chat.yaml#/api_chat_conversations_conversationId_settings
+  /api/chat/delivered:
+    $ref: ./paths/chat.yaml#/api_chat_delivered
+  /api/chat/gifs:
+    $ref: ./paths/chat.yaml#/api_chat_gifs
+  /api/chat/messages:
+    $ref: ./paths/chat.yaml#/api_chat_messages
+  /api/chat/messages/{messageId}:
+    $ref: ./paths/chat.yaml#/api_chat_messages_messageId
+  /api/chat/messages/{messageId}/reactions:
+    $ref: ./paths/chat.yaml#/api_chat_messages_messageId_reactions
+  /api/chat/share:
+    $ref: ./paths/chat.yaml#/api_chat_share
+  /api/comments/{commentId}:
+    $ref: ./paths/posts.yaml#/api_comments_commentId
+  /api/comments/{commentId}/replies:
+    $ref: ./paths/posts.yaml#/api_comments_commentId_replies
+  /api/confessions:
+    $ref: ./paths/confessions.yaml#/api_confessions
+  /api/confessions/{id}:
+    $ref: ./paths/confessions.yaml#/api_confessions_id
+  /api/confessions/{id}/polls/{pollId}/vote:
+    $ref: ./paths/confessions.yaml#/api_confessions_id_polls_pollId_vote
+  /api/confessions/{id}/reactions:
+    $ref: ./paths/confessions.yaml#/api_confessions_id_reactions
+  /api/confessions/{id}/user-reactions:
+    $ref: ./paths/confessions.yaml#/api_confessions_id_user_reactions
+  /api/confessions/analytics:
+    $ref: ./paths/confessions.yaml#/api_confessions_analytics
+  /api/confessions/polls/{pollId}/user-voted:
+    $ref: ./paths/confessions.yaml#/api_confessions_polls_pollId_user_voted
+  /api/confessions/random:
+    $ref: ./paths/confessions.yaml#/api_confessions_random
+  /api/dashboard:
+    $ref: ./paths/community.yaml#/api_dashboard
+  /api/events:
+    $ref: ./paths/events.yaml#/api_events
+  /api/events/{id}:
+    $ref: ./paths/events.yaml#/api_events_id
+  /api/events/{id}/rsvp:
+    $ref: ./paths/events.yaml#/api_events_id_rsvp
+  /api/feed:
+    $ref: ./paths/posts.yaml#/api_feed
+  /api/health:
+    $ref: ./paths/health.yaml#/api_health
+  /api/issue-reports:
+    $ref: ./paths/community.yaml#/api_issue_reports
+  /api/jobs:
+    $ref: ./paths/jobs.yaml#/api_jobs
+  /api/jobs/{id}:
+    $ref: ./paths/jobs.yaml#/api_jobs_id
+  /api/jobs/{id}/application-status:
+    $ref: ./paths/jobs.yaml#/api_jobs_id_application_status
+  /api/jobs/{id}/applications:
+    $ref: ./paths/jobs.yaml#/api_jobs_id_applications
+  /api/jobs/{id}/applications/count:
+    $ref: ./paths/jobs.yaml#/api_jobs_id_applications_count
+  /api/jobs/{id}/apply:
+    $ref: ./paths/jobs.yaml#/api_jobs_id_apply
+  /api/jobs/{id}/comments:
+    $ref: ./paths/jobs.yaml#/api_jobs_id_comments
+  /api/jobs/{id}/comments/{commentId}/reply:
+    $ref: ./paths/jobs.yaml#/api_jobs_id_comments_commentId_reply
+  /api/jobs/comments/{commentId}:
+    $ref: ./paths/jobs.yaml#/api_jobs_comments_commentId
+  /api/lost-and-found:
+    $ref: ./paths/lost-and-found.yaml#/api_lost_and_found
+  /api/lost-and-found/{postId}:
+    $ref: ./paths/lost-and-found.yaml#/api_lost_and_found_postId
+  /api/lost-and-found/{postId}/activate:
+    $ref: ./paths/lost-and-found.yaml#/api_lost_and_found_postId_activate
+  /api/lost-and-found/{postId}/resolve:
+    $ref: ./paths/lost-and-found.yaml#/api_lost_and_found_postId_resolve
+  /api/moderation/posts/{postId}/identity-disclosures:
+    $ref: ./paths/admin.yaml#/api_moderation_posts_postId_identity_disclosures
+  /api/posts:
+    $ref: ./paths/posts.yaml#/api_posts
+  /api/posts/{id}:
+    $ref: ./paths/posts.yaml#/api_posts_id
+  /api/posts/{id}/comments:
+    $ref: ./paths/posts.yaml#/api_posts_id_comments
+  /api/posts/{id}/react:
+    $ref: ./paths/posts.yaml#/api_posts_id_react
+  /api/profile:
+    $ref: ./paths/profile.yaml#/api_profile
+  /api/profile-reference-data:
+    $ref: ./paths/profile.yaml#/api_profile_reference_data
+  /api/profile/{userId}:
+    $ref: ./paths/profile.yaml#/api_profile_userId
+  /api/profile/cover:
+    $ref: ./paths/profile.yaml#/api_profile_cover
+  /api/profile/cover/{userId}:
+    $ref: ./paths/profile.yaml#/api_profile_cover_userId
+  /api/profile/me:
+    $ref: ./paths/profile.yaml#/api_profile_me
+  /api/profile/picture:
+    $ref: ./paths/profile.yaml#/api_profile_picture
+  /api/profile/picture/{userId}:
+    $ref: ./paths/profile.yaml#/api_profile_picture_userId
+  /api/profile/upload-cover:
+    $ref: ./paths/profile.yaml#/api_profile_upload_cover
+  /api/profile/upload-picture:
+    $ref: ./paths/profile.yaml#/api_profile_upload_picture
+  /api/reports:
+    $ref: ./paths/community.yaml#/api_reports
+  /api/reports/{id}:
+    $ref: ./paths/community.yaml#/api_reports_id
+  /api/saved-items/{kind}/{id}:
+    $ref: ./paths/community.yaml#/api_saved_items_kind_id
+  /api/search:
+    $ref: ./paths/community.yaml#/api_search
+  /api/uploads:
+    $ref: ./paths/uploads.yaml#/api_uploads
+  /api/user:
+    $ref: ./paths/users.yaml#/api_user
+  /api/user/{userId}:
+    $ref: ./paths/users.yaml#/api_user_userId
+  /api/user/by-student-id/{studentId}:
+    $ref: ./paths/users.yaml#/api_user_by_student_id_studentId
+  /api/user/student-id:
+    $ref: ./paths/users.yaml#/api_user_student_id
+  /api/user/student-id/check/{studentId}:
+    $ref: ./paths/users.yaml#/api_user_student_id_check_studentId
+  /api/users/search:
+    $ref: ./paths/users.yaml#/api_users_search
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Supabase access token (JWT)

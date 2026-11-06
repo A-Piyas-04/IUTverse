@@ -1,0 +1,21 @@
+# Path items for the "health" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_health:
+  get:
+    operationId: health_get
+    tags:
+      - Health
+    summary: Liveness check
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/health/route.ts
+    security: []
+    responses:
+      "200":
+        description: The service is up.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/HealthStatus
+      "500":
+        $ref: ../components/responses.yaml#/E500

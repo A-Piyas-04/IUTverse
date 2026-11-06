@@ -1,0 +1,450 @@
+# Path items for the "profile" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_profile_reference_data:
+  get:
+    operationId: profileReferenceData_getProfileReferenceData
+    tags:
+      - Profile
+    summary: Departments, programs, halls and rooms
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/profile-reference-data/route.ts -> src/server/controllers/profileController.ts#getProfileReferenceData
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ProfileReferenceDataEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile_userId:
+  get:
+    operationId: profile_getProfile
+    tags:
+      - Profile
+    summary: Member profile
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/profile/[userId]/route.ts -> src/server/controllers/profileController.ts#getProfile
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Bare body. The caller's own id returns the OwnerUser superset.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PublicUser
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile_cover_userId:
+  get:
+    operationId: profile_getCoverPicture
+    tags:
+      - Profile
+    summary: Get Cover Picture
+    x-priority: P0
+    x-contract-status: inferred
+    x-source: src/app/api/profile/cover/[userId]/route.ts -> src/server/controllers/profileController.ts#getCoverPicture
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "302":
+        description: Redirect to a signed or public file URL
+        headers:
+          Location:
+            schema:
+              type: string
+              format: uri
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile_cover:
+  delete:
+    operationId: profile_deleteCoverPicture
+    tags:
+      - Profile
+    summary: Delete cover picture
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/profile/cover/route.ts -> src/server/controllers/profileController.ts#deleteCoverPicture
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/BareMessage
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile_me:
+  get:
+    operationId: profile_getOwnProfileMe
+    tags:
+      - Profile
+    summary: Own profile (alias of GET /api/profile)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/profile/me/route.ts -> src/server/controllers/profileController.ts#getOwnProfile
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/OwnerUserEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  patch:
+    operationId: profile_patchOwnProfile
+    tags:
+      - Profile
+    summary: Patch Own Profile
+    x-priority: P0
+    x-contract-status: inferred
+    x-source: src/app/api/profile/me/route.ts -> src/server/controllers/profileController.ts#patchOwnProfile
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/ProfileUpdateRequest
+api_profile_picture_userId:
+  get:
+    operationId: profile_getProfilePicture
+    tags:
+      - Profile
+    summary: Get Profile Picture
+    x-priority: P0
+    x-contract-status: inferred
+    x-source: src/app/api/profile/picture/[userId]/route.ts -> src/server/controllers/profileController.ts#getProfilePicture
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "302":
+        description: Redirect to a signed or public file URL
+        headers:
+          Location:
+            schema:
+              type: string
+              format: uri
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile_picture:
+  delete:
+    operationId: profile_deleteProfilePicture
+    tags:
+      - Profile
+    summary: Delete profile picture
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/profile/picture/route.ts -> src/server/controllers/profileController.ts#deleteProfilePicture
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/BareMessage
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile:
+  get:
+    operationId: profile_getOwnProfile
+    tags:
+      - Profile
+    summary: Own profile (private fields included)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/profile/route.ts -> src/server/controllers/profileController.ts#getOwnProfile
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/OwnerUserEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: profile_createProfile
+    tags:
+      - Profile
+    summary: Create Profile
+    x-priority: P0
+    x-contract-status: inferred
+    x-source: src/app/api/profile/route.ts -> src/server/controllers/profileController.ts#createProfile
+    security:
+      - bearerAuth: []
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/ProfileUpdateRequest
+  put:
+    operationId: profile_updateProfile
+    tags:
+      - Profile
+    summary: Update Profile
+    x-priority: P0
+    x-contract-status: inferred
+    x-source: src/app/api/profile/route.ts -> src/server/controllers/profileController.ts#updateProfile
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/ProfileUpdateRequest
+api_profile_upload_cover:
+  post:
+    operationId: profile_uploadCoverPicture
+    tags:
+      - Profile
+    summary: Upload cover picture
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/profile/upload-cover/route.ts -> src/server/controllers/profileController.ts#uploadCoverPicture
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose cover); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose cover); alternative to sending the file.
+              coverPicture:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PictureUploadResponse
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_profile_upload_picture:
+  post:
+    operationId: profile_uploadProfilePicture
+    tags:
+      - Profile
+    summary: Upload profile picture
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/profile/upload-picture/route.ts -> src/server/controllers/profileController.ts#uploadProfilePicture
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose avatar); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose avatar); alternative to sending the file.
+              profilePicture:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PictureUploadResponse
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

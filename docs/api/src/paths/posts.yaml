@@ -1,0 +1,500 @@
+# Path items for the "posts" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_comments_commentId_replies:
+  get:
+    operationId: comments_getCommentReplies
+    tags:
+      - Posts
+    summary: List replies to a comment
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/comments/[commentId]/replies/route.ts -> src/server/controllers/commentController.ts#getCommentReplies
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/CommentListEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_comments_commentId:
+  put:
+    operationId: comments_updateComment
+    tags:
+      - Posts
+    summary: Edit own comment
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/comments/[commentId]/route.ts -> src/server/controllers/commentController.ts#updateComment
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/CommentUpdateRequest
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/CommentEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: comments_deleteComment
+    tags:
+      - Posts
+    summary: Delete own comment
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/comments/[commentId]/route.ts -> src/server/controllers/commentController.ts#deleteComment
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/MessageEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_feed:
+  get:
+    operationId: feed_getUserFeed
+    tags:
+      - Posts
+    summary: Feed (same department and batch; falls back to all posts)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/feed/route.ts -> src/server/controllers/postController.ts#getUserFeed
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: category
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostListEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_posts_id_comments:
+  get:
+    operationId: posts_getPostComments
+    tags:
+      - Posts
+    summary: List top-level comments of a post
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/posts/[id]/comments/route.ts -> src/server/controllers/commentController.ts#getPostComments
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/CommentListEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: posts_createComment
+    tags:
+      - Posts
+    summary: Comment on a post (idempotent with Idempotency-Key)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/posts/[id]/comments/route.ts -> src/server/controllers/commentController.ts#createComment
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: ../components/parameters.yaml#/IdempotencyKey
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/CommentCreateRequest
+    responses:
+      "201":
+        description: Created, or a replay of an earlier request with the same Idempotency-Key
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/CommentEnvelope
+        headers:
+          Idempotent-Replayed:
+            description: true when this response is a replay of an earlier request with the same Idempotency-Key.
+            schema:
+              type: string
+              enum:
+                - "true"
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_posts_id_react:
+  post:
+    operationId: posts_reactToPost
+    tags:
+      - Posts
+    summary: Toggle or change a reaction
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/posts/[id]/react/route.ts -> src/server/controllers/postController.ts#reactToPost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/PostReactRequest
+    responses:
+      "200":
+        description: Reaction updated or removed
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostReactResponse
+      "201":
+        description: Reaction added
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostReactResponse
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_posts_id:
+  get:
+    operationId: posts_getPost
+    tags:
+      - Posts
+    summary: Get a post
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/posts/[id]/route.ts -> src/server/controllers/postController.ts#getPost
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  put:
+    operationId: posts_updatePost
+    tags:
+      - Posts
+    summary: Update own post
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/posts/[id]/route.ts -> src/server/controllers/postController.ts#updatePost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/PostWriteRequest
+        multipart/form-data:
+          schema:
+            allOf:
+              - $ref: ../components/schemas.yaml#/PostWriteRequest
+              - type: object
+                properties:
+                  image:
+                    type: string
+                    format: binary
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: posts_deletePost
+    tags:
+      - Posts
+    summary: Delete own post
+    x-priority: P0
+    x-contract-status: reviewed
+    x-source: src/app/api/posts/[id]/route.ts -> src/server/controllers/postController.ts#deletePost
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/MessageEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_posts:
+  get:
+    operationId: posts_getPosts
+    tags:
+      - Posts
+    summary: List posts
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/posts/route.ts -> src/server/controllers/postController.ts#getPosts
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: category
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostListEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: posts_createPost
+    tags:
+      - Posts
+    summary: Create a post (idempotent with Idempotency-Key)
+    x-priority: P0
+    x-contract-status: verified
+    x-source: src/app/api/posts/route.ts -> src/server/controllers/postController.ts#createPost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/PostWriteRequest
+        multipart/form-data:
+          schema:
+            allOf:
+              - $ref: ../components/schemas.yaml#/PostWriteRequest
+              - type: object
+                properties:
+                  image:
+                    type: string
+                    format: binary
+    responses:
+      "201":
+        description: Created, or a replay of an earlier request with the same Idempotency-Key
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/PostEnvelope
+        headers:
+          Idempotent-Replayed:
+            description: true when this response is a replay of an earlier request with the same Idempotency-Key.
+            schema:
+              type: string
+              enum:
+                - "true"
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+    parameters:
+      - $ref: ../components/parameters.yaml#/IdempotencyKey

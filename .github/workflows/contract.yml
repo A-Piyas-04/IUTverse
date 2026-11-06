@@ -1,0 +1,131 @@
+name: contract
+
+# The API contract (docs/api) is what the mobile app builds against. This workflow keeps it valid, in sync with
+# the route files, and compatible with the last published version, and publishes new versions as GitHub
+# Releases tagged api-contract-vX.Y.Z. See docs/api/README.md.
+#
+# It has no path filter on purpose: a change to any handler or middleware can change the contract, and the
+# checks take about a minute.
+
+on:
+  push:
+    branches: [development, production]
+    tags: ["api-contract-v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+jobs:
+  # Lint the sources, check the committed bundle and inventory are current, run the structural checks, and run the
+  # contract tests (spec vs routes, spec vs real handler output, gate rules). No secrets are used.
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run contract:check
+      - run: npx vitest run --project server tests/server/contract-surface.test.ts tests/server/contract-responses.test.ts tests/server/contract-gate.test.ts
+
+  # Compare with the latest PUBLISHED contract (an immutable release asset), never with a moving branch, so a series of
+  # small changes cannot walk the baseline. Before the first release there is nothing to compare with.
+  compatibility:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: Download the latest published contract
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName \
+            --jq '[.[].tagName | select(startswith("api-contract-v"))] | sort_by(ltrimstr("api-contract-v") | split(".") | map(tonumber)) | last // empty')
+          if [ -z "$tag" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No api-contract-v* release exists yet, so there is no baseline to compare with."
+            exit 0
+          fi
+          mkdir baseline
+          gh release download "$tag" --repo "$GITHUB_REPOSITORY" --dir baseline \
+            --pattern openapi.yaml --pattern openapi.yaml.sha256 --pattern contract-metadata.json
+          (cd baseline && sha256sum --check openapi.yaml.sha256)
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Baseline: $tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Version rules (immutable versions, bump size)
+        id: gate
+        if: steps.baseline.outputs.found == 'true'
+        run: node scripts/contract/gate.mjs --baseline baseline/openapi.yaml
+
+      # Breaking changes are an error unless the version carries a MAJOR bump.
+      - name: Breaking-change detection (oasdiff)
+        if: steps.baseline.outputs.found == 'true' && steps.gate.outputs.breaking-allowed != 'true'
+        uses: oasdiff/oasdiff-action/breaking@9e56cf8b3aff7edb326d5767d3d23f96127e20c3 # v0.1.21
+        with:
+          base: baseline/openapi.yaml
+          revision: docs/api/openapi.yaml
+          fail-on: ERR
+
+  # Publishes a version as a GitHub Release: a durable, unauthenticated-download location for the contract
+  # (the repository is public). Only runs for api-contract-v* tags. The release is the only place `contents: write` is used.
+  publish:
+    if: github.ref_type == 'tag'
+    needs: [validate, compatibility]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: Tag must match info.version and point at a released branch
+        run: |
+          version=$(node -p "require('yaml').parse(require('fs').readFileSync('docs/api/openapi.yaml','utf8')).info.version")
+          if [ "$GITHUB_REF_NAME" != "api-contract-v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match info.version $version"
+            exit 1
+          fi
+          git fetch --no-tags origin development production
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/development && ! git merge-base --is-ancestor "$GITHUB_SHA" origin/production; then
+            echo "::error::$GITHUB_SHA is on neither development nor production"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - run: npm run contract:check
+      - run: npm run contract:package
+
+      - name: Create the release (fails if the version was already published)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/contract/openapi.yaml dist/contract/openapi.yaml.sha256 dist/contract/contract-metadata.json \
+            --verify-tag --latest=false \
+            --title "API contract $VERSION" \
+            --notes "OpenAPI contract $VERSION for commit $GITHUB_SHA. Assets: openapi.yaml, openapi.yaml.sha256, contract-metadata.json."

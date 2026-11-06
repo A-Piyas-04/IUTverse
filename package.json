@@ -26,7 +26,13 @@
     "migrate:supabase": "node scripts/applySupabaseMigrations.js",
     "security:bootstrap-roles": "node scripts/bootstrapSecurityRoles.js",
     "security:provision-accounts": "node scripts/provisionPrivilegedAccounts.js",
-    "security:scan-env": "node scripts/scanSecrets.js"
+    "security:scan-env": "node scripts/scanSecrets.js",
+    "contract:lint": "redocly lint docs/api/src/openapi.src.yaml --config docs/api/redocly.yaml",
+    "contract:build": "node scripts/contract/build.mjs && node scripts/contract/inventory.mjs",
+    "contract:inventory": "node scripts/contract/inventory.mjs",
+    "contract:check": "npm run contract:lint && node scripts/contract/build.mjs --check && node scripts/contract/check.mjs && node scripts/contract/inventory.mjs --check",
+    "contract:package": "node scripts/contract/package.mjs",
+    "contract:gate": "node scripts/contract/gate.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -47,6 +53,7 @@
     "@eslint/js": "^9.17.0",
     "@next/eslint-plugin-next": "^16.4.2",
     "@playwright/test": "^1.49.1",
+    "@redocly/cli": "^2.72.0",
     "@stryker-mutator/core": "^10.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
@@ -58,6 +65,8 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.1.9",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
@@ -65,7 +74,8 @@
     "supabase": "^2.121.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.19.1",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "yaml": "^2.9.1"
   },
   "overrides": {
     "typed-rest-client": {

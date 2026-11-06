@@ -1,0 +1,644 @@
+# Path items for the "chat" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_chat_attachments_messageId:
+  get:
+    operationId: chat_getAttachment
+    tags:
+      - Chat
+    summary: Open a chat attachment (302 to a signed URL, or JSON with redirect=false)
+    x-priority: P1
+    x-contract-status: verified
+    x-source: src/app/api/chat/attachments/[messageId]/route.ts -> src/server/controllers/chatController.ts#getAttachment
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: ../components/parameters.yaml#/RedirectFlag
+    responses:
+      "200":
+        description: "With redirect=false: the signed URL and when it expires"
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SignedUrlEnvelope
+      "302":
+        description: Redirect to a signed or public file URL
+        headers:
+          Location:
+            schema:
+              type: string
+              format: uri
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_blocks_userId:
+  post:
+    operationId: chat_blockUser
+    tags:
+      - Chat
+    summary: Block User
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/blocks/[userId]/route.ts -> src/server/controllers/chatController.ts#blockUser
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: chat_unblockUser
+    tags:
+      - Chat
+    summary: Unblock User
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/blocks/[userId]/route.ts -> src/server/controllers/chatController.ts#unblockUser
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations_conversationId_clear:
+  post:
+    operationId: chat_clearConversation
+    tags:
+      - Chat
+    summary: Clear Conversation
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/[conversationId]/clear/route.ts -> src/server/controllers/chatController.ts#clearConversation
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations_conversationId_media:
+  get:
+    operationId: chat_conversationMedia
+    tags:
+      - Chat
+    summary: Conversation Media
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/[conversationId]/media/route.ts -> src/server/controllers/chatController.ts#conversationMedia
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: type
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations_conversationId_messages:
+  get:
+    operationId: chat_getMessages
+    tags:
+      - Chat
+    summary: Get Messages
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/[conversationId]/messages/route.ts -> src/server/controllers/chatController.ts#getMessages
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations_conversationId_read:
+  put:
+    operationId: chat_markAsRead
+    tags:
+      - Chat
+    summary: Mark As Read
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/[conversationId]/read/route.ts -> src/server/controllers/chatController.ts#markAsRead
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations_conversationId_search:
+  get:
+    operationId: chat_searchConversation
+    tags:
+      - Chat
+    summary: Search Conversation
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/[conversationId]/search/route.ts -> src/server/controllers/chatController.ts#searchConversation
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: q
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations_conversationId_settings:
+  patch:
+    operationId: chat_updateConversationSettings
+    tags:
+      - Chat
+    summary: Update Conversation Settings
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/[conversationId]/settings/route.ts -> src/server/controllers/chatController.ts#updateConversationSettings
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              mute: {}
+              markedUnread: {}
+              nickname: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_conversations:
+  get:
+    operationId: chat_getConversations
+    tags:
+      - Chat
+    summary: Get Conversations
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/route.ts -> src/server/controllers/chatController.ts#getConversations
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: chat_startConversation
+    tags:
+      - Chat
+    summary: Start Conversation
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/conversations/route.ts -> src/server/controllers/chatController.ts#startConversation
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              otherUserId: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_delivered:
+  post:
+    operationId: chat_markDelivered
+    tags:
+      - Chat
+    summary: Mark Delivered
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/delivered/route.ts -> src/server/controllers/chatController.ts#markDelivered
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_gifs:
+  get:
+    operationId: chat_gifs
+    tags:
+      - Chat
+    summary: Gifs
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/gifs/route.ts -> src/server/controllers/chatController.ts#gifs
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: q
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_messages_messageId_reactions:
+  post:
+    operationId: chat_reactToMessage
+    tags:
+      - Chat
+    summary: React To Message
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/messages/[messageId]/reactions/route.ts -> src/server/controllers/chatController.ts#reactToMessage
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              emoji: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_messages_messageId:
+  patch:
+    operationId: chat_editMessage
+    tags:
+      - Chat
+    summary: Edit Message
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/messages/[messageId]/route.ts -> src/server/controllers/chatController.ts#editMessage
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_chat_messages:
+  post:
+    operationId: chat_sendMessage
+    tags:
+      - Chat
+    summary: Send a message (idempotent with Idempotency-Key)
+    x-priority: P1
+    x-contract-status: verified
+    x-source: src/app/api/chat/messages/route.ts -> src/server/controllers/chatController.ts#sendMessage
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/SendMessageRequest
+        multipart/form-data:
+          schema:
+            allOf:
+              - $ref: ../components/schemas.yaml#/SendMessageRequest
+              - type: object
+                properties:
+                  attachment:
+                    type: string
+                    format: binary
+    responses:
+      "201":
+        description: Created, or a replay of an earlier request with the same Idempotency-Key
+        headers:
+          Idempotent-Replayed:
+            description: true when this response is a replay of an earlier request with the same Idempotency-Key.
+            schema:
+              type: string
+              enum:
+                - "true"
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SendMessageResponse
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+    parameters:
+      - $ref: ../components/parameters.yaml#/IdempotencyKey
+api_chat_share:
+  post:
+    operationId: chat_sharePost
+    tags:
+      - Chat
+    summary: Share Post
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/chat/share/route.ts -> src/server/controllers/chatController.ts#sharePost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              postId: {}
+              message: {}
+              userIds: {}
+              conversationIds: {}
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

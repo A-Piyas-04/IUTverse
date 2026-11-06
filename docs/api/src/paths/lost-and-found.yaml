@@ -1,0 +1,295 @@
+# Path items for the "lost-and-found" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_lost_and_found_postId_activate:
+  patch:
+    operationId: lostAndFound_markAsActive
+    tags:
+      - Lost and found
+    summary: Mark As Active
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/[postId]/activate/route.ts -> src/server/controllers/lostAndFoundController.ts#markAsActive
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_lost_and_found_postId_resolve:
+  patch:
+    operationId: lostAndFound_markAsResolved
+    tags:
+      - Lost and found
+    summary: Mark As Resolved
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/[postId]/resolve/route.ts -> src/server/controllers/lostAndFoundController.ts#markAsResolved
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/GenericObject
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_lost_and_found_postId:
+  get:
+    operationId: lostAndFound_getPostById
+    tags:
+      - Lost and found
+    summary: Get Post By Id
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/[postId]/route.ts -> src/server/controllers/lostAndFoundController.ts#getPostById
+    security:
+      - {}
+      - bearerAuth: []
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  patch:
+    operationId: lostAndFound_updatePost
+    tags:
+      - Lost and found
+    summary: Update Post
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/[postId]/route.ts -> src/server/controllers/lostAndFoundController.ts#updatePost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type: {}
+              occurredAt: {}
+              privacyAccepted: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose lostFound); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              type: {}
+              occurredAt: {}
+              privacyAccepted: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose lostFound); alternative to sending the file.
+              image:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: lostAndFound_deletePost
+    tags:
+      - Lost and found
+    summary: Delete Post
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/[postId]/route.ts -> src/server/controllers/lostAndFoundController.ts#deletePost
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "409":
+        $ref: ../components/responses.yaml#/E409
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_lost_and_found:
+  get:
+    operationId: lostAndFound_getAllPosts
+    tags:
+      - Lost and found
+    summary: Get All Posts
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/route.ts -> src/server/controllers/lostAndFoundController.ts#getAllPosts
+    security:
+      - {}
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: type
+        in: query
+        required: false
+        schema: {}
+      - name: status
+        in: query
+        required: false
+        schema: {}
+      - name: search
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: lostAndFound_createPost
+    tags:
+      - Lost and found
+    summary: Create Post
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/lost-and-found/route.ts -> src/server/controllers/lostAndFoundController.ts#createPost
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose lostFound); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose lostFound); alternative to sending the file.
+              image:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

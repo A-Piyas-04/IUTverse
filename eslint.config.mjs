@@ -45,6 +45,11 @@ export default tseslint.config(
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   {
+    // The API contract tooling (docs/api build, checks, inventory) is ES modules running in Node.
+    files: ["scripts/contract/**/*.mjs"],
+    languageOptions: { globals: globals.node, sourceType: "module" },
+  },
+  {
     // Test servers that run in Node, e.g. the mock OAuth provider.
     files: ["e2e/**/*.mjs"],
     languageOptions: { globals: globals.node },

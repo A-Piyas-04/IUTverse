@@ -1,0 +1,241 @@
+# Path items for the "events" area. Generated once by a static scan of the route files, then maintained by hand.
+# x-contract-status: verified = checked by a conformance test; reviewed = schema derived by reading the handler; inferred = status codes and field names scanned from the handler only.
+api_events_id:
+  put:
+    operationId: events_updateEvent
+    tags:
+      - Events
+    summary: Update Event
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/events/[id]/route.ts -> src/server/controllers/communityController.ts#updateEvent
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              eventDate: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose event); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              eventDate: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose event); alternative to sending the file.
+              image:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  delete:
+    operationId: events_deleteEvent
+    tags:
+      - Events
+    summary: Delete Event
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/events/[id]/route.ts -> src/server/controllers/communityController.ts#deleteEvent
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "404":
+        $ref: ../components/responses.yaml#/E404
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_events_id_rsvp:
+  put:
+    operationId: events_updateRsvp
+    tags:
+      - Events
+    summary: Update Rsvp
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/events/[id]/rsvp/route.ts -> src/server/controllers/communityController.ts#updateRsvp
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status: {}
+            additionalProperties: true
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+api_events:
+  get:
+    operationId: events_listEvents
+    tags:
+      - Events
+    summary: List Events
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/events/route.ts -> src/server/controllers/communityController.ts#listEvents
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Limit
+      - name: type
+        in: query
+        required: false
+        schema: {}
+    responses:
+      "200":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500
+  post:
+    operationId: events_createEvent
+    tags:
+      - Events
+    summary: Create Event
+    x-priority: P1
+    x-contract-status: inferred
+    x-source: src/app/api/events/route.ts -> src/server/controllers/communityController.ts#createEvent
+    x-rate-limit-class: createLimiter
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title: {}
+              description: {}
+              location: {}
+              eventDate: {}
+              type: {}
+              clubName: {}
+              category: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose event); alternative to sending the file.
+            additionalProperties: true
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title: {}
+              description: {}
+              location: {}
+              eventDate: {}
+              type: {}
+              clubName: {}
+              category: {}
+              uploadPath:
+                type: string
+                description: Object path from POST /api/uploads (purpose event); alternative to sending the file.
+              image:
+                type: string
+                format: binary
+            additionalProperties: true
+    responses:
+      "201":
+        description: Success
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SuccessEnvelope
+      "400":
+        $ref: ../components/responses.yaml#/E400
+      "401":
+        $ref: ../components/responses.yaml#/E401
+      "403":
+        $ref: ../components/responses.yaml#/E403
+      "429":
+        $ref: ../components/responses.yaml#/E429
+      "500":
+        $ref: ../components/responses.yaml#/E500

@@ -1,0 +1,594 @@
+# Shared schemas (OpenAPI 3.0.3 dialect: `nullable: true`, no type arrays).
+#
+# Conventions documented from the implementation, not imposed on it:
+#   * Identifiers: members are UUID strings; content (posts, comments, jobs, conversations, ...) uses positive integers.
+#   * Timestamps: ISO 8601 strings in UTC as produced by PostgREST (`timestamptz`).
+#   * Optional vs null: unknown values are usually `null`, not omitted. Clients must accept both.
+#   * Envelopes: most routes answer `{ success: true, data, message?, pagination? }`; some answer a bare object or a
+#     route-specific body. Each operation's response schema says which.
+
+# ---------------------------------------------------------------- generic
+
+GenericObject:
+  type: object
+  description: A JSON object whose fields are not yet documented (contract status `inferred`).
+  additionalProperties: true
+
+SuccessEnvelope:
+  type: object
+  description: Standard success envelope. `data` is present on most responses; its shape is operation-specific.
+  required: [success]
+  properties:
+    success: { type: boolean, enum: [true] }
+    message: { type: string }
+    data: {}
+    pagination: { $ref: "#/PaginationMeta" }
+  additionalProperties: true
+
+MessageEnvelope:
+  type: object
+  required: [success, message]
+  properties:
+    success: { type: boolean, enum: [true] }
+    message: { type: string }
+  additionalProperties: true
+
+ErrorBody:
+  type: object
+  description: >-
+    Error body. `message` is always present. `success: false` is present on most errors but not all
+    (some controllers answer `{ message }` only). `code` is a stable machine-readable value and is
+    currently emitted by the authentication step and by Idempotency-Key handling only; clients must not require it elsewhere.
+  required: [message]
+  properties:
+    success: { type: boolean, enum: [false] }
+    message: { type: string }
+    code:
+      type: string
+      description: Stable error code. Unknown values must be treated as a generic error of that HTTP status.
+      enum: [AUTH_TOKEN_REQUIRED, AUTH_TOKEN_INVALID, MEMBERSHIP_REQUIRED, IDEMPOTENCY_KEY_INVALID, IDEMPOTENCY_KEY_REUSED]
+    error:
+      type: string
+      description: Internal detail. Only sent when the server runs with EXPOSE_ERRORS outside production.
+  additionalProperties: true
+
+PaginationMeta:
+  type: object
+  description: >-
+    Page metadata. `page`, `limit` and `totalPages` are always present. The total count key differs by
+    endpoint: `total` (most), `totalPosts` (posts, feed), `totalComments` (post comments). Clients must read
+    whichever is present.
+  required: [page, limit]
+  properties:
+    page: { type: integer, minimum: 1 }
+    limit: { type: integer, minimum: 1 }
+    totalPages: { type: integer, minimum: 0 }
+    total: { type: integer, minimum: 0 }
+    totalPosts: { type: integer, minimum: 0 }
+    totalComments: { type: integer, minimum: 0 }
+  additionalProperties: true
+
+HealthStatus:
+  type: object
+  required: [status]
+  properties:
+    status: { type: string, enum: [ok] }
+
+# ---------------------------------------------------------------- members
+
+MemberSummary:
+  type: object
+  nullable: true
+  description: Minimal public member card embedded in posts, comments and reactions. Null for anonymous content or when the profile is missing.
+  required: [id]
+  properties:
+    id: { type: string, format: uuid }
+    name: { type: string, nullable: true }
+    displayName: { type: string, nullable: true }
+    handle: { type: string, nullable: true }
+    batch: { type: integer, nullable: true }
+    department: { type: string, nullable: true }
+    profilePictureUrl: { type: string, nullable: true, description: "Public URL, absolute when Storage is configured." }
+    profile:
+      type: object
+      properties:
+        profilePicture: { type: string, nullable: true, description: Storage object path. }
+
+PublicUserProfile:
+  type: object
+  properties:
+    bio: { type: string, nullable: true }
+    profilePicture: { type: string, nullable: true, description: Storage object path. }
+    coverPicture: { type: string, nullable: true, description: Storage object path. }
+    interests: { type: array, items: { type: string } }
+    badges: { type: array, items: { type: string } }
+
+PublicUser:
+  type: object
+  description: A member as other members see them. Email, role and student ID are never included.
+  required: [id]
+  properties:
+    id: { type: string, format: uuid }
+    name: { type: string, nullable: true }
+    displayName: { type: string, nullable: true }
+    handle: { type: string, nullable: true }
+    department: { type: string, nullable: true }
+    departmentId: { type: integer, nullable: true }
+    batch: { type: integer, nullable: true }
+    createdAt: { type: string, format: date-time }
+    profilePictureUrl: { type: string, nullable: true }
+    coverPictureUrl: { type: string, nullable: true }
+    profile: { $ref: "#/PublicUserProfile" }
+
+OwnerUser:
+  description: "The signed-in member's own profile: the public fields plus private ones."
+  allOf:
+    - $ref: "#/PublicUser"
+    - type: object
+      properties:
+        studentId: { type: string, nullable: true }
+        privacy: { type: object, additionalProperties: true }
+        profile:
+          type: object
+          properties:
+            collegeName: { type: string, nullable: true }
+            schoolName: { type: string, nullable: true }
+            hometown: { type: string, nullable: true }
+            currentProgram: { type: string, nullable: true }
+            programId: { type: integer, nullable: true }
+            currentYear: { type: string, nullable: true }
+            currentSemester: { type: string, nullable: true }
+            currentHall: { type: string, nullable: true }
+            hallId: { type: integer, nullable: true }
+            currentResidence: { type: string, nullable: true }
+            residencyType: { type: string, nullable: true, enum: [resident, non_resident, null] }
+            residentGender: { type: string, nullable: true, enum: [male, female, null] }
+            currentRoom: { type: string, nullable: true }
+            roomId: { type: integer, nullable: true }
+            currentBed: { type: string, nullable: true }
+
+Me:
+  type: object
+  description: Identity of the authenticated, active member.
+  required: [id, email, role, membershipStatus]
+  properties:
+    id: { type: string, format: uuid }
+    email: { type: string }
+    displayName: { type: string, nullable: true }
+    role: { type: string, enum: [user, mod, admin] }
+    membershipStatus: { type: string, description: Always `active` on a successful call. }
+
+MeEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/Me" }
+
+ValidateTokenResponse:
+  type: object
+  description: Bare body (no `success`, no `data`).
+  required: [message, user]
+  properties:
+    message: { type: string }
+    user:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string, nullable: true }
+        role: { type: string }
+
+OwnerUserEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/OwnerUser" }
+
+PublicUserEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/PublicUser" }
+
+PublicUserListEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { type: array, items: { $ref: "#/PublicUser" } }
+
+ProfileUpdateRequest:
+  type: object
+  description: >-
+    Partial update. Unknown keys are ignored. `departmentId`, `programId`, `hallId` and `roomId` are checked against
+    reference data; see GET /api/profile-reference-data.
+  properties:
+    bio: { type: string }
+    interests: { type: array, items: { type: string } }
+    name: { type: string }
+    displayName: { type: string }
+    handle: { type: string }
+    departmentId: { type: integer, nullable: true }
+    batch: { type: integer }
+    profilePicture: { type: string }
+    coverPicture: { type: string }
+    studentId: { type: string }
+    privacy: { type: object, additionalProperties: true }
+    collegeName: { type: string }
+    schoolName: { type: string }
+    hometown: { type: string }
+    programId: { type: integer, nullable: true }
+    currentYear: { type: string }
+    currentSemester: { type: string }
+    hallId: { type: integer, nullable: true }
+    roomId: { type: integer, nullable: true }
+    residencyType: { type: string, enum: [resident, non_resident] }
+    residentGender: { type: string, enum: [male, female] }
+    nonResidentAddress: { type: string }
+    currentBed: { type: string }
+  additionalProperties: true
+
+ProfileReferenceData:
+  type: object
+  required: [departments, programs, halls, rooms]
+  properties:
+    departments:
+      type: array
+      items: { type: object, required: [id, name], properties: { id: { type: integer }, name: { type: string } } }
+    programs:
+      type: array
+      items:
+        type: object
+        required: [id, departmentId, code, name]
+        properties: { id: { type: integer }, departmentId: { type: integer }, code: { type: string }, name: { type: string } }
+    halls:
+      type: array
+      items: { type: object, required: [id, name], properties: { id: { type: integer }, name: { type: string } } }
+    rooms:
+      type: array
+      items:
+        type: object
+        required: [id, hallId, roomNumber]
+        properties: { id: { type: integer }, hallId: { type: integer }, roomNumber: { type: string } }
+
+ProfileReferenceDataEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/ProfileReferenceData" }
+
+UpdateUserNameRequest:
+  type: object
+  required: [name]
+  properties:
+    name: { type: string, minLength: 2, maxLength: 50 }
+
+UpdateUserNameResponse:
+  type: object
+  description: Bare body (no `success`).
+  required: [message, user]
+  properties:
+    message: { type: string }
+    user:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, nullable: true }
+        name: { type: string, nullable: true }
+        department: { type: string, nullable: true }
+        batch: { type: integer, nullable: true }
+        studentId: { type: string, nullable: true }
+        updatedAt: { type: string, format: date-time }
+
+PictureUploadResponse:
+  type: object
+  description: Bare body returned after a profile or cover picture upload.
+  required: [message]
+  properties:
+    message: { type: string }
+    profilePicture: { type: string, description: Storage object path (profile picture only). }
+    profilePictureUrl: { type: string, nullable: true }
+    coverPicture: { type: string }
+    coverPictureUrl: { type: string, nullable: true }
+    profile: { type: object, additionalProperties: true }
+  additionalProperties: true
+
+BareMessage:
+  type: object
+  description: Bare body `{ message }` used by several profile routes.
+  required: [message]
+  properties:
+    message: { type: string }
+
+# ---------------------------------------------------------------- posts
+
+ReactionType:
+  type: string
+  enum: [like, funny, relatable, angry, insightful, helpful, wholesome]
+
+ReactionSummary:
+  type: object
+  description: Count per reaction type. All seven keys are always present.
+  required: [like, funny, relatable, angry, insightful, helpful, wholesome]
+  properties:
+    like: { type: integer }
+    funny: { type: integer }
+    relatable: { type: integer }
+    angry: { type: integer }
+    insightful: { type: integer }
+    helpful: { type: integer }
+    wholesome: { type: integer }
+
+PostReaction:
+  type: object
+  required: [id, postId, userId, reactionType]
+  properties:
+    id: { type: integer }
+    postId: { type: integer }
+    userId: { type: string, format: uuid }
+    reactionType: { type: string, description: One of the ReactionType values. }
+    user: { $ref: "#/MemberSummary" }
+
+Comment:
+  type: object
+  required: [id, postId, content, createdAt, isAnonymous]
+  properties:
+    id: { type: integer }
+    postId: { type: integer }
+    userId: { type: string, format: uuid, nullable: true, description: Null for anonymous comments. }
+    authorId: { type: string, format: uuid, nullable: true, description: Null for anonymous comments. }
+    isAnonymous: { type: boolean }
+    content: { type: string }
+    createdAt: { type: string, format: date-time }
+    updatedAt: { type: string, format: date-time }
+    parentCommentId: { type: integer, nullable: true }
+    user: { $ref: "#/MemberSummary" }
+    replies: { type: array, items: { $ref: "#/Comment" } }
+    _count:
+      type: object
+      properties:
+        replies: { type: integer }
+
+Post:
+  type: object
+  required: [id, content, createdAt, isAnonymous, reactionSummary, reactions, comments]
+  properties:
+    id: { type: integer }
+    userId: { type: string, format: uuid, nullable: true, description: Null for anonymous posts. }
+    authorId: { type: string, format: uuid, nullable: true, description: Null for anonymous posts. }
+    content: { type: string }
+    category: { type: string, nullable: true }
+    isAnonymous: { type: boolean }
+    createdAt: { type: string, format: date-time }
+    updatedAt: { type: string, format: date-time }
+    image: { type: string, nullable: true, description: Storage object path. }
+    imageUrl: { type: string, nullable: true }
+    likesCount: { type: integer, nullable: true }
+    reactionCount: { type: integer }
+    reactionSummary: { $ref: "#/ReactionSummary" }
+    currentReaction:
+      type: string
+      nullable: true
+      description: The caller's reaction, if any. One of the ReactionType values.
+    commentCount: { type: integer, nullable: true }
+    user: { $ref: "#/MemberSummary" }
+    tags:
+      type: array
+      items:
+        type: object
+        properties:
+          tag:
+            type: object
+            nullable: true
+            properties: { id: { type: integer }, name: { type: string } }
+    reactions: { type: array, items: { $ref: "#/PostReaction" } }
+    comments:
+      type: array
+      description: The latest top-level comments (3 in lists, up to 100 on the detail endpoint).
+      items: { $ref: "#/Comment" }
+    _count:
+      type: object
+      properties:
+        comments: { type: integer, nullable: true }
+        reactions: { type: integer, nullable: true }
+
+PostEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/Post" }
+
+PostListEnvelope:
+  type: object
+  required: [success, data, pagination]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { type: array, items: { $ref: "#/Post" } }
+    pagination: { $ref: "#/PaginationMeta" }
+
+CommentEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/Comment" }
+
+CommentListEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { type: array, items: { $ref: "#/Comment" } }
+    pagination: { $ref: "#/PaginationMeta" }
+
+PostWriteRequest:
+  type: object
+  description: JSON or multipart. At least one of `content` or an image is required on create.
+  properties:
+    content: { type: string, maxLength: 5000 }
+    category: { type: string, maxLength: 80 }
+    isAnonymous: { type: boolean }
+    uploadPath: { type: string, description: "Object path from POST /api/uploads (purpose `post`), instead of sending the file." }
+
+CommentCreateRequest:
+  type: object
+  required: [content]
+  properties:
+    content: { type: string, maxLength: 2000 }
+    parentCommentId: { type: integer }
+    isAnonymous: { type: boolean }
+
+CommentUpdateRequest:
+  type: object
+  required: [content]
+  properties:
+    content: { type: string, maxLength: 2000 }
+
+PostReactRequest:
+  type: object
+  required: [reactionType]
+  properties:
+    reactionType: { $ref: "#/ReactionType" }
+
+PostReactResponse:
+  type: object
+  required: [success, message, action, reactionCount]
+  properties:
+    success: { type: boolean, enum: [true] }
+    message: { type: string }
+    action: { type: string, enum: [added, updated, removed] }
+    reactionCount: { type: integer }
+
+# ---------------------------------------------------------------- uploads
+
+UploadIntentRequest:
+  type: object
+  required: [purpose, mimeType, size]
+  properties:
+    purpose: { type: string, enum: [avatar, cover, post, lostFound, catPost, event, resource, chat] }
+    mimeType: { type: string, description: "Must be allowed for the purpose (images, PDF for `resource`/`chat`, video/audio for `chat`)." }
+    size: { type: integer, minimum: 1, description: "Bytes. Limits: avatar 2 MB, cover/post/lostFound/catPost/event 5 MB, resource 10 MB, chat 10 MB (video 50 MB)." }
+    conversationId: { type: integer, minimum: 1, description: Required when purpose is `chat`. }
+
+UploadIntent:
+  type: object
+  required: [purpose, bucket, path, token, signedUrl, mimeType, maxBytes]
+  properties:
+    purpose: { type: string }
+    bucket: { type: string }
+    path: { type: string, description: Pass this back as `uploadPath` to the route that uses the file. The upload is an unused orphan until a route claims it. }
+    token: { type: string, description: Supabase Storage signed-upload token. Short lived; do not log. }
+    signedUrl: { type: string, format: uri, description: "Where to PUT the file bytes. The client-facing Storage address (not the server's internal one), with the secret token in its query. Never log it, and never send the bearer token to it." }
+    mimeType: { type: string }
+    maxBytes: { type: integer }
+    expiresAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: When the signed upload stops working, read from the token's own expiry. Null if it could not be read. Upload before this time; request a new intent afterwards.
+
+UploadIntentEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    message: { type: string }
+    data: { $ref: "#/UploadIntent" }
+
+# ---------------------------------------------------------------- signed downloads (Phase D)
+
+SignedUrl:
+  type: object
+  required: [url, expiresAt]
+  properties:
+    url: { type: string, format: uri, description: A signed URL. Treat it as a secret while it is valid; never log it. }
+    expiresAt: { type: string, format: date-time, description: When the URL stops working. Ask the endpoint again for a fresh one while you are still authorized. }
+
+SignedUrlEnvelope:
+  type: object
+  required: [success, data]
+  properties:
+    success: { type: boolean, enum: [true] }
+    data: { $ref: "#/SignedUrl" }
+
+# ---------------------------------------------------------------- chat send (Phase D)
+
+ChatAttachment:
+  type: object
+  nullable: true
+  properties:
+    url: { type: string, nullable: true, description: "Signed URL valid for about one hour. Refresh by fetching the message list or GET /api/chat/attachments/{messageId}?redirect=false." }
+    name: { type: string, nullable: true }
+    mimeType: { type: string, nullable: true }
+    size: { type: integer, nullable: true }
+    width: { type: integer, nullable: true }
+    height: { type: integer, nullable: true }
+    durationMs: { type: integer, nullable: true }
+    waveform: { type: array, nullable: true, items: { type: number } }
+
+ChatMessage:
+  type: object
+  required: [id, conversationId, senderId, kind, content, sentAt]
+  properties:
+    id: { type: integer }
+    conversationId: { type: integer }
+    senderId: { type: string, format: uuid }
+    receiverId: { type: string, nullable: true, description: Always null; kept for compatibility. }
+    kind: { type: string, enum: [text, image, video, audio, file, gif, post] }
+    content: { type: string }
+    sentAt: { type: string, format: date-time }
+    deliveredAt: { type: string, format: date-time, nullable: true }
+    readAt: { type: string, format: date-time, nullable: true }
+    editedAt: { type: string, format: date-time, nullable: true }
+    isRead: { type: boolean }
+    attachment: { $ref: "#/ChatAttachment" }
+    attachmentUrl: { type: string, nullable: true }
+    attachmentName: { type: string, nullable: true }
+    gif:
+      type: object
+      nullable: true
+      properties:
+        url: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+    sharedPost: { type: object, nullable: true, additionalProperties: true }
+    reactions:
+      type: array
+      items:
+        type: object
+        properties:
+          emoji: { type: string }
+          userId: { type: string, format: uuid }
+    sender: { $ref: "#/MemberSummary" }
+
+SendMessageRequest:
+  type: object
+  description: JSON or multipart (multipart sends every value as text). One of a file, a GIF or a shared post per message.
+  required: [conversationId]
+  properties:
+    conversationId: { type: integer, minimum: 1 }
+    content: { type: string, maxLength: 4000 }
+    uploadPath: { type: string, description: "Object path from POST /api/uploads (purpose chat), instead of sending the file." }
+    attachmentName: { type: string, maxLength: 200 }
+    attachmentWidth: { type: integer, minimum: 1, maximum: 20000 }
+    attachmentHeight: { type: integer, minimum: 1, maximum: 20000 }
+    attachmentDurationMs: { type: integer, minimum: 0, maximum: 3600000 }
+    attachmentWaveform: { description: Waveform samples for voice messages. }
+    gifUrl: { type: string, format: uri }
+    gifWidth: { type: integer, minimum: 1, maximum: 4000 }
+    gifHeight: { type: integer, minimum: 1, maximum: 4000 }
+    sharedPostId: { type: integer, minimum: 1 }
+
+SendMessageResponse:
+  type: object
+  description: Bare body (no `success`).
+  required: [message, data]
+  properties:
+    message: { type: string }
+    data: { $ref: "#/ChatMessage" }
