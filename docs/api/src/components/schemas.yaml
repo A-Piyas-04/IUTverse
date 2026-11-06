@@ -364,6 +364,7 @@ Post:
     content: { type: string }
     category: { type: string, nullable: true }
     isAnonymous: { type: boolean }
+    isOwner: { type: boolean, description: "True only for the post's author, including on anonymous posts." }
     createdAt: { type: string, format: date-time }
     updatedAt: { type: string, format: date-time }
     image: { type: string, nullable: true, description: Storage object path. }

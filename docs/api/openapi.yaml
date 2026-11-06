@@ -1941,6 +1941,8 @@ paths:
           $ref: '#/components/responses/E401'
         '403':
           $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
         '429':
           $ref: '#/components/responses/E429'
         '500':
@@ -2550,7 +2552,8 @@ paths:
       operationId: feed_getUserFeed
       tags:
         - Posts
-      summary: Feed (same department and batch; falls back to all posts)
+      summary: Home feed, by tab
+      description: '`for_you` (the default) lists named posts from the caller''s department and batch, and falls back to all posts for a member with neither. `department` and `batch` widen to one of the two, and are empty for a member without that detail. `resources` lists posts in the resource category.'
       x-priority: P0
       x-contract-status: verified
       x-source: src/app/api/feed/route.ts -> src/server/controllers/postController.ts#getUserFeed
@@ -2563,6 +2566,23 @@ paths:
           in: query
           required: false
           schema: {}
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - for_you
+              - department
+              - batch
+              - resources
+            default: for_you
+        - name: search
+          in: query
+          required: false
+          description: Keep posts whose text contains this.
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -3593,7 +3613,21 @@ paths:
         - name: category
           in: query
           required: false
+          description: 'A category name, or a Community tab: `Media` (posts with an image), `Department` or `Batch` (named posts from the caller''s own), `Questions`, `Resources`. `All` lists everything.'
           schema: {}
+        - name: search
+          in: query
+          required: false
+          description: Keep posts whose text contains this.
+          schema:
+            type: string
+        - name: userId
+          in: query
+          required: false
+          description: Only this member's posts, as shown on their profile. Their anonymous posts are included only when the caller is that member.
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Success
@@ -3601,6 +3635,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostListEnvelope'
+        '400':
+          $ref: '#/components/responses/E400'
         '401':
           $ref: '#/components/responses/E401'
         '403':
@@ -3872,6 +3908,8 @@ paths:
           $ref: '#/components/responses/E401'
         '403':
           $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
         '409':
           $ref: '#/components/responses/E409'
         '429':
@@ -3922,6 +3960,8 @@ paths:
           $ref: '#/components/responses/E401'
         '403':
           $ref: '#/components/responses/E403'
+        '404':
+          $ref: '#/components/responses/E404'
         '429':
           $ref: '#/components/responses/E429'
         '500':
@@ -5533,6 +5573,9 @@ components:
           nullable: true
         isAnonymous:
           type: boolean
+        isOwner:
+          type: boolean
+          description: True only for the post's author, including on anonymous posts.
         createdAt:
           type: string
           format: date-time

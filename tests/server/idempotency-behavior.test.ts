@@ -282,6 +282,11 @@ describe("posts", () => {
 });
 
 describe("comments", () => {
+  // Replies need a live post to land on.
+  beforeEach(() => {
+    posts.rows.push({ id: 5, status: "active" }, { id: 6, status: "active" });
+  });
+
   const comment = (body: object, key?: string, postId = 5, token = "user-token") =>
     request("POST", `/api/posts/${postId}/comments`, { token, body, headers: key ? { "Idempotency-Key": key } : {} });
 
@@ -304,6 +309,16 @@ describe("comments", () => {
     await comment({ content: "Nice" }, KEY);
     expect((await comment({ content: "Other words" }, KEY)).status).toBe(409);
     expect((await comment({ content: "Nice" }, KEY, 6)).status).toBe(409);
+    expect(comments.rows).toHaveLength(1);
+  });
+
+  it("a retry still gets its reply after the post is hidden, but a new reply does not land", async () => {
+    const first = await comment({ content: "Nice" }, KEY);
+    posts.rows[0].status = "archived";
+    const retry = await comment({ content: "Nice" }, KEY);
+    expect(retry.status).toBe(201);
+    expect(retry.body.data.id).toBe(first.body.data.id);
+    expect((await comment({ content: "Nice" }, KEY_2)).status).toBe(404);
     expect(comments.rows).toHaveLength(1);
   });
 

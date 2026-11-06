@@ -44,7 +44,9 @@ export interface Comment {
   id: number;
   content: string;
   author?: Profile;
+  user?: Profile | null;
   authorId?: string;
+  isAnonymous?: boolean;
   createdAt: string;
   parentCommentId?: number | null;
   replies?: Comment[];
@@ -69,6 +71,8 @@ export interface Post {
   image?: string;
   category?: string;
   isAnonymous?: boolean;
+  /** True only for the post's author, including on anonymous posts. */
+  isOwner?: boolean;
   createdAt: string;
   reactionCount?: number;
   commentCount?: number;

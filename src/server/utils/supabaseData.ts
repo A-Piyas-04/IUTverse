@@ -26,6 +26,16 @@ export const publicUrl = (bucket?: string | null, objectPath?: string | null): s
   return storageService.publicUrl(bucket, objectPath);
 };
 
+// Post images are stored under the uploader's id, and the bucket is public, so
+// the path of an anonymous post's image would name its author. Such images move
+// to a neutral folder (anonymizePostImage); until then they are not shown.
+export const postImagePath = (post: any): string | null => {
+  if (!post?.image_path) return null;
+  return post.is_anonymous && String(post.image_path).startsWith(`${post.author_id}/`) ? null : post.image_path;
+};
+
+export const postImageUrl = (post: any) => publicUrl(post?.image_bucket, postImagePath(post));
+
 export const mapProfile = (profile: any) => {
   if (!profile) return null;
 

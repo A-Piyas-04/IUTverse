@@ -57,6 +57,7 @@ export const createComment: Handler = async (ctx) => {
     if ("error" in idempotency) return idempotency.error;
     const key = idempotency.key;
     const anonymous = ctx.body.isAnonymous === true || ctx.body.isAnonymous === "true";
+
     const replay = (existing: any) => {
       if (
         existing.post_id !== postIdResult.value ||
@@ -77,6 +78,17 @@ export const createComment: Handler = async (ctx) => {
     if (key) {
       const existing = await findExisting();
       if (existing) return replay(existing);
+    }
+
+    // Only live posts take new replies, and a reply must stay on its parent's post.
+    // This follows the replay above: a retry of a saved reply still gets its answer.
+    const { data: post, error: postError } = await supabase.from("posts").select("id, status").eq("id", postIdResult.value).maybeSingle();
+    if (postError) throw postError;
+    if (post?.status !== "active") return notFound("Post not found");
+    if (parentResult.value) {
+      const { data: parent, error: parentError } = await supabase.from("post_comments").select("id, post_id, status").eq("id", parentResult.value).maybeSingle();
+      if (parentError) throw parentError;
+      if (parent?.post_id !== postIdResult.value || parent.status !== "active") return badRequest("Parent comment not found on this post");
     }
 
     const { data, error } = await supabase
@@ -146,6 +158,16 @@ export const getCommentReplies: Handler = async (ctx) => {
     const commentIdResult = positiveInt(ctx.params.commentId, "Comment ID");
     if (!commentIdResult.ok) return badRequest(commentIdResult.error);
 
+    // Replies are only as visible as the comment and post they belong to.
+    const { data: parent, error: parentError } = await supabase
+      .from("post_comments")
+      .select("id, status, post:posts!post_comments_post_id_fkey(status, author_id)")
+      .eq("id", commentIdResult.value)
+      .maybeSingle();
+    if (parentError) throw parentError;
+    const post = (parent as any)?.post;
+    if (parent?.status !== "active" || !post || !canViewContent({ status: post.status, ownerId: post.author_id, viewer: ctx.user })) return notFound("Comment not found");
+
     const { data, error } = await supabase
       .from("post_comments")
       .select(commentSelect)
@@ -175,6 +197,7 @@ export const updateComment: Handler = async (ctx) => {
     if (findError) throw findError;
     if (!existing) return notFound("Comment not found");
     if (existing.author_id !== ctx.user!.id) return forbidden("Unauthorized");
+    if (existing.status !== "active") return forbidden("This comment is under moderation and cannot be edited");
 
     const { data, error } = await supabase
       .from("post_comments")

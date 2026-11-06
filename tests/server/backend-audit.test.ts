@@ -229,7 +229,7 @@ describe("data handling", () => {
   it("BUG-023/024/026 post pagination counts the filtered set; categories and reactions upsert", () => {
     const posts = read("src/server/controllers/postController.ts");
     expect(posts).toMatch(/count: "exact"/);
-    expect(posts).toMatch(/if \(idsFilter\) query = query\.in\("id", idsFilter\)/);
+    expect(posts).toMatch(/if \(categoryIds\) query = query\.in\("id", categoryIds\)/);
     expect(posts).not.toMatch(/Prisma|category\s*String/);
     expect(posts).toMatch(/attachCategory/);
     expect(posts).toMatch(/\.upsert\(/);
@@ -266,7 +266,7 @@ describe("data handling", () => {
   });
 
   it("BUG-049 the feed falls back safely without a department or batch", () => {
-    expect(read("src/server/controllers/postController.ts")).toMatch(/if \(!profile\?\.department_id && !profile\?\.batch\)/);
+    expect(read("src/server/controllers/postController.ts")).toMatch(/if \(!department_id && !batch\)/);
   });
 
   it("BUG-050 direct conversations are looked up by direct_key", () => {

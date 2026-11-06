@@ -1,12 +1,13 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import type { Handler } from "../http/context";
 import { badRequest, forbidden, json, notFound, serverError } from "../http/responses";
 import { isPublicError } from "../http/errors";
 import { isUniqueViolation, keyReusedError, publicErrorResponse, readIdempotencyKey, REPLAYED_HEADER } from "../http/idempotency";
 import { removeObject } from "../services/storageService";
 import logger from "../utils/logger";
-import { ensureSupabaseAdmin, mapProfile, pageRange, profileSelect, publicUrl, uploadToBucket } from "../utils/supabaseData";
-import { optionalText, positiveInt, requiredText } from "../utils/validation";
+import { ensureSupabaseAdmin, mapProfile, pageRange, postImagePath, postImageUrl, profileSelect, uploadToBucket } from "../utils/supabaseData";
+import { filterSearchTerm, optionalText, positiveInt, requiredText, uuid } from "../utils/validation";
 import { canViewContent } from "../utils/contentVisibility";
 
 const mapReaction = (reaction: any) => ({
@@ -65,8 +66,10 @@ const mapPost = (post: any, currentUserId: string | null = null) => {
     isAnonymous: post.is_anonymous,
     createdAt: post.created_at,
     updatedAt: post.updated_at,
-    image: post.image_path,
-    imageUrl: publicUrl(post.image_bucket, post.image_path),
+    image: postImagePath(post),
+    imageUrl: postImageUrl(post),
+    // Lets an anonymous post's author manage it; true only for the author.
+    isOwner: Boolean(currentUserId) && post.author_id === currentUserId,
     likesCount: post.reaction_count,
     reactionCount: Number(post.reaction_count) || reactions.length,
     reactionSummary,
@@ -87,8 +90,24 @@ const allowedPostReactions = new Set(["like", "funny", "relatable", "angry", "in
 
 const postSelect = `*, user:profiles!posts_author_id_fkey(${profileSelect})`;
 
-const hydratePost = async (post: any, commentLimit = 3, currentUserId: string | null = null) => {
+const anonymizePostImage = async (post: any) => {
+  if (!post.image_path || postImagePath(post)) return post;
   const supabase = ensureSupabaseAdmin();
+  const target = `anonymous/${randomUUID()}${post.image_path.slice(post.image_path.lastIndexOf("."))}`;
+  const { error } = await supabase.storage.from(post.image_bucket).move(post.image_path, target);
+  if (error) {
+    // Another request may have just moved it. The image stays hidden meanwhile.
+    logger.warn("Could not move an anonymous post image", { postId: post.id });
+    return post;
+  }
+  const { error: updateError } = await supabase.from("posts").update({ image_path: target }).eq("id", post.id);
+  if (updateError) throw updateError;
+  return { ...post, image_path: target };
+};
+
+const hydratePost = async (rawPost: any, commentLimit = 3, currentUserId: string | null = null) => {
+  const supabase = ensureSupabaseAdmin();
+  const post = await anonymizePostImage(rawPost);
   const [categories, reactions, comments] = await Promise.all([
     supabase
       .from("post_category_links")
@@ -112,15 +131,27 @@ const hydratePost = async (post: any, commentLimit = 3, currentUserId: string | 
   if (reactions.error) throw reactions.error;
   if (comments.error) throw comments.error;
 
+  const ids = (comments.data as any[]).map((comment) => comment.id);
+  const replies = ids.length
+    ? await supabase
+        .from("post_comments")
+        .select(`*, user:profiles!post_comments_author_id_fkey(${profileSelect})`)
+        .in("parent_comment_id", ids)
+        .eq("status", "active")
+        .order("created_at", { ascending: true })
+    : { data: [], error: null };
+  if (replies.error) throw replies.error;
+
   return mapPost({
     ...post,
     categories: categories.data,
     reactions: reactions.data,
-    comments: comments.data,
+    comments: (comments.data as any[]).map((comment) => ({ ...comment, replies: ((replies.data as any[]) || []).filter((reply) => reply.parent_comment_id === comment.id) })),
   }, currentUserId);
 };
 
 const attachCategory = async (postId: number, categoryName: string | null) => {
+  if (!categoryName) return;
   if (!categoryName) return;
   const supabase = ensureSupabaseAdmin();
   const { data: category, error } = await supabase
@@ -143,7 +174,7 @@ const getCategoryPostIds = async (category: unknown): Promise<number[] | null> =
   const { data: links, error } = await supabase
     .from("post_category_links")
     .select("post_id, category:post_categories!inner(name)")
-    .eq("category.name", category)
+    .ilike("category.name", String(category).replace(/[%_*\\]/g, " "))
     .limit(1000);
 
   if (error) throw error;
@@ -170,6 +201,59 @@ const respondWithPosts = async (query: PromiseLike<{ data: any; count: number | 
 const emptyPage = (page: number, limit: number) =>
   json(200, { success: true, data: [], pagination: { page, limit, totalPosts: 0, totalPages: 0 } });
 
+interface PostFilter {
+  authorId?: string;
+  cohort?: { department_id?: number | null; batch?: number | null };
+  /** Leave out anonymous posts. Required whenever posts are picked by who wrote them. */
+  namedOnly?: boolean;
+  category?: unknown;
+  withImage?: boolean;
+}
+
+// Active posts, newest first, narrowed by the filter and the `search` parameter.
+const listPosts = async (ctx: Parameters<Handler>[0], filter: PostFilter = {}) => {
+  const { page, limit, from, to } = pageRange(ctx.query.page || 1, ctx.query.limit || 10);
+  const categoryIds = await getCategoryPostIds(filter.category);
+  if (categoryIds && !categoryIds.length) return emptyPage(page, limit);
+
+  const select = filter.cohort ? postSelect.replace("posts_author_id_fkey(", "posts_author_id_fkey!inner(") : postSelect;
+  let query = ensureSupabaseAdmin()
+    .from("posts")
+    .select(select, { count: "exact" })
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .range(from, to);
+  if (filter.authorId) query = query.eq("author_id", filter.authorId);
+  if (filter.cohort?.department_id) query = query.eq("user.department_id", filter.cohort.department_id);
+  if (filter.cohort?.batch) query = query.eq("user.batch", filter.cohort.batch);
+  if (filter.namedOnly) query = query.eq("is_anonymous", false);
+  if (categoryIds) query = query.in("id", categoryIds);
+  if (filter.withImage) query = query.not("image_path", "is", null);
+  const term = filterSearchTerm(optionalText(ctx.query.search, { max: 100 })).replace(/[%_*]/g, " ").trim();
+  if (term) query = query.ilike("content", `%${term}%`);
+
+  return respondWithPosts(query, page, limit, 0, ctx.user?.id || null);
+};
+
+const viewerCohort = async (userId: string) => {
+  const { data, error } = await ensureSupabaseAdmin().from("profiles").select("department_id, batch").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return { department_id: data?.department_id ?? null, batch: data?.batch ?? null };
+};
+
+// Tabs that are not stored categories, and tab names for ones that are.
+const CATEGORY_ALIASES: Record<string, string> = { questions: "question", resources: "resource" };
+
+const removeImage = (bucket?: string | null, path?: string | null) =>
+  bucket && path ? removeObject({ bucket, objectPath: path }).catch((error) => logger.warn("Could not remove a post image", { message: error?.message })) : undefined;
+
+// Only live posts take reactions and replies. Missing and hidden look the same.
+const findLivePost = async (postId: number) => {
+  const { data, error } = await ensureSupabaseAdmin().from("posts").select("id, status").eq("id", postId).maybeSingle();
+  if (error) throw error;
+  return data?.status === "active" ? data : null;
+};
+
 export const createPost: Handler = async (ctx) => {
   try {
     const hasImage = Boolean(ctx.file);
@@ -190,7 +274,8 @@ export const createPost: Handler = async (ctx) => {
     const wantsAnonymous = isAnonymous === "true" || isAnonymous === true;
     const replay = async (existing: any) => {
       const dto = await hydratePost(existing, 3, userId);
-      const sameImage = ctx.file ? (ctx.file.stored ? existing.image_path === ctx.file.path : existing.image_size_bytes === ctx.file.size) : !existing.image_path;
+      // An anonymous post's image has moved, so only its size can be compared.
+      const sameImage = ctx.file ? (ctx.file.stored && !existing.is_anonymous ? existing.image_path === ctx.file.path : existing.image_size_bytes === ctx.file.size) : !existing.image_path;
       if (dto.content !== (content || "") || Boolean(dto.isAnonymous) !== wantsAnonymous || dto.category !== (category ?? null) || !sameImage) throw keyReusedError();
       ctx.responseHeaders.set(REPLAYED_HEADER, "true");
       return json(201, { success: true, data: dto });
@@ -251,22 +336,28 @@ export const createPost: Handler = async (ctx) => {
 
 export const getPosts: Handler = async (ctx) => {
   try {
-    const { page, limit, from, to } = pageRange(ctx.query.page || 1, ctx.query.limit || 10);
-    const category = ctx.query.category;
-    const supabase = ensureSupabaseAdmin();
+    const viewerId = ctx.user!.id;
+    const { userId } = ctx.query;
+    if (userId) {
+      const author = uuid(userId, "User ID");
+      if (!author.ok) return badRequest(author.error);
+      // Others never see someone's anonymous posts on their profile.
+      return await listPosts(ctx, { authorId: author.value, namedOnly: author.value !== viewerId });
+    }
 
-    const idsFilter = await getCategoryPostIds(category);
-    if (idsFilter && !idsFilter.length) return emptyPage(page, limit);
-
-    let query = supabase
-      .from("posts")
-      .select(postSelect, { count: "exact" })
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .range(from, to);
-    if (idsFilter) query = query.in("id", idsFilter);
-
-    return await respondWithPosts(query, page, limit, 0, ctx.user?.id || null);
+    const category = String(ctx.query.category || "").trim();
+    const tab = category.toLowerCase();
+    if (tab === "media") return await listPosts(ctx, { withImage: true });
+    if (tab === "department" || tab === "batch") {
+      const cohort = await viewerCohort(viewerId);
+      const value = cohort[tab === "department" ? "department_id" : "batch"];
+      if (!value) {
+        const { page, limit } = pageRange(ctx.query.page || 1, ctx.query.limit || 10);
+        return emptyPage(page, limit);
+      }
+      return await listPosts(ctx, { cohort: tab === "department" ? { department_id: value } : { batch: value }, namedOnly: true });
+    }
+    return await listPosts(ctx, { category: CATEGORY_ALIASES[tab] || category || undefined });
   } catch (error: any) {
     logger.error("Error fetching posts:", error);
     return serverError("Failed to fetch posts", error.message);
@@ -312,6 +403,7 @@ export const updatePost: Handler = async (ctx) => {
     if (existing.author_id !== userId) {
       return forbidden("You are not authorized to update this post");
     }
+    if (existing.status !== "active") return forbidden("This post is under moderation and cannot be edited");
 
     const payload: Record<string, unknown> = {};
     if (ctx.body.content !== undefined) {
@@ -328,15 +420,26 @@ export const updatePost: Handler = async (ctx) => {
       payload.image_size_bytes = image.size;
     }
 
-    const { data: post, error } = await supabase
-      .from("posts")
-      .update(payload)
-      .eq("id", postId)
-      .select(postSelect)
-      .single();
+    const category = ctx.body.category ? optionalText(ctx.body.category, { max: 80 }) : null;
+    if (!Object.keys(payload).length && !category) return badRequest("Nothing to update");
 
-    if (error) throw error;
-    if (ctx.body.category) await attachCategory(post.id, optionalText(ctx.body.category, { max: 80 }));
+    let post = existing;
+    if (Object.keys(payload).length) {
+      const { data, error } = await supabase.from("posts").update(payload).eq("id", postId).select(postSelect).single();
+      if (error) throw error;
+      post = data;
+    } else {
+      const { data, error } = await supabase.from("posts").select(postSelect).eq("id", postId).single();
+      if (error) throw error;
+      post = data;
+    }
+    if (payload.image_path && existing.image_path !== payload.image_path) await removeImage(existing.image_bucket, existing.image_path);
+    if (category) {
+      // A post has one category: the new one replaces the old.
+      const { error: unlinkError } = await supabase.from("post_category_links").delete().eq("post_id", post.id);
+      if (unlinkError) throw unlinkError;
+      await attachCategory(post.id, category);
+    }
     return json(200, { success: true, data: await hydratePost(post, 3, userId) });
   } catch (error: any) {
     logger.error("Error updating post:", error);
@@ -366,6 +469,7 @@ export const deletePost: Handler = async (ctx) => {
 
     const { error } = await supabase.from("posts").delete().eq("id", postId);
     if (error) throw error;
+    await removeImage(existing.image_bucket, existing.image_path);
     return json(200, { success: true, message: "Post deleted successfully" });
   } catch (error: any) {
     logger.error("Error deleting post:", error);
@@ -386,6 +490,7 @@ export const reactToPost: Handler = async (ctx) => {
     if (!allowedPostReactions.has(reactionType)) {
       return badRequest(`reactionType must be one of: ${[...allowedPostReactions].join(", ")}`);
     }
+    if (!(await findLivePost(postId))) return notFound("Post not found");
 
     const { data: existing, error: findError } = await supabase
       .from("post_reactions")
@@ -430,49 +535,22 @@ export const reactToPost: Handler = async (ctx) => {
   }
 };
 
+// The home feed. `scope` is the tab: for_you (same department and batch, or
+// everything for members who have not set those), department, batch, resources.
 export const getUserFeed: Handler = async (ctx) => {
   try {
-    const { page, limit, from, to } = pageRange(ctx.query.page || 1, ctx.query.limit || 10);
-    const supabase = ensureSupabaseAdmin();
-    const userId = ctx.user!.id;
+    const { page, limit } = pageRange(ctx.query.page || 1, ctx.query.limit || 10);
+    const scope = String(ctx.query.scope || "for_you");
+    const category = ctx.query.category;
+    if (scope === "resources") return await listPosts(ctx, { category: "resource" });
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("department_id, batch")
-      .eq("id", userId)
-      .maybeSingle();
-    if (profileError) throw profileError;
-
-    if (!profile?.department_id && !profile?.batch) {
-      return getPosts(ctx);
-    }
-
-    let profileQuery = supabase.from("profiles").select("id");
-    if (profile.department_id) profileQuery = profileQuery.eq("department_id", profile.department_id);
-    if (profile.batch) profileQuery = profileQuery.eq("batch", profile.batch);
-
-    const { data: matchingProfiles, error: matchingError } = await profileQuery;
-    if (matchingError) throw matchingError;
-
-    const authorIds = (matchingProfiles || []).map((matchingProfile) => matchingProfile.id);
-    if (!authorIds.length) return emptyPage(page, limit);
-
-    const categoryIds = await getCategoryPostIds(ctx.query.category);
-    if (categoryIds && !categoryIds.length) return emptyPage(page, limit);
-
-    let query = supabase
-      .from("posts")
-      .select(postSelect, { count: "exact" })
-      .eq("status", "active")
-      // Selecting by the author's cohort would shrink an anonymous author's
-      // anonymity set to their department and batch.
-      .eq("is_anonymous", false)
-      .in("author_id", authorIds)
-      .order("created_at", { ascending: false })
-      .range(from, to);
-    if (categoryIds) query = query.in("id", categoryIds);
-
-    return await respondWithPosts(query, page, limit, 0, userId);
+    const { department_id, batch } = await viewerCohort(ctx.user!.id);
+    // Selecting by the author's cohort would shrink an anonymous author's
+    // anonymity set to their department and batch, so those stay out.
+    if (scope === "department") return department_id ? await listPosts(ctx, { cohort: { department_id }, namedOnly: true, category }) : emptyPage(page, limit);
+    if (scope === "batch") return batch ? await listPosts(ctx, { cohort: { batch }, namedOnly: true, category }) : emptyPage(page, limit);
+    if (!department_id && !batch) return await listPosts(ctx, { category });
+    return await listPosts(ctx, { cohort: { department_id, batch }, namedOnly: true, category });
   } catch (error: any) {
     logger.error("Error fetching user feed:", error);
     return serverError("Failed to fetch user feed", error.message);

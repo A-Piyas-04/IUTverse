@@ -3,7 +3,7 @@
 // own list: active content only, and anonymous posts never reveal the author.
 import "server-only";
 import { PublicError } from "../http/errors";
-import { ensureSupabaseAdmin, mapProfile, profileSelect, publicUrl } from "../utils/supabaseData";
+import { ensureSupabaseAdmin, mapProfile, postImageUrl, profileSelect } from "../utils/supabaseData";
 import { filterSearchTerm, sanitizePlainText } from "../utils/validation";
 
 export const SEARCH_TYPES = ["people", "posts", "events", "jobs", "resources", "lostFound"] as const;
@@ -37,7 +37,7 @@ const people = async (pattern: string, { from, to }: Range) => {
 const posts = async (pattern: string, { from, to }: Range) => {
   const { data, error } = await ensureSupabaseAdmin()
     .from("posts")
-    .select(`id, content, is_anonymous, image_bucket, image_path, reaction_count, comment_count, created_at, user:profiles!posts_author_id_fkey(${profileSelect})`)
+    .select(`id, author_id, content, is_anonymous, image_bucket, image_path, reaction_count, comment_count, created_at, user:profiles!posts_author_id_fkey(${profileSelect})`)
     .eq("status", "active")
     .ilike("content", pattern.replaceAll("*", "%"))
     .order("created_at", { ascending: false })
@@ -48,7 +48,7 @@ const posts = async (pattern: string, { from, to }: Range) => {
     content: snippet(post.content, 220),
     isAnonymous: Boolean(post.is_anonymous),
     author: post.is_anonymous ? null : mapProfile(post.user),
-    imageUrl: publicUrl(post.image_bucket, post.image_path),
+    imageUrl: postImageUrl(post),
     reactionCount: post.reaction_count || 0,
     commentCount: post.comment_count || 0,
     createdAt: post.created_at,

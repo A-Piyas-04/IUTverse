@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Camera, CheckCircle2, Edit3, LockKeyhole, MessageSquare, ShieldCheck } from "lucide-react";
 import { apiRequest, jsonBody, mediaUrl } from "@/lib/api";
 import { uploadDirect } from "@/lib/uploads";
@@ -22,6 +22,8 @@ interface ReferenceData {
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const { notify } = useToast();
   const { userId } = useParams<{ userId?: string }>();
   const id = userId || user?.id;
   const owner = !userId || userId === user?.id;
@@ -36,7 +38,13 @@ export function ProfilePage() {
   const posts = useQuery({
     queryKey: ["profile-posts", id],
     queryFn: ({ signal }) => apiRequest<Post[]>("/posts?userId=" + id + "&limit=50", {}, signal),
-    enabled: Boolean(id && tab === "Posts"),
+    enabled: Boolean(id),
+  });
+  const postTotal = (posts.data as { pagination?: { totalPosts?: number } } | undefined)?.pagination?.totalPosts ?? posts.data?.data?.length ?? 0;
+  const message = useMutation({
+    mutationFn: () => apiRequest<{ id: number }>("/chat/conversations", { method: "POST", ...jsonBody({ otherUserId: id }) }),
+    onSuccess: (result) => router.push(`/messages?conversation=${result.data.id}`),
+    onError: (error) => notify(error.message),
   });
   if (profile.isError) return <PageFrame title="Profile"><EmptyState title="Profile unavailable" body={profile.error.message} /></PageFrame>;
   const value = profile.data?.data;
@@ -48,13 +56,13 @@ export function ProfilePage() {
       <div className={styles.cover} style={coverStyle} />
       <div className={styles.profileBody}>
         <div className={styles.profileAvatar}><Avatar size={96} name={value?.displayName} src={mediaUrl(value?.profilePictureUrl)} /></div>
-        <div className={styles.profileActions}>{owner ? <Button onClick={() => setEdit(true)}><Edit3 size={17} />Edit profile</Button> : <Button><MessageSquare size={17} />Message</Button>}</div>
+        <div className={styles.profileActions}>{owner ? <Button onClick={() => setEdit(true)}><Edit3 size={17} />Edit profile</Button> : <Button onClick={() => message.mutate()} disabled={message.isPending}><MessageSquare size={17} />Message</Button>}</div>
         <div className={styles.profileName}>
           <h1>{value?.displayName || "Loading…"}{value?.badges?.length ? <CheckCircle2 size={18} color="var(--accent)" /> : null}</h1>
           <p>{value?.handle ? "@" + value.handle : ""} {value?.department}{value?.batch ? " " + value.batch : ""}</p>
           <p>{value?.bio || "Complete your profile to help the IUT community know you."}</p>
         </div>
-        <div className={styles.metrics}><span><strong>{posts.data?.data?.length || 0}</strong> Posts</span><span><strong>{value?.interests?.length || 0}</strong> Interests</span><span><strong>{value?.badges?.length || 0}</strong> Badges</span></div>
+        <div className={styles.metrics}><span><strong>{postTotal}</strong> Posts</span><span><strong>{value?.interests?.length || 0}</strong> Interests</span><span><strong>{value?.badges?.length || 0}</strong> Badges</span></div>
       </div>
     </div>
     <div className={styles.toolbar}>{["Posts", "Resources", "Opportunities", "Replies", "About"].map(item => <Chip key={item} active={tab === item} onClick={() => setTab(item)}>{item}</Chip>)}</div>

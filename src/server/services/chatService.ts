@@ -1,7 +1,7 @@
 import "server-only";
 import { PublicError } from "../http/errors";
 import { isUniqueViolation, keyReusedError } from "../http/idempotency";
-import { ensureSupabaseAdmin, mapProfile, profileSelect, publicUrl } from "../utils/supabaseData";
+import { ensureSupabaseAdmin, mapProfile, postImageUrl, profileSelect } from "../utils/supabaseData";
 import { sanitizePlainText } from "../utils/validation";
 import { browserUrl, removeObject } from "./storageService";
 
@@ -205,7 +205,7 @@ class ChatService {
       postIds.length
         ? supabase
             .from("posts")
-            .select(`id, content, is_anonymous, status, image_bucket, image_path, created_at, user:profiles!posts_author_id_fkey(${profileSelect})`)
+            .select(`id, author_id, content, is_anonymous, status, image_bucket, image_path, created_at, user:profiles!posts_author_id_fkey(${profileSelect})`)
             .in("id", postIds)
         : null,
     ]);
@@ -231,7 +231,7 @@ class ChatService {
             id: post.id,
             available: true,
             content: sanitizePlainText(post.content || "", { max: 280 }),
-            imageUrl: publicUrl(post.image_bucket, post.image_path),
+            imageUrl: postImageUrl(post),
             isAnonymous: Boolean(post.is_anonymous),
             author: post.is_anonymous ? null : mapProfile(post.user),
             createdAt: post.created_at,
